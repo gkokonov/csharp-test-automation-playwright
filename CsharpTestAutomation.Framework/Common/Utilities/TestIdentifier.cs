@@ -44,10 +44,7 @@ public static class TestIdentifier
     /// <summary>
     /// Clears the test ID cache
     /// </summary>
-    public static void ClearCache()
-    {
-        s_testIdCache.Clear();
-    }
+    public static void ClearCache() => s_testIdCache.Clear();
 
     /// <summary>
     /// Captures the identifying values of the current NUnit context in a single read so that the
@@ -59,8 +56,8 @@ public static class TestIdentifier
 
         return new TestContextSnapshot(
             context.Test.ID,
-            context.Test.DisplayName,
-            context.Test.MethodName,
+            context.Test.DisplayName ?? "DisplayNameNotAvailable",
+            context.Test.MethodName ?? "MethodNameNotAvailable",
             context.CurrentRepeatCount);
     }
 
@@ -86,10 +83,7 @@ public static class TestIdentifier
     /// Creates a unique key for the current test context
     /// </summary>
     /// <returns>A unique key based on test context</returns>
-    private static string CreateTestContextKey(TestContextSnapshot snapshot)
-    {
-        return $"{snapshot.Id}|{snapshot.DisplayName}|{ResolveMethodSegment(snapshot.MethodName)}|{snapshot.RepeatCount}";
-    }
+    private static string CreateTestContextKey(TestContextSnapshot snapshot) => $"{snapshot.Id}|{snapshot.DisplayName}|{ResolveMethodSegment(snapshot.MethodName)}|{snapshot.RepeatCount}";
 
     /// <summary>
     /// Generates a test ID from the current test context
@@ -117,10 +111,7 @@ public static class TestIdentifier
     /// Resolves the method-name segment, substituting a stable placeholder when running in a
     /// suite-level context (such as [OneTimeSetUp] or a [SetUpFixture]) where MethodName is null.
     /// </summary>
-    private static string ResolveMethodSegment(string methodName)
-    {
-        return string.IsNullOrEmpty(methodName) ? SuiteContextSegment : methodName;
-    }
+    private static string ResolveMethodSegment(string methodName) => string.IsNullOrEmpty(methodName) ? SuiteContextSegment : methodName;
 
     /// <summary>
     /// Immutable snapshot of the NUnit context values used to identify a test.

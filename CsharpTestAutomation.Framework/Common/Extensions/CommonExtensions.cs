@@ -36,17 +36,11 @@ public static class CommonExtensions
     /// the original value of the "target" parameter if it is not null or empty, otherwise
     /// returns the original value of the "alternative" parameter.
     /// </returns>
-    public static string GetNonEmptyValueOrAlternative(string target, string alternative)
-    {
-        return string.IsNullOrEmpty(target) ? alternative : target;
-    }
+    public static string GetNonEmptyValueOrAlternative(string target, string alternative) => string.IsNullOrEmpty(target) ? alternative : target;
 
     /// <summary>
     /// Generates Unix Timestamp in milliseconds from DateTime.UtcNow.
     /// </summary>
     /// <returns>Unix Timestamp as string</returns>
-    public static string GetCurrentUnixTimestamp()
-    {
-        return new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds().ToString();
-    }
+    public static string GetCurrentUnixTimestamp() => new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds().ToString();
 }

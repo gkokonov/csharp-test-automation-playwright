@@ -31,8 +31,8 @@ public class CoreConfiguration
     public string PlaywrightDeviceName { get; set; } = string.Empty; // default if not set
     public string BuildNumber { get; set; } = "1.0.0"; // default if not set
     public bool BypassCSP { get; set; } // default false if not set
-    public HttpCredentials HttpCredentials { get; set; }  // default null if not set
-    public string PlaywrightArgs { get; set; } // e.g. "--disable-gpu --no-sandbox"
+    public HttpCredentials? HttpCredentials { get; set; }  // default null if not set
+    public string? PlaywrightArgs { get; set; } // e.g. "--disable-gpu --no-sandbox"
 
     public float BrowserStartTimeoutInMs { get; set; } = 35_000;
     public float NavigationTimeoutInMs { get; set; } = 35_000;

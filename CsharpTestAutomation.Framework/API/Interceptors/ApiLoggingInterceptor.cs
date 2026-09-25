@@ -58,12 +58,12 @@ public sealed class ApiLoggingInterceptor(IApiLogSanitizer sanitizer, ApiLogging
                 RequestHeaders = requestHeaders,
                 RequestBody = requestBody,
                 StatusCode = (int)response.StatusCode,
-                ReasonPhrase = response.StatusDescription,
+                ReasonPhrase = response.StatusDescription ?? string.Empty,
                 ResponseHeaders = responseHeaders,
                 ResponseBody = responseBody,
                 Elapsed = elapsed,
                 IsSuccessful = response.IsSuccessful,
-                ErrorMessage = response.ErrorMessage
+                ErrorMessage = response.ErrorMessage ?? string.Empty
             };
 
             LogToNLog(entry, response.ErrorException);
@@ -79,7 +79,7 @@ public sealed class ApiLoggingInterceptor(IApiLogSanitizer sanitizer, ApiLogging
         }
     }
 
-    private static void LogToNLog(ApiLogEntry entry, Exception errorException)
+    private static void LogToNLog(ApiLogEntry entry, Exception? errorException)
     {
         var message =
             $"[API] {entry.Method} {entry.Resource} → {entry.StatusCode} | {entry.Elapsed.TotalMilliseconds:F0}ms";

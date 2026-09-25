@@ -41,10 +41,7 @@ public abstract class BaseBuilder<TModel>
         return this;
     }
 
-    public TModel Build()
-    {
-        return _builder.Build();
-    }
+    public TModel Build() => _builder.Build();
 
     public TModel BuildFromDictionary(Dictionary<string, object> sourceMap)
     {

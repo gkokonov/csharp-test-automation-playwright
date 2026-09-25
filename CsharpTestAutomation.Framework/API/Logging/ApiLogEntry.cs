@@ -13,7 +13,7 @@ public record ApiLogEntry
     public string Resource { get; init; } = string.Empty;
 
     /// <summary>Absolute URI that responded, when available.</summary>
-    public Uri FullUri { get; init; } // default null if not set
+    public Uri? FullUri { get; init; } // default null if not set
 
     /// <summary>Request headers, redacted only when redaction is enabled.</summary>
     public IReadOnlyDictionary<string, string> RequestHeaders { get; init; } = new Dictionary<string, string>();

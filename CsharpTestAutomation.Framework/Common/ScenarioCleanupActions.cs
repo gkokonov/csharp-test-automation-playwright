@@ -12,12 +12,12 @@ public class ScenarioCleanupActions
     /// <summary>
     /// Synchronous CleanUpActions stack.
     /// </summary>
-    public Stack<Action> CleanUpActions { get; private set; }
+    public Stack<Action>? CleanUpActions { get; private set; }
 
     /// <summary>
     /// Asynchronous CleanUpActions stack.
     /// </summary>
-    public Stack<Func<Task>> AsyncCleanUpActions { get; private set; }
+    public Stack<Func<Task>>? AsyncCleanUpActions { get; private set; }
 
     /// <summary>
     /// Adds new synchronous clean-up action to the stack.
@@ -42,18 +42,12 @@ public class ScenarioCleanupActions
     /// <summary>
     /// Remove last synchronous clean-up action from the stack.
     /// </summary>
-    public void RemoveLastCleanUpAction()
-    {
-        CleanUpActions?.Pop();
-    }
+    public void RemoveLastCleanUpAction() => CleanUpActions?.Pop();
 
     /// <summary>
     /// Remove last asynchronous clean-up action from the stack.
     /// </summary>
-    public void RemoveLastAsyncCleanUpAction()
-    {
-        AsyncCleanUpActions?.Pop();
-    }
+    public void RemoveLastAsyncCleanUpAction() => AsyncCleanUpActions?.Pop();
 
     /// <summary>
     /// Remove all clean-up actions from the stack.
@@ -72,11 +66,9 @@ public class ScenarioCleanupActions
     /// <exception cref="AggregateException">
     /// Throws exception only if failOnException is set to true
     /// </exception>
-    public void CleanUp(bool failOnException = true)
-    {
+    public void CleanUp(bool failOnException = true) =>
         // Execute async cleanup operations synchronously by blocking
         CleanUpAsync(failOnException).GetAwaiter().GetResult();
-    }
 
     /// <summary>
     /// Execute all clean-up actions from the stack in LIFO manner asynchronously. Usually done
@@ -89,7 +81,7 @@ public class ScenarioCleanupActions
     /// </exception>
     public async Task CleanUpAsync(bool failOnException = true)
     {
-        List<Exception> exceptions = null;
+        List<Exception>? exceptions = null;
 
         try
         {

@@ -107,10 +107,7 @@ public static partial class RelativeDateTimeGenerator
     /// <param name="input">The input string describing a relative date.</param>
     /// <param name="format">The format string for the output (default is "dd/MM/yyyy").</param>
     /// <returns>A formatted date string.</returns>
-    public static string GenerateRelativeDate(string input, string format = DefaultDateFormat)
-    {
-        return ParseRelativeDate(input, format).ToString(format, CultureInfo.InvariantCulture);
-    }
+    public static string GenerateRelativeDate(string input, string format = DefaultDateFormat) => ParseRelativeDate(input, format).ToString(format, CultureInfo.InvariantCulture);
 
     /// <summary>
     /// Parses a relative time string and returns the corresponding <see cref="DateTime"/> value.
@@ -152,10 +149,7 @@ public static partial class RelativeDateTimeGenerator
     /// <param name="input">The input string describing a relative time.</param>
     /// <param name="format">The format string for the output (default is "HH:mm:ss").</param>
     /// <returns>A formatted time string.</returns>
-    public static string GenerateRelativeGetTime(string input, string format = DefaultTimeFormat)
-    {
-        return ParseRelativeGetTime(input, format).ToString(format, CultureInfo.InvariantCulture);
-    }
+    public static string GenerateRelativeGetTime(string input, string format = DefaultTimeFormat) => ParseRelativeGetTime(input, format).ToString(format, CultureInfo.InvariantCulture);
 
     [GeneratedRegex(@"(?<value>\d+)\s*(?<unit>day|month|year)s?\s*(?<direction>before|after)\s*(?<reference>today)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex DatePatternRegex();

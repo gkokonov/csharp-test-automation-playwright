@@ -35,8 +35,5 @@ public static class PollyUtility
             .WaitAndRetryAsync(retryCount, retryAttempt => TimeSpan.FromSeconds(retryEveryNSeconds), OnRetry);
     }
 
-    private static void OnRetry(Exception exception, TimeSpan timeSpan, int retry, Context context)
-    {
-        s_logger.Info($"Exception thrown for retry count of '{retry}' : {exception}");
-    }
+    private static void OnRetry(Exception exception, TimeSpan timeSpan, int retry, Context context) => s_logger.Info($"Exception thrown for retry count of '{retry}' : {exception}");
 }

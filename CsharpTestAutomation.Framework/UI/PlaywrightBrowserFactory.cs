@@ -16,7 +16,7 @@ public static class PlaywrightBrowserFactory
     private static readonly ConcurrentDictionary<string, IBrowser> s_browsers = new();
     private static readonly ConcurrentDictionary<string, IBrowserContext> s_contexts = new();
     private static readonly SemaphoreSlim s_playwrightLock = new(1, 1);
-    private static volatile IPlaywright s_playwrightInstance;
+    private static volatile IPlaywright? s_playwrightInstance;
 
     private static readonly CoreConfiguration s_configuration = AppConfiguration<CoreConfiguration>.Instance.Settings;
 
@@ -26,7 +26,7 @@ public static class PlaywrightBrowserFactory
     public static IBrowser GetCurrentBrowser()
     {
         var testId = GetCurrentTestId();
-        return s_browsers.TryGetValue(testId, out IBrowser browser)
+        return s_browsers.TryGetValue(testId, out IBrowser? browser)
             ? browser
             : throw new InvalidOperationException($"Browser not initialized for test {testId}");
     }
@@ -37,7 +37,7 @@ public static class PlaywrightBrowserFactory
     public static IBrowserContext GetCurrentContext()
     {
         var testId = GetCurrentTestId();
-        return s_contexts.TryGetValue(testId, out IBrowserContext context)
+        return s_contexts.TryGetValue(testId, out IBrowserContext? context)
             ? context
             : throw new InvalidOperationException($"Browser context not initialized for test {testId}");
     }
@@ -76,16 +76,13 @@ public static class PlaywrightBrowserFactory
     /// Creates a new browser context for the current test. <see langword="null"/> for <paramref
     /// name="storageState"/> means no storage state is used.
     /// </summary>
-    public static Task<IBrowserContext> CreateContextAsync(string storageState = null)
-    {
-        return CreateAndStoreContextAsync(storageState, s_configuration.HttpCredentials);
-    }
+    public static Task<IBrowserContext> CreateContextAsync(string? storageState = null) => CreateAndStoreContextAsync(storageState, s_configuration.HttpCredentials);
 
     /// <summary>
     /// Creates a new browser context for the current test with given HTTP credentials.
     /// <see langword="null"/> for <paramref name="storageState"/> means no storage state is used.
     /// </summary>
-    public static Task<IBrowserContext> CreateContextWithGivenHttpCredentialsAsync(string userName, string password, string storageState = null)
+    public static Task<IBrowserContext> CreateContextWithGivenHttpCredentialsAsync(string userName, string password, string? storageState = null)
     {
         var credentials = new HttpCredentials { Username = userName, Password = password };
         return CreateAndStoreContextAsync(storageState, credentials);
@@ -117,7 +114,7 @@ public static class PlaywrightBrowserFactory
     {
         var testId = GetCurrentTestId();
 
-        if (s_contexts.TryRemove(testId, out IBrowserContext context))
+        if (s_contexts.TryRemove(testId, out IBrowserContext? context))
         {
             if (s_configuration.TraceEnabled)
             {
@@ -163,7 +160,7 @@ public static class PlaywrightBrowserFactory
     {
         var testId = GetCurrentTestId();
 
-        if (s_browsers.TryRemove(testId, out IBrowser browser))
+        if (s_browsers.TryRemove(testId, out IBrowser? browser))
         {
             try
             {
@@ -218,17 +215,17 @@ public static class PlaywrightBrowserFactory
         s_log.Debug("All Playwright resources disposed.");
     }
 
-    private static async Task<IBrowserContext> CreateAndStoreContextAsync(string storageState, HttpCredentials httpCredentials)
+    private static async Task<IBrowserContext> CreateAndStoreContextAsync(string? storageState, HttpCredentials? httpCredentials)
     {
         var testId = GetCurrentTestId();
 
-        if (!s_browsers.TryGetValue(testId, out IBrowser browser))
+        if (!s_browsers.TryGetValue(testId, out IBrowser? browser))
         {
             throw new InvalidOperationException($"Browser must be initialized before creating context for test {testId}");
         }
 
         // Dispose any stale context from a previous call (e.g. a test retry that skipped teardown)
-        if (s_contexts.TryRemove(testId, out IBrowserContext stale))
+        if (s_contexts.TryRemove(testId, out IBrowserContext? stale))
         {
             try
             { await stale.CloseAsync().ConfigureAwait(false); }
@@ -254,7 +251,7 @@ public static class PlaywrightBrowserFactory
         };
     }
 
-    private static BrowserTypeLaunchOptions CreateBrowserOptions(string channel = null)
+    private static BrowserTypeLaunchOptions CreateBrowserOptions(string? channel = null)
     {
         var browserOptions = new BrowserTypeLaunchOptions {
             DownloadsPath = Directory.GetCurrentDirectory(),
@@ -269,7 +266,7 @@ public static class PlaywrightBrowserFactory
         return browserOptions;
     }
 
-    private static async Task<IBrowserContext> CreateBrowserContextAsync(IBrowser browser, string storageState, HttpCredentials httpCredentials = null)
+    private static async Task<IBrowserContext> CreateBrowserContextAsync(IBrowser browser, string? storageState, HttpCredentials? httpCredentials = null)
     {
         var contextOptions = new BrowserNewContextOptions {
             ViewportSize = s_configuration.ViewportSize,
@@ -284,7 +281,7 @@ public static class PlaywrightBrowserFactory
 
         if (!string.IsNullOrWhiteSpace(deviceName))
         {
-            contextOptions = s_playwrightInstance.Devices[deviceName];
+            contextOptions = s_playwrightInstance!.Devices[deviceName];
             contextOptions.IgnoreHTTPSErrors = true;
             if (s_configuration.RecordVideoEnabled)
             {
@@ -327,8 +324,5 @@ public static class PlaywrightBrowserFactory
     /// <summary>
     /// Gets the ID of the current test using TestIdentifier
     /// </summary>
-    private static string GetCurrentTestId()
-    {
-        return TestIdentifier.GetTestId();
-    }
+    private static string GetCurrentTestId() => TestIdentifier.GetTestId();
 }

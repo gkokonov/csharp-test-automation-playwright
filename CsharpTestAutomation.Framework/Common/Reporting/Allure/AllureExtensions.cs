@@ -54,7 +54,7 @@ public static class AllureExtensions
     /// </summary>
     /// <param name="context">The browser context whose pages are inspected.</param>
     /// <param name="title">Attachment title; defaults to <c>"Browser Logs"</c>.</param>
-    public static async Task CaptureBrowserLogsAsync(IBrowserContext context, string title = null)
+    public static async Task CaptureBrowserLogsAsync(IBrowserContext context, string? title = null)
     {
         try
         {

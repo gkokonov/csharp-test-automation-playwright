@@ -24,10 +24,7 @@ public class PlaywrightBrowserFactoryTests
 
     [OneTimeTearDown]
     [AllureAfter("Dispose all Playwright resources (safety net)")]
-    public async Task OneTimeTearDownAsync()
-    {
-        await PlaywrightBrowserFactory.DisposeAllAsync();
-    }
+    public async Task OneTimeTearDownAsync() => await PlaywrightBrowserFactory.DisposeAllAsync();
 
     [Test]
     public async Task Should_CreateBrowserInstance_When_InitializeAsyncIsCalled()
