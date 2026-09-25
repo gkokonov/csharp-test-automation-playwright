@@ -1,6 +1,6 @@
 # AGENTS.md
 
-You are a senior .NET framework engineer and QA automation expert in C# 14 / .NET 10, NUnit 4, Microsoft.Playwright, Dapper, Allure, NLog, Polly, Bogus, and NBuilder.
+You are a senior .NET framework engineer and QA automation expert in C# 14 / .NET 10, NUnit 4, Microsoft.Playwright, RestSharp, Dapper, Allure, NLog, Polly, Bogus, and NBuilder.
 
 ## 1. Core
 
@@ -10,20 +10,18 @@ You are a senior .NET framework engineer and QA automation expert in C# 14 / .NE
 
 | Project | Role |
 | --- | --- |
-| `CsharpTestAutomation.Framework` | Core reusable test-automation class library (`net10.0`, packable NuGet). Houses all shared infrastructure: configuration, UI (Playwright), DB (Dapper), and the API testing layer. |
+| `CsharpTestAutomation.Framework` | Core reusable test-automation class library (`net10.0`, packable NuGet). Houses all shared infrastructure: configuration, UI (Playwright), DB (Dapper), and the API testing layer (RestSharp). |
 | `CsharpTestAutomation.Tests` | Application test project. Holds typed API clients, DTOs, DTO builders, test data, and the tests that exercise the application under test. References the framework. |
 | `CsharpTestAutomation.Framework.Test` | Framework self-tests. Unit/integration tests for framework utilities; uses WireMock.Net for HTTP-level tests where needed. |
-
-Application under test: `../web-api/` (`CpfApp.WebAPI`, `CpfApp.Application`, `CpfApp.Domain`, `CpfApp.Infrastructure`).
 
 ## 3. Common Commands
 
 ```pwsh
 dotnet restore
-dotnet build .\CpfTestAutomation.slnx
+dotnet build .\CsharpTestAutomation.slnx
 dotnet test .\CsharpTestAutomation.Framework.Test\CsharpTestAutomation.Framework.Test.csproj
 dotnet test .\CsharpTestAutomation.Tests\CsharpTestAutomation.Tests.csproj
-dotnet test .\CpfTestAutomation.slnx                           # all projects
+dotnet test .\CsharpTestAutomation.slnx                           # all projects
 dotnet test --filter "FullyQualifiedName~<FixtureName>"        # narrow run while iterating
 ```
 
@@ -31,8 +29,8 @@ dotnet test --filter "FullyQualifiedName~<FixtureName>"        # narrow run 
 
 ## 4. Layering Rules
 
-- **Framework (`CsharpTestAutomation.Framework`)**: reusable infrastructure only. No domain entities, no application endpoints, no hard-coded environment names, URLs, or connection strings, and no application `appsettings.json` — these belong in `CsharpTestAutomation.Tests`. Drive behavior through `CoreConfiguration`. Nullable, `ConfigureAwait`, and XML-doc rules: see `.copilot/instructions/framework.instructions.md`.
-- **Application tests (`CsharpTestAutomation.Tests`)**: typed API clients, DTOs, DTO builders, page objects, test data, and test fixtures. References the framework. Uses `<Nullable>enable</Nullable>`. Authoring rules: see `.copilot/instructions/tests.instructions.md`.
+- **Framework (`CsharpTestAutomation.Framework`)**: reusable infrastructure only. No domain entities, no application endpoints, no hard-coded environment names, URLs, or connection strings, and no application `appsettings.json` — these belong in `CsharpTestAutomation.Tests`. Drive behavior through `CoreConfiguration`. Nullable, `ConfigureAwait`, and XML-doc rules: see `.agents/rules/framework.md`.
+- **Application tests (`CsharpTestAutomation.Tests`)**: typed API clients, DTOs, DTO builders, page objects, test data, and test fixtures. References the framework. Uses `<Nullable>enable</Nullable>`. Authoring rules: see `.agents/rules/test-automation.md`.
 - **Framework self-tests (`CsharpTestAutomation.Framework.Test`)**: unit/integration tests for framework utilities. Uses WireMock.Net for HTTP-level tests where needed.
 
 ## 5. Framework Architecture
@@ -73,17 +71,21 @@ All rules are enforced by the root `.editorconfig` — follow it and do not figh
 
 ## 8. External Documentation
 
-| Question type | MCP to use | Examples | Do NOT use |
+| Question type | Tool | Examples | Do NOT use for |
 | --- | --- | --- | --- |
-| Third-party or OSS library behavior | **Context7 MCP** | Dapper, Playwright, NLog, Polly, Bogus, NBuilder, Allure, NUnit, RestSharp; version-specific library syntax; dependency errors from those libraries | Do not use for Microsoft/.NET platform mechanics, live app DOM checks, or repo-local code patterns already shown in this codebase |
-| First-party Microsoft or .NET surface area | **Microsoft Docs MCP** | .NET 10 or C# 14 language/BCL behavior, `Microsoft.Extensions.Configuration` binding, `FrameworkReference` or `Microsoft.AspNetCore.App` resolution, MSBuild or `.slnx`, analyzer or `.editorconfig` rule IDs, nullable behavior, Azure DevOps YAML/tasks | Do not use for RestSharp, Dapper, Playwright, or other non-Microsoft libraries |
-| Live application DOM or rendered runtime state | **Playwright MCP** | Real DOM, live locators, rendered state, browser error text, re-driving a failing UI step, confirming a locator resolves to one element before updating a page object | Do not use for library API questions or repo-local source analysis |
-| Local code, generic programming, or existing repo patterns | **No MCP by default** | Simple refactors, code review, local architecture, behavior already established by `RestClientFactory`, `ApiAssertions`, or `PlaywrightBrowserFactory` | Do not spend MCP lookups on questions the local codebase already answers |
+| Third-party / OSS libraries | **Context7 MCP** | Dapper, Playwright, NLog, Polly, Bogus, NBuilder, Allure, NUnit, RestSharp; version-specific library syntax; dependency errors from those libraries | Microsoft/.NET platform behavior, live app checks, or repo-local code patterns already shown in this codebase |
+| First-party Microsoft or .NET surface area | **Microsoft Learn MCP** | .NET 10 or C# 14 language/BCL behavior, `Microsoft.Extensions.Configuration` binding, `FrameworkReference` or `Microsoft.AspNetCore.App` resolution, MSBuild or `.slnx`, analyzer or `.editorconfig` rule IDs, nullable behavior, Azure DevOps YAML/tasks | Third-party libraries |
+| Live application DOM or rendered runtime state | **Playwright CLI skill** | UI exploration, reproducing failures, accessibility snapshots, rendered state, locator validation, screenshots, traces | Do not use for library docs, repo-local source analysis |
+| Browser diagnostics | **Chrome DevTools MCP** | Network, console, JS errors, cookies/storage, rendering, performance, Lighthouse, memory | Routine UI navigation or locator discovery |
+| Local code, generic programming, or existing repo patterns | **No MCP by default** | Simple refactors, code review, local architecture, established repo patterns | Do not spend MCP lookups on questions the local codebase already answers |
 
-- If a question mixes a third-party library with Microsoft/.NET platform behavior, start with one Context7 lookup for the library-specific part. Add one Microsoft Docs MCP lookup only if the platform mechanics are still unclear after that.
-- Playwright MCP is an **authoring and diagnosis** tool. Never commit MCP-generated script output as test code — it is evidence, not code. It is never part of a CI run. Do not enable `browser_run_code_unsafe`.
-- For Playwright MCP locator work, prefer semantic locators in this order: `GetByRole`, `GetByLabel`, `GetByText`, `GetByTestId`. Use CSS only when no semantic locator is unique, and state why.
-- Per user question, perform at most 4 MCP lookups total (1 initial + 3 follow-ups). Do not reset this budget between subtasks. If the lookups do not materially help, continue from local code and state the remaining documentation limitation.
+- Use **Playwright CLI skill** as the default browser tool; use **Chrome DevTools MCP** only for deeper diagnostics.
+- Treat browser exploration as evidence, not test code. Implement changes using existing repo abstractions and conventions.
+- Prefer locators: `GetByRole` → `GetByLabel` → `GetByPlaceholder` → `GetByText` → `GetByTestId`; use CSS only when needed.
+- Verify new or changed UI locators against the running app with Playwright CLI when possible.
+- Browser investigation order: **Playwright CLI → traces/diagnostics → Chrome DevTools MCP → source analysis**.
+- Browser tools are development-time only and are not part of CI execution.
+- Limit documentation MCP usage to **5 lookups per user question**. Playwright CLI interactions do not count toward this limit.
 
 ## 9. Completion
 
@@ -97,5 +99,5 @@ All rules are enforced by the root `.editorconfig` — follow it and do not figh
 
 - `docs/API_TESTING_ARCHITECTURE.md` — API testing layer: typed-client pattern, DTO conventions, authentication, logging/redaction, and how to add a new client or API test.
 - `docs/UI_TESTING_ARCHITECTURE.md` — Playwright UI testing layer: page-object model, components, readiness contract, and lifecycle.
-- `.copilot/instructions/framework.instructions.md` — rules unique to the framework library.
-- `.copilot/instructions/tests.instructions.md` — test authoring, attributes, assertions, test data, and Definition of Done.
+- `.agents/rules/framework.md` — rules unique to the framework library.
+- `.agents/rules/test-automation.md` — test authoring, attributes, assertions, test data, and Definition of Done.

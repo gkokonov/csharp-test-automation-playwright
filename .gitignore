@@ -297,3 +297,5 @@ __pycache__/
 # End of https://www.gitignore.io/api/visualstudio
 
 CsharpTestAutomation.Tests/appsettings.local.json
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
