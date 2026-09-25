@@ -12,13 +12,12 @@ public class RestClientFactoryTests
 
     private static RestClientFactory CreateFactory(ApiSettings settings) => new(settings);
 
-    private static ApiSettings ValidSettings(Action<ApiServiceSettings> configureService = null)
+    private static ApiSettings ValidSettings(Action<ApiServiceSettings>? configureService = null)
     {
         var service = new ApiServiceSettings { BaseUrl = "https://api.example.com", TimeoutSeconds = 30 };
         configureService?.Invoke(service);
 
-        return new ApiSettings
-        {
+        return new ApiSettings {
             Services = new Dictionary<string, ApiServiceSettings> { [ServiceName] = service },
             Logging = new ApiLoggingSettings { MaxBodySizeBytes = 10_000 }
         };

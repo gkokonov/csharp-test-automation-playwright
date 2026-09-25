@@ -41,7 +41,7 @@ public class TestIdentifierTests
     [Test]
     public void GetTestId_WhenCalledOutsideAnyContext_ThrowsInvalidOperationException()
     {
-        Exception captured = null;
+        Exception? captured = null;
 
         // Suppress AsyncLocal flow so the worker thread does NOT inherit NUnit's real
         // TestExecutionContext. NUnit then supplies an AdhocContext, reproducing the
@@ -76,7 +76,7 @@ public class TestIdentifierTests
 public class TestIdentifierSuiteContextTests
 {
     private static string s_oneTimeSetUpTestId;
-    private static Exception s_oneTimeSetUpException;
+    private static Exception? s_oneTimeSetUpException;
 
     [OneTimeSetUp]
     public void OneTimeSetUp()

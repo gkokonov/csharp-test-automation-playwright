@@ -196,7 +196,7 @@ public class PlaywrightBrowserFactoryTests
 
         // Assert
         IReadOnlyList<BrowserContextCookiesResult> cookies = await page2.Context.CookiesAsync();
-        BrowserContextCookiesResult testCookie = cookies.FirstOrDefault(c => c.Name == testCookieName);
+        BrowserContextCookiesResult? testCookie = cookies.FirstOrDefault(c => c.Name == testCookieName);
 
         testCookie.Should().NotBeNull("Cookie should be preserved in the new context");
         testCookie.Value.Should().Be(testCookieValue);

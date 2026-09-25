@@ -5,14 +5,14 @@ namespace CsharpTestAutomation.Framework.Test.Tests.DB.MockDB;
 public class User
 {
     public int Id { get; set; }
-    public string FirstName { get; set; }
-    public string SirName { get; set; }
-    public string Title { get; set; }
-    public string Country { get; set; }
-    public string City { get; set; }
-    public string Email { get; set; }
+    public string? FirstName { get; set; }
+    public string? SirName { get; set; }
+    public string? Title { get; set; }
+    public string? Country { get; set; }
+    public string? City { get; set; }
+    public string? Email { get; set; }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj == null || GetType() != obj.GetType())
         {
@@ -33,13 +33,7 @@ public class User
         return result;
     }
 
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(Id, FirstName, SirName, Email);
-    }
+    public override int GetHashCode() => HashCode.Combine(Id, FirstName, SirName, Email);
 
-    public override string ToString()
-    {
-        return JsonConvert.SerializeObject(this);
-    }
+    public override string ToString() => JsonConvert.SerializeObject(this);
 }
