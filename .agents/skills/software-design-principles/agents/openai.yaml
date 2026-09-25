@@ -1,0 +1,6 @@
+interface:
+  display_name: "Software Design Principles"
+  short_description: "Evidence-based design and refactoring guidance"
+  default_prompt: "Use $software-design-principles to assess this design and recommend the smallest justified improvement."
+policy:
+  allow_implicit_invocation: true

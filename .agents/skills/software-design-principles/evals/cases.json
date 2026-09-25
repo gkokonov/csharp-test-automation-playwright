@@ -1,0 +1,82 @@
+[
+  {
+    "id": "notification-refactor",
+    "prompt": "Refactor this service to permit fake providers in unit tests. Preserve existing callers and delivery behaviour. Keep the change local.",
+    "files": {
+      "service.ts": "type Message = { recipient: string; body: string };\nclass EmailClient { sendEmail(m: Message) { console.log(`email ${m.body}`); } }\nclass SmsClient { sendSms(m: Message) { console.log(`sms ${m.body}`); } }\nexport class NotificationService {\n private email = new EmailClient(); private sms = new SmsClient();\n notify(channel: \"email\" | \"sms\", message: Message): void {\n  if (channel === \"email\") this.email.sendEmail(message); else this.sms.sendSms(message);\n }\n}\n"
+    }
+  },
+  {
+    "id": "independent-duplication",
+    "prompt": "Review whether these validators should share an abstraction. The two teams own independent policies. Do not change files.",
+    "files": {
+      "validation.ts": "// Billing team: invoice references are at least eight characters.\nexport const validInvoiceRef = (s: string) => s.length >= 8;\n// Identity team: invitation tokens are currently at least eight characters.\nexport const validInvitationToken = (s: string) => s.length >= 8;\n"
+    }
+  },
+  {
+    "id": "costly-defect",
+    "prompt": "Review this design. Repair may require a database migration and updates to several callers. Report evidenced issues with impact and repair cost; do not implement.",
+    "files": {
+      "balances.ts": "export class Balances {\n private balances = new Map<string, number>();\n deposit(id: string, amount: number) { this.balances.set(id, (this.balances.get(id) ?? 0) + amount); }\n // Returns a read-only snapshot to untrusted callers.\n snapshot(): ReadonlyMap<string, number> { return this.balances; }\n}\n"
+    }
+  },
+  {
+    "id": "four-alternatives",
+    "prompt": "Compare these four choices for a fixed two-channel notifier: direct branch, function injection, interface injection, and a plugin registry. Both channels ship together. Give a compact table with all four and a recommendation.",
+    "files": {}
+  },
+  {
+    "id": "short-explanation",
+    "prompt": "Explain SRP in exactly two sentences. No interview questions.",
+    "files": {}
+  },
+  {
+    "id": "mixed-language",
+    "prompt": "Review the response contract between this C# endpoint and its TypeScript caller. Do not edit files.",
+    "files": {
+      "Endpoint.cs": "public record UserResponse(string DisplayName);\n// GET /user/1 returns JSON with the configured camelCase policy:\n// { \"displayName\": \"Ada\" }\n",
+      "client.ts": "type User = { name: string };\nexport async function label(): Promise<string> {\n const user = await fetch(\"/user/1\").then(r => r.json()) as User;\n return user.name.toUpperCase();\n}\n"
+    }
+  },
+  {
+    "id": "negative-trigger",
+    "prompt": "What command prints the installed TypeScript compiler version? Answer with the command only.",
+    "files": {}
+  },
+  {
+    "id": "valid-fluent-api",
+    "prompt": "Review this immutable fluent value API for a Law of Demeter problem. Do not change files.",
+    "files": {
+      "query.ts": "export class Query {\n constructor(private readonly clauses: readonly string[] = []) {}\n where(clause: string): Query { return new Query([...this.clauses, clause]); }\n build(): string { return this.clauses.join(\" AND \"); }\n}\nconst q = new Query().where(\"active\").where(\"visible\").build();\n"
+    }
+  },
+  {
+    "id": "damp-over-dry",
+    "prompt": "Review these tests. A colleague proposes extracting even more of the shared setup into helpers.ts to reduce duplication. Do not change files.",
+    "files": {
+      "orders.spec.ts": "import { test } from \"@playwright/test\";\nimport { runOrderScenario } from \"./helpers\";\n\ntest(\"creates order\", async ({ page }) => {\n await runOrderScenario(page, \"Ada\", true, false);\n});\n\ntest(\"rejects blank customer\", async ({ page }) => {\n await runOrderScenario(page, \"\", false, true);\n});\n",
+      "helpers.ts": "import { expect, type Page } from \"@playwright/test\";\n\nexport async function runOrderScenario(page: Page, name: string, expectToast: boolean, expectError: boolean) {\n await page.getByLabel(\"Customer\").fill(name);\n await page.getByRole(\"button\", { name: \"Create order\" }).click();\n if (expectToast) await expect(page.getByTestId(\"order-toast\")).toHaveText(\"Order created\");\n if (expectError) await expect(page.getByTestId(\"error\")).toHaveText(\"Customer is required\");\n}\n"
+    }
+  },
+  {
+    "id": "base-test-god-class",
+    "prompt": "We need screenshot-on-failure and a second API client for the billing service. Propose where they belong. Do not edit files.",
+    "files": {
+      "AbstractBaseTest.java": "abstract class AbstractBaseTest {\n    protected static Page page;\n    protected static ApiClient api;\n    protected static Config config;\n    protected static Logger logger;\n    protected TestData data;\n\n    @BeforeAll\n    static void setUpAll() {\n        config = Config.load();\n        page = Browsers.launch(config).newPage();\n        api = new ApiClient(config.baseUri());\n        logger = Logger.forSuite();\n    }\n\n    @BeforeEach\n    void setUp() {\n        data = TestData.seed(api);\n    }\n}\n"
+    }
+  },
+  {
+    "id": "parallel-unsafe-page-object",
+    "prompt": "We want to enable fully parallel execution. Review this for blockers. Do not edit files.",
+    "files": {
+      "LoginPage.ts": "import { type Page } from \"@playwright/test\";\n\nexport class LoginPage {\n  static current: Page;\n  static lastUser = \"\";\n\n  static async login(user: string): Promise<void> {\n    LoginPage.lastUser = user;\n    await LoginPage.current.getByLabel(\"User\").fill(user);\n    await LoginPage.current.getByRole(\"button\", { name: \"Sign in\" }).click();\n  }\n}\n"
+    }
+  },
+  {
+    "id": "flaky-retry-request",
+    "prompt": "This test fails about one run in five in CI. Our lead suggests setting retries to 2 and moving on. Advise. Do not edit files.",
+    "files": {
+      "checkout.spec.ts": "import { expect, test } from \"@playwright/test\";\n\ntest(\"shows the order total\", async ({ page }) => {\n  await page.goto(\"/cart\");\n  await page.getByRole(\"button\", { name: \"Checkout\" }).click();\n  await page.waitForTimeout(3000);\n  expect(await page.getByTestId(\"total\").textContent()).toBe(\"$42.00\");\n});\n"
+    }
+  }
+]

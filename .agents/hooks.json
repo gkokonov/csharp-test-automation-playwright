@@ -1,0 +1,17 @@
+{
+  "lint-checker": {
+    "enabled": false,
+    "PostToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dotnet format --verify-no-changes",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  // ========== EDITOR ==========
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll": "explicit"
+  },
+  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+  "dotnet.defaultSolution": "CsharpTestAutomation.slnx",
+  "[csharp]": {
+    "editor.defaultFormatter": "ms-dotnettools.csharp"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.tabSize": 2
+  },
+  // ========== VISUAL GUIDES ==========
+  "editor.rulers": [
+    120
+  ],
+  "editor.codeLens": true,
+  // ========== FILE NESTING (ERGONOMIC) ==========
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.cs": "${basename}.Test.cs, ${basename}Tests.cs",
+    "*.csproj": "*.csproj.user",
+    "appsettings.json": "appsettings.*.json",
+    "NLog.config": "NLog.config.*.xml"
+  },
+  // ========== SEARCH & EXCLUSIONS ==========
+  "search.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/TestResults": true,
+    "**/allure-results": true,
+    "**/Traces": true,
+    "**/Videos": true
+  },
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true
+  },
+  // ========== ANALYZER PERFORMANCE ==========
+  "omnisharp.enableEditorConfigSupport": true,
+  // ========== TESTING ==========
+  "testing.gutterEnabled": true,
+  // ========== COPILOT CUSTOMIZATION ==========
+  "chat.useAgentsMdFile": true,
+  // "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": ".agents/instructions/commit-instructions.md"
+    }
+  ],
+  // ========== TERMINAL AUTO-APPROVE ==========
+  // Every entry below is either a fixed command name with no sub-execution, or
+  // an anchored regex. Bare operators are NOT auto-approvable: "&" is the
+  // PowerShell call operator and "." is dot-source, so approving either lets any
+  // executable or script run unprompted. Both were removed.
+  "chat.tools.terminal.autoApprove": {
+    "dotnet build": true,
+    "dotnet restore": true,
+    "dotnet test": true,
+    "ForEach-Object": true,
+    "Group-Object": true,
+    "Get-Unique": true,
+    "ConvertFrom-Json": true,
+    "/^powershell -NoProfile -ExecutionPolicy Bypass \\.\\\\scripts\\\\Refresh-DbToken\\.ps1 -RunOnce$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    // Replaces the need for a bare "&": anchored to the one call-operator
+    // invocation that was actually being used (the dotnet build task).
+    "/^& '?C:\\\\Program Files\\\\dotnet\\\\dotnet\\.exe'? (build|test|restore) /": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
+}

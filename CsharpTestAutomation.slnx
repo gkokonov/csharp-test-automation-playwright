@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/SolutionItems/">
+    <File Path="AGENTS.md" />
+    <File Path="docs/API_TESTING_ARCHITECTURE.md" />
+    <File Path="docs/UI_TESTING_ARCHITECTURE.md" />
+  </Folder>
+  <Project Path="CsharpTestAutomation.Framework.Test/CsharpTestAutomation.Framework.Test.csproj" Id="5ff67243-4e45-4b10-97d1-3dd2c9330367" />
+  <Project Path="CsharpTestAutomation.Framework/CsharpTestAutomation.Framework.csproj" />
+  <Project Path="CsharpTestAutomation.Tests/CsharpTestAutomation.Tests.csproj" />
+</Solution>
