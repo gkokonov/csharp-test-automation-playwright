@@ -35,11 +35,9 @@ Prefer self-explanatory code over comments. Make methods, classes, and variables
 reveal intent through their names so a reader rarely needs prose.
 
 * **Production / non-test code** (typed API clients, page objects, DTOs,
-  builders, helpers): do **not** add comments that merely restate what the code
-  already says (for example `// Retrieves a post by ID` above a `GetPostAsync`
-  method, a `// loop over items` above a `foreach`, or one-line `<summary>` XML
-  docs that just echo the member name). Rename the symbol instead of writing a
-  clarifying comment whenever a better name removes the need.
+  builders, helpers): avoid comments that merely restate what the code already
+  says. If a better method or variable name removes the need for a comment, prefer
+  renaming the symbol.
 * **Test fixtures**: **keep** the `// Arrange` / `// Act` / `// Assert` section
   markers — they are an intentional, project-wide convention that signals each
   phase of a test and is **not** treated as a redundant comment.

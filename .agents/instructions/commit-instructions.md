@@ -21,7 +21,8 @@
 * Keep the first line to 72 characters or fewer.
 * Use lowercase and imperative mood: `add`, `fix`, `update`, `remove`.
 * Use the `automation` scope.
-* Include the Azure DevOps work item ID.
+* Include the Azure DevOps work item ID when one exists for the work.
+* If no work item ID exists, do not invent one; omit the suffix rather than making up a value.
 * Do not end the first line with a period.
 * Describe the actual change. Avoid generic messages.
 
