@@ -1,5 +1,6 @@
 ---
 applyTo: "CsharpTestAutomation.Tests/**/*.cs"
+trigger: always_on
 description: "Authoring conventions for application tests, typed clients, DTOs, builders, page objects and test data."
 ---
 
@@ -96,13 +97,19 @@ Default preference order for this repository:
 `[AllureDescription]` is optional; add it when the scenario is not obvious from
 the test name.
 
-## Assertions and Persistence Verification
+## Assertions and Multiple Assertions
 
 Assert whole objects, not field by field:
 `actual.Should().BeEquivalentTo(expected, o => o.ExcludingMissingMembers())`.
 Assert a single field only when the contract is intentionally partial, the value
 is volatile or externally sourced, or the test targets that field's own
 validation rule — state the reason in the test name or assertion message.
+
+* **Single vs Multi-Assertion**:
+  * **Default (Whole Object)**: Use `Should().BeEquivalentTo(...)` — it naturally evaluates all properties and reports all mismatches together.
+  * **Multiple Independent Assertions**: When validating multiple separate conditions (e.g. status code, headers, individual payload fields), wrap them in `Assert.Multiple(() => { ... })` or AwesomeAssertions `using (new AssertionScope()) { ... }`. This prevents early test termination on the first failing assertion and reports all failures at once.
+  * **Asynchronous Assertions**: For multiple Playwright or asynchronous checks, use NUnit 4's `await Assert.MultipleAsync(async () => { ... })`.
+  * **Critical Preconditions**: Gate checks (e.g. asserting `response.StatusCode == HttpStatusCode.Created` before extracting `response.Data` or querying the DB) must remain outside `Assert.Multiple` to fail fast before downstream operations.
 
 Every success-path scenario verifies the complete returned object against the
 actual DB record. Exclude only members the endpoint does not return, that are
@@ -118,7 +125,20 @@ manually.
 Use AwesomeAssertions for status codes, headers, content type, and deserialized
 payloads. Use the minimal `ApiAssertions` extensions only for transport status
 (`ShouldHaveCompletedTransport`) and JSONPath (`ShouldHaveJsonPathValue`).
-UI tests use Playwright web-first `Expect(...)`; never manual sleeps.
+
+## UI Locators and Assertions
+
+UI tests use Playwright web-first `Expect(...)`; never manual sleeps (`Thread.Sleep`, `Task.Delay`, or `Page.WaitForTimeoutAsync`).
+
+* **Locator Priority Hierarchy**:
+  1. `GetByRole(AriaRole.<Role>, new() { Name = "..." })` — primary choice for interactive elements (buttons, links, headings, checkboxes). Mirrors accessible user behavior.
+  2. `GetByLabel("...")` — primary choice for form fields and inputs with associated labels.
+  3. `GetByPlaceholder("...")` — use for inputs that lack visible text labels.
+  4. `GetByText("...")` — use for static text, notifications, alerts, and non-interactive status chips.
+  5. `GetByTestId("...")` — use when semantic locators are absent, dynamic, or unstable.
+  6. **CSS / XPath** — strict last resort: `GetByRole` → `GetByLabel` → `GetByPlaceholder` → `GetByText` → `GetByTestId` → CSS. Use CSS only for third-party layout containers lacking accessible roles.
+* **Component Scoping**: In components deriving from `BaseUIComponent`, always scope child locators from `Root` (e.g. `Root.GetByRole(...)`), never `Page`, to prevent locator bleeding across instances.
+* **Readiness**: Enforce page stability with `WaitUntilLoadedAsync()` (uses `LongTimeoutInMS`) after navigation, then execute actions and assertions.
 
 ## Test Data
 

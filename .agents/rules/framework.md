@@ -1,5 +1,6 @@
 ---
 applyTo: "CsharpTestAutomation.Framework/**/*.cs"
+trigger: always_on
 description: "Rules unique to the reusable framework library."
 ---
 
@@ -13,15 +14,15 @@ or hosting patterns.
 
 ## Nullable
 
-The project sets `<Nullable>warnings</Nullable>`, so files without an explicit
-`#nullable enable` directive stay in oblivious mode and emit no annotation
-warnings.
+The project sets `<Nullable>warnings</Nullable>` as a transitional configuration.
+This setting allows legacy unannotated files to remain oblivious without failing
+the build under `TreatWarningsAsErrors=true`.
 
 | Situation | Rule |
 | --- | --- |
-| New file | Do **not** add `#nullable enable`. Do **not** use `?` on reference types. Use default values instead. |
-| File already has `#nullable enable` (currently `RestClientFactory.cs`, `IRestClientFactory.cs`) | `?` is allowed on optional parameters (`IWebProxy?`, `IAuthenticator?`). |
-| Editing any existing file | Match that file's current annotation state exactly. Never add or remove the directive while modifying a file. |
+| New file | Standalone new files may use `#nullable enable` if written with complete null safety (no warnings). If integrating closely with unannotated legacy types, omit `#nullable enable` and use default values. |
+| File already has `#nullable enable` (e.g. `RestClientFactory.cs`, `IRestClientFactory.cs`) | Full nullability is active. Use `?` for optional parameters/returns, and guard non-null inputs (`ArgumentNullException.ThrowIfNull`). |
+| Editing existing oblivious file | Keep existing oblivious state. Do not add `#nullable enable` mid-file unless refactoring the entire file to be warning-free. |
 
 ## Async
 

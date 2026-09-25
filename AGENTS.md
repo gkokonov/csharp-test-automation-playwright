@@ -39,14 +39,7 @@ dotnet test --filter "FullyQualifiedName~<FixtureName>"        # narrow run 
 
 Quality gates: `TreatWarningsAsErrors=true` (Debug + Release), `EnableNETAnalyzers`, `EnforceCodeStyleInBuild`, `AnalysisLevel=latest`, `Nullable=warnings`. Code must build clean — analyzer and style violations fail the build. `GenerateDocumentationFile=true` (CS1591 suppressed): keep XML doc comments on public types/members.
 
-Folder layout mirrors namespaces (`dotnet_style_namespace_match_folder`):
-
-| Folder | Contents |
-| --- | --- |
-| `Common/` | `AppConfiguration<T>`, `CoreConfiguration`, `ScenarioCleanupActions`, `Extensions/`, `Reporting/Allure/`, `Utilities/` |
-| `DB/` | `DapperActions` |
-| `UI/` | `PlaywrightBrowserFactory`, `PlaywrightTimeouts`, `BrowserType` |
-| `API/` | `Clients/` (`RestClientFactory`), `Authentication/` (`AnonymousAuthenticator`), `Interceptors/` (`ApiLoggingInterceptor`, `ApiHeaderExtractor`, `ApiBodyFormatter`), `Logging/` (`ApiLogEntry`), `Redaction/` (`ApiLogSanitizer`), `Configuration/` (`ApiSettings`), `Validation/` (`ApiAssertions`) |
+Folder layout mirrors namespaces (`dotnet_style_namespace_match_folder`); detailed folder structure is defined in `.agents/rules/framework.md`.
 
 ## 6. Coding Style & Conventions
 
@@ -65,7 +58,7 @@ All rules are enforced by the root `.editorconfig` — follow it and do not figh
 ## 7. Naming Conventions
 
 - File names mirror class names. Namespaces mirror folder paths case-insensitively (`dotnet_style_namespace_match_folder`).
-- **Known casing exception in `CsharpTestAutomation.Tests`**: the folders are upper-case `API/Clients/`, `API/DTOs/`, `API/Factories/`, while the namespaces are Pascal-case `CsharpTestAutomation.Tests.Api.Clients`, `CsharpTestAutomation.Tests.Api.Dtos`, `CsharpTestAutomation.Tests.Api.Factories`. This is intentional and analyzer-clean. Use the upper-case form in file paths and the Pascal-case form in `namespace` declarations and `using` directives. Do not "correct" either one.
+- **Folder / namespace casing**: Namespaces mirror folder paths case-insensitively. For the intentional uppercase `API/` folder casing in `CsharpTestAutomation.Tests`, see `.agents/rules/test-automation.md`.
 - Test classes are `<Subject>Tests`.
 - Test methods are `<Scenario>_<Condition>_<ExpectedResult>`.
 
@@ -81,7 +74,6 @@ All rules are enforced by the root `.editorconfig` — follow it and do not figh
 
 - Use **Playwright CLI skill** as the default browser tool; use **Chrome DevTools MCP** only for deeper diagnostics.
 - Treat browser exploration as evidence, not test code. Implement changes using existing repo abstractions and conventions.
-- Prefer locators: `GetByRole` → `GetByLabel` → `GetByPlaceholder` → `GetByText` → `GetByTestId`; use CSS only when needed.
 - Verify new or changed UI locators against the running app with Playwright CLI when possible.
 - Browser investigation order: **Playwright CLI → traces/diagnostics → Chrome DevTools MCP → source analysis**.
 - Browser tools are development-time only and are not part of CI execution.
