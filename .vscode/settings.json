@@ -46,7 +46,12 @@
   "testing.gutterEnabled": true,
   // ========== COPILOT CUSTOMIZATION ==========
   "chat.useAgentsMdFile": true,
-  // "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "chat.hookFilesLocations": {
+    ".agents/hooks.json": true
+  },
+  "chat.instructionsFilesLocations": {
+    ".agents/rules": true
+  },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
       "file": ".agents/instructions/commit-instructions.md"
