@@ -7,7 +7,7 @@ Load `cases.json`, create each case's files in an isolated workspace, and send o
 ## Pass criteria
 
 | Case | Required result |
-|---|---|
+| --- | --- |
 | notification-refactor | Allows fake providers; keeps zero-argument construction and `notify(channel, message)`; sends once through the selected channel; preserves provider errors; no unrelated edits. |
 | independent-duplication | Accepts independent policies and avoids extraction based only on equal syntax. |
 | costly-defect | Reports that the returned map exposes mutable internal state despite the snapshot contract; describes runtime mutation risk and remedy without suppressing the issue because repair is costly. |
@@ -28,7 +28,7 @@ Grade semantic outcomes and observable actions; do not require exact headings or
 These expectations have no entry in `cases.json`. Exercise them by hand when changing the skill, using the language guides in `references/` as the input. Evaluate decisions and evidence, not exact wording.
 
 | Scenario | Required result |
-|---|---|
+| --- | --- |
 | C# registration service mixes validation, storage, and messaging | Identifies the independent reasons to change; retains cohesive orchestration; abstracts only boundaries with demonstrated need; preserves behaviour. |
 | Java `Bird.fly()` hierarchy includes a penguin | Flags LSP; models `Flying` as a separate capability; proposes contract tests rather than an override that throws. |
 | First implementation has one variant and only hypothetical future variants | Balances OCP against YAGNI and normally keeps the direct design. |
