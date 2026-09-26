@@ -7,8 +7,11 @@ description: >-
   TypeScript/JavaScript, including test automation and framework design: page
   objects, fixtures, test data, parallel safety, and flaky-test design causes.
   Excludes routine formatting, dependency updates, and test failures with an
-  obvious non-design cause. Use this skill when the user asks to review, design,
-  refactor, or explain software architecture, code quality, or test framework design.
+  obvious non-design cause. Do not use it for variable renaming, formatting-only
+  changes, dependency version bumps, or a test failure with a clear
+  product/configuration error and no design question. Use this skill when the user
+  asks to review, design, refactor, or explain software architecture, code quality,
+  or test framework design.
 ---
 
 # Software Design Principles
@@ -19,14 +22,19 @@ Use software design principles as context-sensitive heuristics. Optimize for dem
 
 Infer the mode and authorised scope from the request and conversation. Ask only when unresolved information would materially change the work. Follow the user's requested scope, length, and format; the output templates are defaults.
 
-- **Design:** compare minimal designs for new or changing behaviour.
-- **Implementation/refactoring:** change code while preserving authorized contracts and behaviour.
-- **Review:** identify evidence-backed design risks without modifying code unless asked.
-- **Explain/interview:** teach or rehearse a principle with examples and trade-offs.
+| Request signal | Mode | Scope decision |
+|---|---|---|
+| “How should we build…?”, “Which design…?” | **Design** | Compare minimal designs for new or changing behaviour. |
+| “Refactor…”, “Improve this design”, or a readability change involving responsibilities, coupling, contracts, or change cost | **Implementation/refactoring** | Change code while preserving authorised contracts and behaviour. A purely mechanical rename or formatting cleanup is not a design refactor. |
+| “Review…”, “What is wrong with this design?”, or “Find design risks” | **Review** | Identify evidence-backed design risks without modifying code unless asked. |
+| “Explain…”, “Teach…”, or interview practice | **Explain/interview** | Teach or rehearse a principle with examples and trade-offs. |
+| “Review and fix…”, “Refactor and explain…” | **Combined modes** | Run the requested modes in this order unless the user specifies otherwise: design, review, implementation/refactoring, explain/interview. Preserve each selected mode's output contract and verify any implementation. |
+
+When a request matches multiple modes, apply the combined-mode order above and ask only if that order could change the result. If the repository or referenced files cannot be inspected, state that limitation, restrict conclusions to the supplied material, and do not claim repository-specific evidence.
 
 ## What to load
 
-Each reference opens with an index; read the one relevant section, not the whole file.
+References are sectioned; read only the relevant section, not the whole file.
 
 | Read | When |
 |---|---|
