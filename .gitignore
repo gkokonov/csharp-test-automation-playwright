@@ -299,3 +299,8 @@ __pycache__/
 CsharpTestAutomation.Tests/appsettings.local.json
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+
+# Browser authentication state (contains cookies or tokens)
+**/playwright/.auth/
+/auth.json
+storage-state-*.json

@@ -15,6 +15,28 @@ public abstract class ApiTestBase : TestBase
     protected IAuthenticator BootstrapAuthenticator =>
         new JwtAuthenticator(BootstrapSession.Default.Token);
 
+    protected static T RequireDbData<T>(object? candidate, string missingDataMessage)
+    {
+        if (candidate is T value)
+        {
+            return value;
+        }
+
+        Assert.Inconclusive(missingDataMessage);
+        throw new InvalidOperationException("Assert.Inconclusive returned unexpectedly.");
+    }
+
+    protected static T RequireDbData<T>(IReadOnlyCollection<T>? candidates, string missingDataMessage)
+    {
+        if (candidates is null || candidates.Count == 0)
+        {
+            Assert.Inconclusive(missingDataMessage);
+            throw new InvalidOperationException("Assert.Inconclusive returned unexpectedly.");
+        }
+
+        return candidates.ElementAt(Random.Shared.Next(candidates.Count));
+    }
+
     protected override Task OnSetUpAsync()
     {
         RestClientFactory = new RestClientFactory(s_configuration.Api);

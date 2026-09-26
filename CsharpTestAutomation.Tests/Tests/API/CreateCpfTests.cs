@@ -51,8 +51,9 @@ public class CreateCpfTests : ApiTestBase
         ScenarioCleanupActions.AddCleanUpAction(async () => await client.DeleteCpfAndExpectNoContentAsync(createdId));
 
         // Verify in DB
-        CpfRow created = CpfQueries.SelectCpfById(createdId);
-        created.Should().NotBeNull();
+        CpfRow created = RequireDbData<CpfRow>(
+            CpfQueries.SelectCpfById(createdId),
+            "The created CPF was not found in the database.");
         created.PCode.Should().NotBeNullOrWhiteSpace();
 
         CpfRow expected = new(

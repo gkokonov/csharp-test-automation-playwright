@@ -37,7 +37,7 @@ internal static class ApiHeaderExtractor
         return headers;
     }
 
-    private static void AddHeaders(Dictionary<string, string> target, IReadOnlyCollection<HeaderParameter> source)
+    private static void AddHeaders(Dictionary<string, string> target, IReadOnlyCollection<HeaderParameter>? source)
     {
         if (source is null)
         {

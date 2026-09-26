@@ -10,10 +10,10 @@ public class UserRepository(IDatabaseConnectionFactory connectionFactory)
     public int Execute(string sqlQuery, DynamicParameters? parameters = null) =>
      DapperActions.Execute(_connectionFactory.GetConnection(), sqlQuery, parameters);
 
-    public T Query<T>(string sqlQuery, DynamicParameters? parameters = null) =>
+    public T? Query<T>(string sqlQuery, DynamicParameters? parameters = null) =>
      DapperActions.Query<T>(_connectionFactory.GetConnection(), sqlQuery, parameters);
 
-    public IDictionary<string, object> Query(string sqlQuery, DynamicParameters? parameters = null) =>
+    public IDictionary<string, object>? Query(string sqlQuery, DynamicParameters? parameters = null) =>
      DapperActions.Query(_connectionFactory.GetConnection(), sqlQuery, parameters);
 
     public List<T> QueryAll<T>(string sqlQuery, DynamicParameters? parameters = null) =>

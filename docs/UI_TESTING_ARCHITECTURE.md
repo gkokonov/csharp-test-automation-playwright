@@ -132,7 +132,7 @@ Optional artifacts are produced by the factory based on configuration:
 - **Video** (`RecordVideoEnabled`): recorded to `RecordDir`.
 - **Screenshots / browser logs**: captured by `UiTestBase` on failure and attached via `AllureExtensions`.
 
-Allure suite/feature/story metadata is applied with attributes on the fixture and test (see the example below); `TestBase` is annotated `[AllureNUnit]` so Allure participates in the NUnit lifecycle. For the full set of required attributes across both API and UI tests, see `.copilot/instructions/tests.instructions.md`.
+Allure suite/feature/story metadata is applied with attributes on the fixture and test (see the example below); `TestBase` is annotated `[AllureNUnit]` so Allure participates in the NUnit lifecycle. For the full set of required attributes across API and UI tests, see the [test-automation rules](../.agents/rules/test-automation.md).
 
 ## 6. Configuration Reference
 
@@ -232,13 +232,13 @@ public class ExampleUiTests : UiTestBase
 5. Prefer semantic locators and web-first `Expect(...)`; avoid manual sleeps.
 6. Source real credentials/URLs from secure configuration / test data — never hard-code secrets.
 
-For test-case design, required attributes, assertion style, and Definition of Done, see `.copilot/instructions/tests.instructions.md` — these rules apply to UI tests exactly as they apply to API tests and are not restated here.
+For test-case design, required attributes, assertion style, and Definition of Done, see the [test-automation rules](../.agents/rules/test-automation.md) — these rules apply to UI tests too and are not restated here.
 
-## 8. Live-Application Verification with Playwright MCP
+## 8. Live-Application Verification with Playwright CLI
 
-Before writing a page object or component for a new screen, verify locators against the running application rather than guessing from a design mock or a stale screenshot. Playwright MCP drives the real application and returns an accessibility snapshot, giving a ground-truth check that a semantic locator resolves to exactly one element before it is committed to a page object.
+Before writing a page object or component for a new screen, inspect the running application with the repository's [Playwright CLI skill](../.agents/skills/playwright-cli/SKILL.md). Use its accessibility snapshot and locator-generation commands to check the live DOM instead of guessing from a design mock or stale screenshot.
 
-This is an authoring and diagnosis aid only. It never appears in committed test code, and it is never part of the CI run. See `AGENTS.md` for the full MCP routing policy and the semantic-locator preference order (`GetByRole` → `GetByLabel` → `GetByText` → `GetByTestId` → CSS as a last resort).
+This is an authoring and diagnosis aid only. The CLI does not replace the test harness: committed tests remain NUnit tests using Microsoft.Playwright for .NET. See `AGENTS.md` for browser-tool routing and the semantic-locator preference order (`GetByRole` → `GetByLabel` → `GetByText` → `GetByTestId` → CSS as a last resort).
 
 ## 9. Extension Points
 
@@ -257,4 +257,5 @@ Newest first. Bump the version and add a row whenever this document changes so f
 
 | Version | Date | Summary |
 | --- | --- | --- |
+| 1.1 | 2026-09-26 | Repair rule links and use the configured Playwright CLI workflow. |
 | 1.0 | 2026-09-25 | Initial version. |

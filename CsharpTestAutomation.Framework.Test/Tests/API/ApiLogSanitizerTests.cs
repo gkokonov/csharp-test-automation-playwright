@@ -127,9 +127,9 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeHeaders_RedactionDisabledByDefault_PassesSensitiveHeaderThrough()
+    public void SanitizeHeaders_RedactionExplicitlyDisabled_PassesSensitiveHeaderThrough()
     {
-        var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings());
+        var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings { RedactSensitiveData = false });
         IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
             ["Authorization"] = "Bearer abc"
         };
@@ -140,14 +140,24 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeBody_RedactionDisabledByDefault_PassesSensitiveFieldThrough()
+    public void SanitizeBody_RedactionExplicitlyDisabled_PassesSensitiveFieldThrough()
     {
-        var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings());
+        var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings { RedactSensitiveData = false });
         const string body = """{"name":"Alice","password":"s3cr3t"}""";
 
         var sanitized = sanitizer.SanitizeBody(body);
 
         sanitized.Should().Be(body);
         sanitized.Should().NotContain("***REDACTED***");
+    }
+
+    [Test]
+    public void ApiLoggingSettings_Defaults_AvoidRetainingSensitiveDetails()
+    {
+        var settings = new ApiLoggingSettings();
+
+        settings.RedactSensitiveData.Should().BeTrue();
+        settings.AttachOnFailureOnly.Should().BeTrue();
+        settings.LogFullDetail.Should().BeFalse();
     }
 }

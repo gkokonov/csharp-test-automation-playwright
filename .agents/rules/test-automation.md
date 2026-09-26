@@ -169,15 +169,16 @@ UI tests use Playwright web-first `Expect(...)`; never manual sleeps
    for whole-object `BeEquivalentTo` verification.
 2. Found records are **read-only**. Never mutate, update, or delete data the test
    did not create.
-3. If nothing qualifies, create it via the API or a DB helper and register
-   cleanup with `ScenarioCleanupActions` immediately after creation.
-4. Implement the create-own-data fallback even when environment data usually
-   exists — a test must not depend solely on the environment.
-5. Use `ApiTestBase.RequireDbData<T>` for nullable or empty results — never a
-   manual null check followed by `Assert.Inconclusive`.
-6. Never open a connection or embed a connection string in a test. Use the
+3. For API tests whose scenario requires seeded environment data, use
+  `ApiTestBase.RequireDbData<T>` for nullable or empty results. Missing required
+  seed data makes the test inconclusive; do not create unrelated fallback data.
+4. When the scenario owns its setup (for example, an API create/write test),
+  create the required record through the API or a DB helper and register
+  cleanup with `ScenarioCleanupActions` immediately after creation. Never
+  mutate, update, or delete a record the test did not create.
+5. Never open a connection or embed a connection string in a test. Use the
    existing query base and the shared `PostgreSqlConnectionPool`.
-7. Build request payloads with the DTO builders in `API/Factories/`
+6. Build request payloads with the DTO builders in `API/Factories/`
    (`CreateCpfDtoBuilder : BaseBuilder<CreateCpfDto>`) rather than constructing
    DTOs inline. Static and well-known values live in `TestData/API/`
    (`CpfTestData`, `WellKnownUsers`).
@@ -186,11 +187,13 @@ UI tests use Playwright web-first `Expect(...)`; never manual sleeps
 
 1. `dotnet build` is warning-clean (`TreatWarningsAsErrors`).
 2. The fixture passes three consecutive headless runs.
-3. Every success path verifies persistence against the DB row.
+3. API write success paths verify persisted state when database persistence is
+  part of the contract. Read and UI tests verify DB state only when it is part
+  of the behavior under test.
 4. Every created record registers cleanup at creation time.
 5. Allure metadata is complete: suite, feature, story, severity, owner.
-6. Any known defect has both a Markdown defect report and a regression test
-   tagged `[Category("KnownDefect")]` + `[AllureIssue(...)]`.
+6. Any approved known defect has a report at `docs/known-defects/<id>.md` and a
+  regression test tagged `[Category("KnownDefect")]` + `[AllureIssue(...)]`.
 7. No new pattern was introduced without updating the owning instruction file in
    the same change.
 

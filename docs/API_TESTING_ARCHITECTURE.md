@@ -32,9 +32,9 @@ The **suggested** typed-client pattern injects the `IRestClientFactory`, creates
 | --- | --- |
 | `ApiSettings` / `ApiServiceSettings` / `ApiLoggingSettings` | Configuration bound from the `Api` key in `appsettings.json`. `ApiServiceSettings.Validate(name)` and `ApiLoggingSettings.Validate()` fail fast on empty/invalid `BaseUrl`, non-positive `TimeoutSeconds`, or non-positive `MaxBodySizeBytes`. |
 | `IRestClientFactory` / `RestClientFactory` | Creates configured `IRestClient` instances per named service. Construct via `new RestClientFactory(apiSettings, proxy?)`, passing `CoreConfiguration.Api` as the settings. Internally wires `ApiLogSanitizer` → `ApiLoggingInterceptor`, validates settings, applies an optional **explicit** `IWebProxy` (proxy is opt-in and not derived from `ProxyMode`/`ProxyServer`), accepts an optional client-wide `IAuthenticator`, and sets `ThrowOnAnyError=false` + `FailOnDeserializationError=true`. Both opt into `#nullable enable`, so the optional `IWebProxy?` / `IAuthenticator?` parameters are explicitly annotated. |
-| Typed API client | Consuming-project class (e.g. `ExampleApiClient`, `SecureApiClient`, `CpfAppApiClient`). The **suggested** shape injects an `IRestClientFactory`, creates and **owns** its `IRestClient` (service name held as a private `const`), implements `IDisposable` (`(_client as IDisposable)?.Dispose()`), builds `RestRequest`s, and returns RestSharp's native `RestResponse` / `RestResponse<T>`. No framework base class. |
+| Typed API client | Consuming-project class (for example, `CpfAppApiClient`). The **suggested** shape injects an `IRestClientFactory`, creates and **owns** its `IRestClient` (service name held as a private `const`), implements `IDisposable` (`(_client as IDisposable)?.Dispose()`), builds `RestRequest`s, and returns RestSharp's native `RestResponse` / `RestResponse<T>`. No framework base class. |
 | `ApiTestBase` (Tests project) | Optional NUnit base class for API fixtures in `CsharpTestAutomation.Tests`. Builds the shared `RestClientFactory` from `CoreConfiguration.Api` in setup and exposes `BootstrapAuthenticator` (a `JwtAuthenticator` over the UI-bootstrapped token) and `RequireDbData<T>`. Not part of the framework. |
-| `IApiLogSanitizer` / `ApiLogSanitizer` | Optionally redacts sensitive headers and JSON body fields (opt-in, off by default); never throws. Used **only** by the logging interceptor. |
+| `IApiLogSanitizer` / `ApiLogSanitizer` | Redacts sensitive headers and JSON body fields by default; never throws. Used **only** by the logging interceptor. |
 | `ApiHeaderExtractor` / `ApiBodyFormatter` | Read request/response headers and bodies from the RestSharp `RestResponse` for logging; never mutate it. |
 | `ApiLogEntry` | Behavior-free snapshot of one call. |
 | `ApiLoggingInterceptor` | RestSharp interceptor: the sole place that sanitizes, truncates, and **pretty-prints** (JSON / XML / URL-encoded form) bodies before logging to NLog and attaching request/response to Allure. |
@@ -46,13 +46,13 @@ API tests that depend on environment data use `ApiTestBase.RequireDbData` to mar
 
 ```csharp
 Guid cpfId = RequireDbData<Guid>(
-    ScdQueries.SelectRandomCpfIdWithoutScdAccountability(),
-    "No CPF with an SCD but without a Scd-stage accountability row exists in this environment.");
+    CpfQueries.SelectAllCpfs().FirstOrDefault()?.Id,
+    "No CPF records exist in this environment.");
 ```
 
-Use `RequireDbData<T>(object? candidate, string missingDataMessage)` for nullable query results, including nullable value types such as `Guid?`. Pass the query result directly; do not manually check for null and call `Assert.Inconclusive(...)`. For collection queries, use `RequireDbData<T>(List<T> rows, string missingDataMessage)`, which marks an empty list inconclusive and returns a random row.
+Use `RequireDbData<T>(object? candidate, string missingDataMessage)` for nullable single query results, including nullable value types such as `Guid?`. Pass the query result directly; do not manually check for null and call `Assert.Inconclusive(...)`. For collection queries, use `RequireDbData<T>(IReadOnlyCollection<T>? candidates, string missingDataMessage)`, which marks null or empty collections inconclusive and returns a random row. These helpers are in the application test project, not the reusable framework.
 
-The full test-data policy (read-only reuse, cleanup registration, create-own-data fallback) lives in `.agents\rules\test-automation.md`.
+The full test-data policy (read-only seeded data, inconclusive missing prerequisites, and cleanup for test-owned records) lives in `.agents/rules/test-automation.md`.
 
 ## 3. Adding a New Typed API Client
 
@@ -60,8 +60,9 @@ The full test-data policy (read-only reuse, cleanup registration, create-own-dat
 > pre-built `IRestClient`), create and own the `IRestClient` inside the client, and implement
 > `IDisposable`. This keeps the service name an implementation detail, gives a single owner for the
 > client lifetime, and lets a test hold **one field per client** instead of a parallel `IRestClient`
-> field. See `API/Clients/ExampleApiClient.cs` (unauthenticated) and `API/Clients/SecureApiClient.cs`
-> (authenticated) for worked examples.
+> field. See `CsharpTestAutomation.Tests/API/Clients/CpfAppApiClient.cs` for the repository's
+> factory-owned client and `CsharpTestAutomation.Tests/Tests/API/GetCpfsTests.cs` for its
+> authenticated use. The `SecureApiClient` snippet below is illustrative and is not a repository file.
 
 1. Add the service `BaseUrl` + `TimeoutSeconds` under `Api.Services.<name>` in `CsharpTestAutomation.Tests/appsettings.json`.
 2. Create `API/Clients/<Name>ApiClient.cs` as a thin wrapper that takes an `IRestClientFactory` (a primary-constructor parameter) and creates its client in a `private readonly IRestClient _client` field initializer: `factory.Create(ServiceName)` — there is no base class. Keep the service name in a `private const string ServiceName`.
@@ -97,7 +98,7 @@ API/DTOs/
   Cpfs/
     CpfListItemDto.cs      ← GET /api/cpfs (list item)
     CpfDetailDto.cs        ← GET /api/cpfs/{id}
-    CreateCpfRequest.cs    ← POST /api/cpfs request body
+    CreateCpfDto.cs        ← POST /api/cpfs request body
   Outcomes/
     OutcomeDto.cs
   Risks/
@@ -114,8 +115,8 @@ API/DTOs/
 | --- | --- | --- |
 | `{Resource}ListItemDto` | `CpfListItemDto` | Collection / list response item |
 | `{Resource}DetailDto` | `CpfDetailDto` | Single-resource GET response |
-| `Create{Resource}Request` | `CreateCpfRequest` | POST request body |
-| `Update{Resource}Request` | `UpdateCpfRequest` | PUT / PATCH request body |
+| `Create{Resource}Dto` | `CreateCpfDto` | POST request body (current repository convention) |
+| `Update{Resource}Dto` | `UpdateCpfDto` | PUT / PATCH request body |
 | `{Resource}Dto` | `OutcomeDto`, `RiskDto` | Simple sub-resource response with no list/detail distinction |
 
 Avoid generic suffixes such as `Response` or `Dto` alone on top-level resources — the name should communicate which endpoint it represents.
@@ -201,7 +202,7 @@ For services protected by **Microsoft Entra ID / MSAL**, `CsharpTestAutomation.T
 2. `ApiTestBase` (the base class for API fixtures) exposes `BootstrapAuthenticator => new JwtAuthenticator(BootstrapSession.Default.Token)` and builds the shared `RestClientFactory` from `CoreConfiguration.Api` in its setup.
 3. A typed client (e.g. `CpfAppApiClient` for the `cpfappqa` service) receives that authenticator via `new CpfAppApiClient(RestClientFactory, BootstrapAuthenticator)`, so every request carries the bootstrapped bearer token.
 
-See `Tests/API/UiBootstrapApiTests.cs` for the end-to-end test. This flow lives entirely in `CsharpTestAutomation.Tests` — the framework contributes only the RestSharp-native `IAuthenticator` plumbing in `RestClientFactory`; it owns no Entra ID/MSAL logic.
+See `CsharpTestAutomation.Tests/Tests/API/GetCpfsTests.cs` for an API fixture that uses the bootstrapped authenticator. This flow lives entirely in `CsharpTestAutomation.Tests` — the framework contributes only the RestSharp-native `IAuthenticator` plumbing in `RestClientFactory`; it owns no Entra ID/MSAL logic.
 
 > A framework-level OAuth2 / client-credentials `IAuthenticator` (token fetched from a token endpoint
 > rather than a UI login) remains out of scope.
@@ -216,12 +217,12 @@ Every API call is logged to **NLog** by `ApiLoggingInterceptor`, regardless of A
 
 Log level: `Info` for 2xx, `Warn` for 4xx, `Error` for 5xx or a transport exception.
 
-**Allure attachments** are produced when `Api.Logging.AttachToAllure` is `true` and either `AttachOnFailureOnly` is `false` (every call) or the call failed. Two `text/plain` attachments are added per call:
+**Allure attachments** are produced when `Api.Logging.AttachToAllure` is `true` and either `AttachOnFailureOnly` is `false` (every call) or the call failed. The default is failure-only. When produced, two `text/plain` attachments are added:
 
 - `API Request - {METHOD} {resource}`
 - `API Response - {statusCode} {METHOD} {resource}`
 
-Attachment content is redacted only when `Api.Logging.RedactSensitiveData` is `true` (see the Redaction section); by default raw values are retained. Bodies are truncated to `MaxBodySizeBytes` with a `[TRUNCATED]` suffix and then **pretty-printed**: JSON is indented, XML is indented, and URL-encoded form data is rendered as `key: value` lines. Pretty-printing runs after truncation, so a truncated JSON fragment that no longer parses is emitted as-is.
+Attachment content is redacted by default. Set `Api.Logging.RedactSensitiveData` to `false` only for controlled debugging where reports and logs have restricted access. Full request/response detail in NLog is disabled by default; if enabled, it uses the same configured sanitization. Bodies are truncated to `MaxBodySizeBytes` with a `[TRUNCATED]` suffix and then **pretty-printed**: JSON is indented, XML is indented, and URL-encoded form data is rendered as `key: value` lines. Pretty-printing runs after truncation, so a truncated JSON fragment that no longer parses is emitted as-is.
 
 Sanitization, truncation, and formatting apply **only** to log/Allure output — the `RestResponse` returned to tests always holds the raw, untruncated response, so assertions run against exactly what the server sent.
 
@@ -230,7 +231,7 @@ Sanitization, truncation, and formatting apply **only** to log/Allure output —
 
 ## 8. Redaction
 
-Redaction is **opt-in and off by default**: raw headers and bodies (including tokens and credentials) are retained so failed tests can be debugged from the logs and attachments. Enable it by setting `Api.Logging.RedactSensitiveData` to `true`.
+Redaction is **on by default** for API log and Allure content. Sensitive values are replaced with `***REDACTED***` before they are retained. Set `Api.Logging.RedactSensitiveData` to `false` only for controlled debugging; raw values can include tokens and credentials.
 
 When disabled, `ApiLogSanitizer` returns its input unchanged. When enabled, `ApiLogSanitizer` replaces values with `***REDACTED***` and never throws (invalid JSON is returned unchanged).
 
@@ -263,9 +264,10 @@ Bound from the `Api` key in `CsharpTestAutomation.Tests/appsettings.json`.
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `AttachToAllure` | `bool` | `true` | Attach request/response to the Allure report. |
-| `AttachOnFailureOnly` | `bool` | `false` | When `true`, attach only for failed calls; when `false`, attach for every call. |
-| `MaxBodySizeBytes` | `int` | `10000` | Max body bytes retained before truncation **in logs/attachments only** (the `RestResponse` keeps the raw body). Validated to be greater than zero. |
-| `RedactSensitiveData` | `bool` | `false` | When `true`, redact sensitive headers/body fields before logging; off by default for debugging. |
+| `AttachOnFailureOnly` | `bool` | `true` | When `true`, attach only for failed calls; when `false`, attach for every call. |
+| `MaxBodySizeBytes` | `int` | `15000` | Max body bytes retained before truncation **in logs/attachments only** (the `RestResponse` keeps the raw body). Validated to be greater than zero. |
+| `LogFullDetail` | `bool` | `false` | When `true`, write full request/response details at Debug level after configured sanitization. |
+| `RedactSensitiveData` | `bool` | `true` | When `true`, redact sensitive headers/body fields before logging and attachment. Disable only for controlled debugging. |
 | `AdditionalRedactedFields` | `IList<string>` | `[]` | Extra JSON field names appended to the built-in body redaction list (used only when `RedactSensitiveData` is `true`). |
 
 ### Example
@@ -281,9 +283,10 @@ Bound from the `Api` key in `CsharpTestAutomation.Tests/appsettings.json`.
     },
     "Logging": {
       "AttachToAllure": true,
-      "AttachOnFailureOnly": false,
-      "MaxBodySizeBytes": 10000,
-      "RedactSensitiveData": false,
+      "AttachOnFailureOnly": true,
+      "MaxBodySizeBytes": 15000,
+      "LogFullDetail": false,
+      "RedactSensitiveData": true,
       "AdditionalRedactedFields": []
     }
   }
@@ -296,4 +299,6 @@ Newest first. Bump the version and add a row whenever this document changes so f
 
 | Version | Date | Summary |
 | --- | --- | --- |
+| 1.7 | 2026-09-26 | Align test-data helper and examples with the implementation. |
+| 1.6 | 2026-09-26 | Secure API logging defaults and update configuration reference. |
 | 1.5 | 2026-09-25 | Initial version. |

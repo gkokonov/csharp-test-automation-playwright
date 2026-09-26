@@ -61,26 +61,28 @@ public class ApiLoggingSettings
 
     /// <summary>
     /// When <see langword="true"/>, Allure attachments are produced only for failed calls.
-    /// When <see langword="false"/> (default), attachments are produced for every call.
+    /// When <see langword="false"/>, attachments are produced for every call. Defaults to
+    /// <see langword="true"/> to reduce retained request and response data.
     /// </summary>
-    public bool AttachOnFailureOnly { get; set; }
+    public bool AttachOnFailureOnly { get; set; } = true;
 
     /// <summary>Maximum number of bytes of request/response body retained before truncation.</summary>
     public int MaxBodySizeBytes { get; set; } = 15_000;
 
     /// <summary>
-    /// When <see langword="true"/> (default), full request/response headers and bodies are written
-    /// to the log at Debug level. Console only shows the Info summary line; the file target captures
-    /// the full detail. When <see langword="false"/>, only the summary line is logged.
+    /// When <see langword="true"/>, full request/response headers and bodies are written to the log
+    /// at Debug level after configured sanitization. Console only shows the Info summary line; the
+    /// file target captures the full detail. Defaults to <see langword="false"/>.
     /// </summary>
-    public bool LogFullDetail { get; set; } = true;
+    public bool LogFullDetail { get; set; }
 
     /// <summary>
     /// When <see langword="true"/>, sensitive headers and JSON body fields are replaced with
-    /// <c>***REDACTED***</c> before logging or attaching to reports. When <see langword="false"/>
-    /// (default), raw values are retained so tokens and credentials remain visible for debugging.
+    /// <c>***REDACTED***</c> before logging or attaching to reports. Defaults to
+    /// <see langword="true"/>. Set to <see langword="false"/> only when raw values are required
+    /// for debugging and the logs and reports are access-controlled.
     /// </summary>
-    public bool RedactSensitiveData { get; set; }
+    public bool RedactSensitiveData { get; set; } = true;
 
     /// <summary>
     /// Additional JSON field names (appended to the built-in list) redacted from logged bodies.

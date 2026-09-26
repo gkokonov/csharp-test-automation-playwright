@@ -24,8 +24,7 @@ public class GetCpfByIdTests : ApiTestBase
         // Arrange
         CpfAppApiClient client = TestContainer.Get<CpfAppApiClient>()!;
         List<CpfRow> all = CpfQueries.SelectAllCpfs();
-        all.Should().NotBeEmpty();
-        CpfRow expected = all[Random.Shared.Next(all.Count)];
+        CpfRow expected = RequireDbData(all, "No CPF records exist in this environment.");
 
         // Act
         RestResponse<CpfListItemDto> response = await client.GetCpfByIdAsync(expected.Id);

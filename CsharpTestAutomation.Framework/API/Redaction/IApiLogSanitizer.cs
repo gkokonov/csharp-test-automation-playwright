@@ -2,8 +2,8 @@ namespace CsharpTestAutomation.Framework.API.Redaction;
 
 /// <summary>
 /// Redacts sensitive values from API request/response data before they are logged or attached to reports.
-/// Redaction is opt-in via <see cref="Configuration.ApiLoggingSettings.RedactSensitiveData"/>; when disabled
-/// (the default) both methods return their input unchanged.
+/// Redaction is enabled by default via <see cref="Configuration.ApiLoggingSettings.RedactSensitiveData"/>.
+/// When explicitly disabled, both methods return their input unchanged.
 /// </summary>
 public interface IApiLogSanitizer
 {

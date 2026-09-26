@@ -25,10 +25,11 @@ dotnet test .\CsharpTestAutomation.slnx                           #
 dotnet test --filter "FullyQualifiedName~<FixtureName>"        # narrow run while iterating
 ```
 
-`TreatWarningsAsErrors=true` in Debug and Release. A warning is a build failure.
+`TreatWarningsAsErrors=true` in Debug and Release across all three projects. A warning is a build failure.
 
 ## 4. Layering Rules
 
+- Before changing a project, read its project-scoped `AGENTS.md` and the linked canonical rule. An agent started at the repository root may not load nested instructions automatically.
 - **Framework (`CsharpTestAutomation.Framework`)**: reusable infrastructure only. No domain entities, no application endpoints, no hard-coded environment names, URLs, or connection strings, and no application `appsettings.json` — these belong in `CsharpTestAutomation.Tests`. Drive behavior through `CoreConfiguration`. Nullable, `ConfigureAwait`, and XML-doc rules: see `.agents/rules/framework.md`.
 - **Application tests (`CsharpTestAutomation.Tests`)**: typed API clients, DTOs, DTO builders, page objects, test data, and test fixtures. References the framework. Uses `<Nullable>enable</Nullable>`. Authoring rules: see `.agents/rules/test-automation.md`.
 - **Framework self-tests (`CsharpTestAutomation.Framework.Test`)**: unit/integration tests for framework utilities. Uses WireMock.Net for HTTP-level tests where needed.
@@ -37,7 +38,7 @@ dotnet test --filter "FullyQualifiedName~<FixtureName>"        # narrow run 
 
 `CsharpTestAutomation.Framework` is a **class library** (`OutputType=Library`, `IsPackable=true`). Design every public type as a reusable building block, never as test-specific code. It targets `net10.0` with `ImplicitUsings=enable` and a global `using NUnit.Framework`. `FrameworkReference Microsoft.AspNetCore.App` is referenced only for `Microsoft.Extensions.Configuration` binding — this is **not** a web app; avoid ASP.NET Core/MVC patterns (controllers, middleware, hosting).
 
-Quality gates: `TreatWarningsAsErrors=true` (Debug + Release), `EnableNETAnalyzers`, `EnforceCodeStyleInBuild`, `AnalysisLevel=latest`, `Nullable=warnings`. Code must build clean — analyzer and style violations fail the build. `GenerateDocumentationFile=true` (CS1591 suppressed): keep XML doc comments on public types/members.
+Quality gates for `CsharpTestAutomation.Framework`: `TreatWarningsAsErrors=true` (Debug + Release), `EnableNETAnalyzers`, `EnforceCodeStyleInBuild`, `AnalysisLevel=latest`, and `Nullable=enable`. The other two projects also treat warnings as errors; their analyzer and style settings are project-specific. `GenerateDocumentationFile=true` (CS1591 suppressed): keep XML doc comments on public framework types/members.
 
 Folder layout mirrors namespaces (`dotnet_style_namespace_match_folder`); detailed folder structure is defined in `.agents/rules/framework.md`.
 
@@ -89,6 +90,8 @@ All rules are enforced by the root `.editorconfig` — follow it and do not figh
 
 ## 10. References
 
+- `docs/AGENT_SUPPORT.md` — shared instruction/skill discovery across Copilot, Codex, Antigravity, and Devin.
+- `CsharpTestAutomation.Framework.Test/AGENTS.md` — authoring rules for framework self-tests.
 - `docs/API_TESTING_ARCHITECTURE.md` — API testing layer: typed-client pattern, DTO conventions, authentication, logging/redaction, and how to add a new client or API test.
 - `docs/UI_TESTING_ARCHITECTURE.md` — Playwright UI testing layer: page-object model, components, readiness contract, and lifecycle.
 - `.agents/rules/framework.md` — rules unique to the framework library.

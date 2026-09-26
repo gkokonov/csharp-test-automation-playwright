@@ -14,11 +14,20 @@ namespace CsharpTestAutomation.Tests.Tests;
 [Category("UI")]
 public abstract class UiTestBase : TestBase
 {
-    [AllowNull]
-    protected IBrowserContext Context { get => field ?? throw new InvalidOperationException("Browser context is not initialized."); private set; }
+    private IBrowserContext? _context;
+    private IPage? _page;
 
     [AllowNull]
-    protected IPage Page { get => field ?? throw new InvalidOperationException("Page is not initialized."); private set; }
+    protected IBrowserContext Context {
+        get => _context ?? throw new InvalidOperationException("Browser context is not initialized.");
+        private set => _context = value;
+    }
+
+    [AllowNull]
+    protected IPage Page {
+        get => _page ?? throw new InvalidOperationException("Page is not initialized.");
+        private set => _page = value;
+    }
 
     /// <summary>
     /// Creates a page object bound to the current <see cref="Page"/>. Entry point for tests:
@@ -35,14 +44,14 @@ public abstract class UiTestBase : TestBase
             var testFailed = TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed;
 
             // Capture screenshot on failure
-            if (testFailed && Page is not null)
+            if (testFailed && _page is { } page)
             {
-                await CaptureScreenshotOnFailureAsync();
+                await CaptureScreenshotOnFailureAsync(page);
 
                 // Also capture browser logs on failure if configured
-                if (s_configuration.CaptureBrowserLogs)
+                if (s_configuration.CaptureBrowserLogs && _context is { } context)
                 {
-                    await CaptureBrowserLogsOnFailureAsync();
+                    await CaptureBrowserLogsOnFailureAsync(context);
                 }
             }
         }
@@ -51,8 +60,8 @@ public abstract class UiTestBase : TestBase
             try { await PlaywrightBrowserFactory.DisposeContextAsync(); } catch { /* swallow */ }
             try { await PlaywrightBrowserFactory.DisposeBrowserAsync(); } catch { /* swallow */ }
 
-            Context = null;
-            Page = null;
+            _context = null;
+            _page = null;
         }
     }
 
@@ -91,18 +100,15 @@ public abstract class UiTestBase : TestBase
     /// <summary>
     /// Captures a screenshot when a test fails and attaches it to the report
     /// </summary>
-    private async Task CaptureScreenshotOnFailureAsync() =>
-#pragma warning disable CA1826 // Do not use Enumerable methods on indexable collections
-        await AllureExtensions.CaptureScreenshotAsync(Context.Pages.LastOrDefault(), TestContext.CurrentContext.Test.MethodName);
-#pragma warning restore CA1826 // Do not use Enumerable methods on indexable collections
-
+    private static async Task CaptureScreenshotOnFailureAsync(IPage page) =>
+        await AllureExtensions.CaptureScreenshotAsync(
+            page,
+            TestContext.CurrentContext.Test.MethodName ?? "Unknown test");
 
     /// <summary>
     /// Captures browser logs when a test fails and attaches them to the report
     /// </summary>
-    private async Task CaptureBrowserLogsOnFailureAsync() =>
-#pragma warning disable CA1826 // Do not use Enumerable methods on indexable collections
-        await AllureExtensions.CaptureBrowserLogsAsync(Context, TestContext.CurrentContext.Test.MethodName);
-#pragma warning restore CA1826 // Do not use Enumerable methods on indexable collections
+    private static async Task CaptureBrowserLogsOnFailureAsync(IBrowserContext context) =>
+        await AllureExtensions.CaptureBrowserLogsAsync(context, TestContext.CurrentContext.Test.MethodName);
 
 }

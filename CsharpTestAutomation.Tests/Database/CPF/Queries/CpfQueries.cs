@@ -35,7 +35,7 @@ public static class CpfQueries
         return DapperActions.QueryAll<CpfRow>(connection, SelectAllCpfsSql);
     }
 
-    public static CpfRow SelectCpfById(Guid id)
+    public static CpfRow? SelectCpfById(Guid id)
     {
         using NpgsqlConnection connection = CpfDbBase.GetConnection();
         return DapperActions.Query<CpfRow>(connection, SelectCpfByIdSql, new DynamicParameters(new { Id = id }));

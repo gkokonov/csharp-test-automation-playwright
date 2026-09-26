@@ -5,7 +5,7 @@ Cross-language principles live in [Test Automation Design](test-automation.md); 
 ## Design choices
 
 - Unlike xUnit, NUnit has no fixture-injection mechanism, so composition is plain object construction: build collaborators—browser session, API client, data builder—in per-test setup and hold them in fields. No container is required, and a base class is not the alternative.
-- Return typed results from clients rather than `RestResponse` or `HttpResponseMessage`, so specs never read status codes or JSON paths.
+- Prefer typed domain results at API client boundaries when the response abstraction is not part of the behavior under test. In this repository, follow `docs/API_TESTING_ARCHITECTURE.md`: tests intentionally use RestSharp `RestResponse<T>` to assert transport status, headers, and payloads.
 - Reuse one `RestClient` or `HttpClient` per base address—both are thread-safe and pool connections—but never mutate default headers per test. Shared defaults plus parallel tests means one test overwrites another's auth. Pass per-request state explicitly.
 - Use a `record` for test data and `with` expressions to override only the fields under test; the overrides then document the test's intent.
 - Inject `TimeProvider`, random sources, and identifier generators wherever determinism matters.
@@ -43,7 +43,7 @@ Cross-language principles live in [Test Automation Design](test-automation.md); 
 Only the instance-per-test row changes a design; the rest is syntax.
 
 | Concern | NUnit | xUnit | MSTest |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Per-test setup | `[SetUp]` | constructor | `[TestInitialize]` |
 | Per-test teardown | `[TearDown]` | `IDisposable` / `IAsyncLifetime` | `[TestCleanup]` |
 | Once per class | `[OneTimeSetUp]` | `IClassFixture<T>` | `[ClassInitialize]` |
@@ -182,7 +182,7 @@ public sealed class OrderTests : PageTest
 - Does `TestBase` own anything beyond framework lifecycle, and how deep is the chain?
 - Does a spec contain a CSS/XPath string, `WaitForTimeoutAsync`, or `Thread.Sleep`?
 - Are default headers or shared client configuration mutated per test?
-- Does a spec assert on `RestResponse` internals, status codes, or JSON paths instead of typed results?
+- Does a spec bypass the repository's API client contract or assert transport details that are not part of its scenario? In this repository, use the documented RestSharp response assertions when transport behavior is under test.
 - Is `[Retry]` or `[Order]` compensating for a defect or a missing synchronization point?
 - Do several assertions describing one outcome use `Assert.Multiple`, or would the first failure hide the rest?
 - Are page objects returning `IElementHandle` (stale-prone) where an `ILocator` belongs?

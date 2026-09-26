@@ -38,8 +38,7 @@ public class DapperActionsTests
     [Test]
     public void ShouldBeAbleToReadFromDatabaseQueryingSingleEntityWithGenericReturnType()
     {
-        var expectedUser = new User
-        {
+        var expectedUser = new User {
             Id = 1,
             FirstName = "Ivan",
             SirName = "Ivanov",
@@ -64,7 +63,7 @@ public class DapperActionsTests
         var dpRead = new DynamicParameters();
         dpRead.Add("firstName", "Ivan");
 
-        User actualUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? actualUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(actualUser, Is.EqualTo(expectedUser));
     }
@@ -98,7 +97,7 @@ public class DapperActionsTests
         var dpRead = new DynamicParameters();
         dpRead.Add("firstName", "Ivan");
 
-        IDictionary<string, object> actualDictionary = s_userRepository.Query(readSqlQuery, dpRead);
+        IDictionary<string, object>? actualDictionary = s_userRepository.Query(readSqlQuery, dpRead);
 
         Assert.That(actualDictionary, Is.EqualTo(expectedDictionary));
     }
@@ -136,8 +135,7 @@ public class DapperActionsTests
     [Test]
     public void ShouldBeAbleToCreateEntityInDatabase()
     {
-        var expectedUser = new User
-        {
+        var expectedUser = new User {
             Id = 7,
             FirstName = "Frank",
             SirName = "Sinatra",
@@ -171,8 +169,7 @@ public class DapperActionsTests
         WHERE Email = @email";
 
         var dpCreate = new DynamicParameters(
-            new
-            {
+            new {
                 id = 7,
                 firstName = "Frank",
                 sirName = "Sinatra",
@@ -191,13 +188,13 @@ public class DapperActionsTests
 
         s_userRepository.Execute(createSqlQuery, dpCreate);
 
-        User actualUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? actualUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(actualUser, Is.EqualTo(expectedUser));
 
         s_userRepository.Execute(deleteSqlQuery, dpDelete);
 
-        User deletedUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? deletedUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(deletedUser, Is.Null);
     }
@@ -205,8 +202,7 @@ public class DapperActionsTests
     [Test]
     public void ShouldBeAbleToUpdateEntityInDatabase()
     {
-        var expectedUser = new User
-        {
+        var expectedUser = new User {
             Id = 7,
             FirstName = "Frank",
             SirName = "Sinatra",
@@ -253,8 +249,7 @@ public class DapperActionsTests
         WHERE Email = @email";
 
         var dpCreate = new DynamicParameters(
-            new
-            {
+            new {
                 id = 7,
                 firstName = "Frank",
                 sirName = "Sinatra",
@@ -269,8 +264,7 @@ public class DapperActionsTests
         dpRead.Add("firstName", "Frank");
 
         var dpUpdate = new DynamicParameters(
-            new
-            {
+            new {
                 id = 7,
                 firstName = "Frank",
                 sirName = "Sinatra",
@@ -286,7 +280,7 @@ public class DapperActionsTests
 
         s_userRepository.Execute(createSqlQuery, dpCreate);
 
-        User actualUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? actualUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(actualUser, Is.EqualTo(expectedUser));
 
@@ -295,13 +289,13 @@ public class DapperActionsTests
         expectedUser.Country = "Bulgaria";
         expectedUser.City = "Sofia";
 
-        User updatedUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? updatedUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(updatedUser, Is.EqualTo(expectedUser));
 
         s_userRepository.Execute(deleteSqlQuery, dpDelete);
 
-        User deletedUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? deletedUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(deletedUser, Is.Null);
     }
