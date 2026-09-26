@@ -2,7 +2,7 @@
 
 Reference for the API testing layer in `CsharpTestAutomation.Framework` (namespace `CsharpTestAutomation.Framework.API`). The layer wraps [RestSharp](https://restsharp.dev/) with consistent serialization, sanitized/truncated logging, Allure attachments, and a small set of chainable assertions. Typed clients consume RestSharp's `IRestClient` directly — the framework does **not** own a request/execution/response abstraction; tests assert on RestSharp's native `RestResponse` / `RestResponse<T>`.
 
-> **RestSharp version note:** this module targets **RestSharp 114.0.0**. The interceptor overrides
+> The interceptor overrides
 > `BeforeRequest(RestRequest, CancellationToken)` / `AfterRequest(RestResponse, CancellationToken)`,
 > reads request headers from `RestResponse.MergedParameters`, response headers from
 > `Headers` + `ContentHeaders`, and the request body from `RestRequest.Parameters`
@@ -52,7 +52,7 @@ Guid cpfId = RequireDbData<Guid>(
 
 Use `RequireDbData<T>(object? candidate, string missingDataMessage)` for nullable query results, including nullable value types such as `Guid?`. Pass the query result directly; do not manually check for null and call `Assert.Inconclusive(...)`. For collection queries, use `RequireDbData<T>(List<T> rows, string missingDataMessage)`, which marks an empty list inconclusive and returns a random row.
 
-The full test-data policy (read-only reuse, cleanup registration, create-own-data fallback) lives in `.copilot/instructions/tests.instructions.md`.
+The full test-data policy (read-only reuse, cleanup registration, create-own-data fallback) lives in `.agents\rules\test-automation.md`.
 
 ## 3. Adding a New Typed API Client
 
@@ -86,13 +86,13 @@ Plain NUnit `[TestFixture]` — no base class required, or derive from `ApiTestB
 3. Hold **one field per client** and dispose each in `[TearDown]` via `_client.Dispose()`. With several clients in one fixture, share the single factory and dispose each client. `RestClientFactory` is **not** `IDisposable` — never dispose the factory.
 4. Assert on the returned `RestResponse<T>` with **AwesomeAssertions**. Use the minimal `ApiAssertions` extensions only for transport status (`ShouldHaveCompletedTransport`) and JSONPath (`ShouldHaveJsonPathValue`).
 
-For test-case design, naming, required attributes, assertion style, test data, and Definition of Done, see `.copilot/instructions/tests.instructions.md`. Those rules apply to every test in the project and are not restated here.
+For test-case design, naming, required attributes, assertion style, test data, and Definition of Done, see `.agents\rules\test-automation.md`. Those rules apply to every test in the project and are not restated here.
 
 ## 5. DTO Conventions
 
 DTOs live in `CsharpTestAutomation.Tests/API/DTOs/` and are organized by **resource** — one sub-folder per API resource group. This keeps all shapes for a feature in one place rather than splitting them across generic `Requests/` and `Responses/` buckets.
 
-```
+```text
 API/DTOs/
   Cpfs/
     CpfListItemDto.cs      ← GET /api/cpfs (list item)
@@ -210,7 +210,7 @@ See `Tests/API/UiBootstrapApiTests.cs` for the end-to-end test. This flow lives 
 
 Every API call is logged to **NLog** by `ApiLoggingInterceptor`, regardless of Allure settings:
 
-```
+```text
 [API] {METHOD} {resource} → {statusCode} | {elapsedMs}ms
 ```
 

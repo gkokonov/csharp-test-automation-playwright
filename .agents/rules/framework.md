@@ -1,6 +1,7 @@
 ---
 applyTo: "CsharpTestAutomation.Framework/**/*.cs"
-trigger: always_on
+trigger: glob
+globs: "CsharpTestAutomation.Framework/**/*.cs"
 description: "Rules unique to the reusable framework library."
 ---
 
@@ -14,15 +15,13 @@ or hosting patterns.
 
 ## Nullable
 
-The project sets `<Nullable>warnings</Nullable>` as a transitional configuration.
-This setting allows legacy unannotated files to remain oblivious without failing
-the build under `TreatWarningsAsErrors=true`.
+The project sets `<Nullable>enable</Nullable>` for the entire project. Nullable
+annotations and warnings are active in every source file, and warnings are
+errors in Debug and Release builds.
 
-| Situation | Rule |
-| --- | --- |
-| New file | Standalone new files may use `#nullable enable` if written with complete null safety (no warnings). If integrating closely with unannotated legacy types, omit `#nullable enable` and use default values. |
-| File already has `#nullable enable` (e.g. `RestClientFactory.cs`, `IRestClientFactory.cs`) | Full nullability is active. Use `?` for optional parameters/returns, and guard non-null inputs (`ArgumentNullException.ThrowIfNull`). |
-| Editing existing oblivious file | Keep existing oblivious state. Do not add `#nullable enable` mid-file unless refactoring the entire file to be warning-free. |
+Use `?` for values that may be null and guard required non-null inputs (for
+example, with `ArgumentNullException.ThrowIfNull`). Do not add `#nullable enable`
+or `#nullable disable` directives; the project setting applies to every file.
 
 ## Async
 
