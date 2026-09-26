@@ -1,0 +1,22 @@
+id: review-evidence
+name: Report a costly contract defect
+description: Check that review findings remain evidence-based when repair is costly.
+
+inputs:
+  prompt: >-
+    Review this C# design. The method promises to return a read-only snapshot,
+    but it returns the internal dictionary through an IReadOnlyDictionary
+    reference. Repair may affect several callers and require a migration. Report
+    evidenced design risks only; do not change files.
+
+expected:
+  should_trigger: true
+  output_contains:
+    - mutable
+
+graders:
+  - type: text
+    name: locates_mutability_risk
+    config:
+      regex_match:
+        - "(?i)(snapshot|internal state)"

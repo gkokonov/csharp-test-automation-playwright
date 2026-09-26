@@ -1,0 +1,22 @@
+id: refactor-contract
+name: Preserve callers during provider refactoring
+description: Check that a refactoring preserves the existing public contract.
+
+inputs:
+  prompt: >-
+    Refactor this notifier so tests can supply fake providers. Keep zero-argument
+    construction and the existing notify(channel, message) call working. Both
+    channels ship together, so avoid adding a plugin system. Describe the
+    smallest suitable change and its trade-off.
+
+expected:
+  should_trigger: true
+  output_contains:
+    - notify
+
+graders:
+  - type: text
+    name: preserves_default_construction
+    config:
+      regex_match:
+        - "(?i)(constructor|default providers)"

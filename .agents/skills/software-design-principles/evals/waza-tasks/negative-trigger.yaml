@@ -1,0 +1,9 @@
+id: negative-trigger
+name: Do not trigger for a compiler version command
+description: Check that unrelated command lookup does not select the design skill.
+
+inputs:
+  prompt: What command prints the installed TypeScript compiler version? Answer with the command only.
+
+expected:
+  should_trigger: false

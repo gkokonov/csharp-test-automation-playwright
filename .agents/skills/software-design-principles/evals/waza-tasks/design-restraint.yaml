@@ -1,0 +1,19 @@
+id: design-restraint
+name: Avoid abstraction for hypothetical variation
+description: Check that the skill favors evidence over speculative extensibility.
+
+inputs:
+  prompt: >-
+    We have one implementation of a formatter and no current request for
+    another format. Should I add an interface and plugin registry now so future
+    formats are easier to support? Give a brief recommendation and trade-off.
+
+expected:
+  should_trigger: true
+
+graders:
+  - type: text
+    name: cites_present_requirements
+    config:
+      regex_match:
+        - "(?i)(speculative|hypothetical|current requirements)"

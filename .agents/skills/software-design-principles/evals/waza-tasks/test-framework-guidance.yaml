@@ -1,0 +1,22 @@
+id: test-framework-guidance
+name: Review parallel safety in a test framework
+description: Check guidance for test automation concerns and shared mutable state.
+
+inputs:
+  prompt: >-
+    We want to run NUnit UI tests in parallel. Our base fixture stores one static
+    Playwright Page shared by all tests. Review the design and recommend the
+    smallest safe change, including what to verify.
+
+expected:
+  should_trigger: true
+  output_contains:
+    - static
+    - parallel
+
+graders:
+  - type: text
+    name: recommends_isolated_pages
+    config:
+      regex_match:
+        - "(?i)(per-test|isolated)"

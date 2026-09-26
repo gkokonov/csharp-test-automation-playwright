@@ -1,0 +1,16 @@
+id: explain-principle
+name: Explain a design principle briefly
+description: Check that explanation requests receive a direct, scoped answer.
+
+inputs:
+  prompt: Explain the Single Responsibility Principle in exactly two sentences. Do not ask follow-up questions.
+
+expected:
+  should_trigger: true
+
+graders:
+  - type: text
+    name: explains_single_responsibility
+    config:
+      regex_match:
+        - "(?i)(reason to change|responsibility)"
