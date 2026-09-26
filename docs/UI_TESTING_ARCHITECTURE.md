@@ -6,7 +6,6 @@ Reference for the UI testing layer that wraps [Playwright for .NET](https://play
 > fragments are modeled as components (composition over inheritance), waits prefer auto-retrying
 > web-first assertions over manual sleeps, and timeouts are configuration-driven rather than
 > hard-coded.
-
 > **Playwright version note:** this module uses Microsoft.Playwright with locators (not element
 > handles), semantic locators (`GetByRole`, `GetByLabel`), and web-first assertions. The default
 > Expect timeout is set once from configuration via
@@ -51,7 +50,7 @@ flowchart LR
 
 Three small base classes keep the model consistent and thin:
 
-```
+```text
 BaseUIObject (IPage, configuration, Expect)
 ├── BaseUIView      → full pages (navigation + readiness + GetPage<T>)
 └── BaseUIComponent → reusable fragments (scoped to a Root locator)
