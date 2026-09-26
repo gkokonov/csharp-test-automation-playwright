@@ -30,8 +30,8 @@ Each reference opens with an index; read the one relevant section, not the whole
 
 | Read | When |
 |---|---|
-| [workflows-and-output-contracts.md](references/workflows-and-output-contracts.md#mode-index) | A substantial task, for the current mode. A brief explanation may need no reference. |
-| [principles-and-tradeoffs.md](references/principles-and-tradeoffs.md#principle-index) | A principle's diagnostic detail helps decide or explain. |
+| [workflows-and-output-contracts.md](references/workflows-and-output-contracts.md) | A substantial task, for the current mode. A brief explanation may need no reference. |
+| [principles-and-tradeoffs.md](references/principles-and-tradeoffs.md) | A principle's diagnostic detail helps decide or explain. |
 | [test-automation.md](references/test-automation.md) | The artifact under design is a test, a suite, or a test automation framework. |
 | A language guide below | A language-specific decision matters; read its design choices and review checks. |
 | [source-coverage-and-validation.md](references/source-coverage-and-validation.md) | Auditing this harness, tracing it to the source article, or maintaining its examples. |
@@ -45,7 +45,7 @@ Each reference opens with an index; read the one relevant section, not the whole
 - Choose the production or the test column by the artifact under design, not both.
 - Read a complete example only when it helps the current problem; prefer TypeScript over plain JavaScript.
 - For a tool-level test decision read `test-automation.md` with the matching `*-testing.md`: the first carries the cross-language principles, the second only its tool specifics.
-- For test code, `test-automation.md` overrides the general DRY pressure in [principles-and-tradeoffs.md](references/principles-and-tradeoffs.md#dry--dont-repeat-yourself): a test's dominant quality is diagnostic speed under failure.
+- For test code, `test-automation.md` overrides the general DRY pressure described in the DRY section of [principles-and-tradeoffs.md](references/principles-and-tradeoffs.md): a test's dominant quality is diagnostic speed under failure.
 
 ## Workflow
 

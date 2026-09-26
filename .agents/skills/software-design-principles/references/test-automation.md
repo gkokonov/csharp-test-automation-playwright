@@ -148,7 +148,7 @@ test / spec  →  task or flow objects (optional)  →  page / screen / componen
 ## Test smells
 
 | Smell | Evidence to seek | Proportional response |
-|---|---|---|
+| --- | --- | --- |
 | God base class | Base test owning driver, config, data, logging, and reporting; deep override chains | Split into per-concern fixtures; request only what a test needs |
 | Over-abstracted test | Test body is only helper calls; assertions live in helpers | Inline the narrative back into the test; keep only knowledge shared |
 | Mystery guest | Test depends on data it did not create | Create the data in the test or its fixture; make it unique |

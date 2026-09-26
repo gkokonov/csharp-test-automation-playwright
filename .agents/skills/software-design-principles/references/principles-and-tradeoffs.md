@@ -164,7 +164,7 @@ Use this reference to diagnose a design, not as a compliance checklist. A princi
 ## Common pitfalls and responses
 
 | Pitfall | Evidence to seek | Proportional response |
-|---|---|---|
+| --- | --- | --- |
 | Over-engineering | Speculative variants, unused layers, excessive configuration | Apply KISS/YAGNI; remove or postpone unneeded machinery |
 | Tight coupling | Provider details in policy, broad ripple changes, hard infrastructure tests | Introduce the narrowest boundary justified by volatility |
 | Ignoring reuse | The same knowledge changes repeatedly in several places | Centralize the stable rule, not merely similar syntax |

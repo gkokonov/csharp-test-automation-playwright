@@ -21,7 +21,7 @@ Additional references used to check or enrich important claims:
 ## Article traceability matrix
 
 | Source section | Harness location | Treatment |
-|---|---|---|
+| --- | --- | --- |
 | Purpose and benefits of design principles | `SKILL.md`; `principles-and-tradeoffs.md` introduction | Retained as maintainability, clarity, testability, and proportional evolution goals |
 | SOLID overview | `principles-and-tradeoffs.md` → SOLID | Retained and made diagnostic rather than checklist-driven |
 | Single Responsibility Principle | `principles-and-tradeoffs.md` → SRP; C# case | Reframed around reason/actor for change; warns against one-method classes |
@@ -97,7 +97,7 @@ The review used current [OpenAI skill guidance](https://developers.openai.com/co
 Scope: this standalone skill after the test-automation additions, the production/test guide split, the unified marker-driven checker, and twelve evaluation fixtures. A later same-day revision consolidated the workflow into `SKILL.md`, replaced its prose routing with a load table, removed restated paragraphs from the three `*-testing.md` guides, extended `REQUIRED_IDS` to the test-automation blocks, and fixed two defects in `typescript-testing.md`. Only the rows marked re-run below were re-executed for that revision; the compile rows predate it and cover files it did not touch.
 
 | Check | Result |
-|---|---|
+| --- | --- |
 | Frontmatter limits | Passed, re-checked against the Agent Skills specification. `name` 26 chars, lowercase-hyphen, no leading/trailing/consecutive hyphen, matches the parent directory as the spec requires. `description` 476 chars, within the spec's 1,024-character maximum and Copilot's 1,024-character limit. A previous record cited a "Codex 500-character limit"; no such per-description limit exists. The spec's 500-character cap applies to the unused `compatibility` field, and the Codex 2%-of-context/8,000-character budget applies to the initial skills *list*, not to one description. |
 | Description behaviour under a crowded catalog | Noted, not a pass or failure. Codex shortens skill descriptions first when many skills are installed, so trigger words should be front-loaded. The `Excludes …` clause is last in the description and is therefore the first content lost, which is exactly what the `negative-trigger` fixture exercises. Untested: no crowded-catalog run has been performed. |
 | `agents/openai.yaml` schema and location | Passed. The path matches the documented skill layout (sibling of `SKILL.md`, `scripts/`, `references/`). All four keys used—`interface.display_name`, `interface.short_description`, `interface.default_prompt`, `policy.allow_implicit_invocation`—are documented; the `$skill` mention syntax in `default_prompt` is correct. `allow_implicit_invocation` defaults to `true`, so setting it to `true` restates the default and is kept only as declared intent. Checked by key comparison against the documented example, not by a host load or `skills-ref validate`. |
