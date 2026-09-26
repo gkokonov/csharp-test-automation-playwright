@@ -7,11 +7,11 @@ description: >-
   TypeScript/JavaScript, including test automation and framework design: page
   objects, fixtures, test data, parallel safety, and flaky-test design causes.
   Excludes routine formatting, dependency updates, and test failures with an
-  obvious non-design cause. Do not use it for variable renaming, formatting-only
-  changes, dependency version bumps, or a test failure with a clear
-  product/configuration error and no design question. Use this skill when the user
-  asks to review, design, refactor, or explain software architecture, code quality,
-  or test framework design.
+  obvious non-design cause.
+  Use this skill when the user asks to review, design, refactor, or explain software architecture,
+  code quality, or test framework design.
+  Do not use it for variable renaming, formatting-only changes, dependency version bumps,
+  or a test failure with a clear product/configuration error and no design question.
 ---
 
 # Software Design Principles
