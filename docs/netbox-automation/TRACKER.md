@@ -9,19 +9,19 @@ until this tracker and the specs in this folder are reviewed.
 
 | # | Task | Status | Notes |
 | --- | --- | --- | --- |
-| 0.1 | Extract good CPF-based patterns from instruction files into generic/NetBox examples | TODO | `docs/API_TESTING_ARCHITECTURE.md`, `docs/UI_TESTING_ARCHITECTURE.md`, `.agents/rules/test-automation.md` — see `01-infrastructure-spec.md` §0.a |
-| 0.2 | Remove obsolete CPF API clients/DTOs/builders/tests | TODO | See `01-infrastructure-spec.md` §0.b |
-| 0.3 | Remove obsolete CPF DB queries/row DTOs | TODO | `Database/CPF/**` |
-| 0.4 | Remove obsolete CPF UI page objects/components | TODO | Verify `ExampleUiTests` template is unaffected |
-| 0.5 | Remove CPF entries from `appsettings.json` / `appsettings.local.json` | TODO | Keep structure for reuse by NetBox config |
-| 0.6 | Re-evaluate `docs/API_TESTING_ARCHITECTURE.md`, `docs/UI_TESTING_ARCHITECTURE.md`, `.agents/rules/test-automation.md` for dangling references and fix | TODO | See `01-infrastructure-spec.md` §0.c; gate before Phase 1 |
-| 0.7 | Confirm no residual `Cpf`/`cpg` references repo-wide (`grep_search`) | TODO | Gate before Phase 1 |
+| 0.1 | Replace application-specific instruction examples with generic patterns | DONE | Architecture and authoring instructions now use illustrative resource names. |
+| 0.2 | Remove obsolete API clients/DTOs/builders/tests | DONE | Removed the prior application's typed client, DTOs, builder, and API fixtures. |
+| 0.3 | Remove obsolete DB queries/row DTOs | DONE | Removed application-specific database query and row DTOs. |
+| 0.4 | Remove obsolete UI tests and page objects/components | DONE | Removed the app-bound bootstrap UI test; no app-specific page object/component remained. `ExampleUiTests` is retained. |
+| 0.5 | Remove application entries from `appsettings.json` / `appsettings.local.json` | DONE | Retained reusable browser, API logging, and empty DB configuration structure. |
+| 0.6 | Re-evaluate architecture and authoring instructions for dangling references | DONE | Re-read all three files; obsolete file and class references were replaced. |
+| 0.7 | Confirm no retired application identifiers remain repo-wide | DONE | Repository-wide source search returned no matches. |
 
 ## Phase 1 — Infrastructure
 
 | # | Task | Status | Notes |
 | --- | --- | --- | --- |
-| 1.1 | `NetBoxConfigurationDTO` + `ExtendedConfiguration` wiring | TODO | Fold UI credentials into `NetBox`; simplify `UiConfigurationDTO` away from its CPF-only shape (resolved in `01-infrastructure-spec.md`) |
+| 1.1 | `NetBoxConfigurationDTO` + `ExtendedConfiguration` wiring | TODO | Fold UI credentials into `NetBox`; simplify `UiConfigurationDTO` to the NetBox flow (resolved in `01-infrastructure-spec.md`) |
 | 1.2 | `appsettings.json` / `appsettings.local.json` NetBox + DbSettings entries | TODO | Both files must carry the **same key set**; only secret values differ (`PLACEHOLDER_PASSWORD` vs real) — see `01-infrastructure-spec.md` Configuration section |
 | 1.3 | Health check (NetBox root, `/api/`, Postgres) fails fast | TODO | Model on `GlobalSetupFixture` |
 | 1.4 | `NetBoxAuthClient` (token provisioning) — design with software-design-principles skill | TODO | `Authorization: Token <value>` scheme |
@@ -96,8 +96,8 @@ until this tracker and the specs in this folder are reviewed.
 | Date | Decision | Made By |
 | --- | --- | --- |
 | 2026-09-27 | Reuse existing 3 projects instead of new `NetBox.*.Tests` projects | Confirmed by user |
-| 2026-09-27 | Remove CPF assets, but extract good patterns into instructions first, then re-evaluate those instructions for dangling references | Confirmed by user |
+| 2026-09-27 | Remove legacy application assets after extracting reusable patterns and checking instructions for dangling references | Confirmed by user |
 | 2026-09-27 | Specs stored under `docs/netbox-automation/` | Confirmed by user |
 | 2026-09-27 | New NetBox-specific auth flow, not reusing MSAL `BootstrapSession`; designed using the software-design-principles skill (separate provisioning/session/authenticator collaborators) | Confirmed by user |
-| 2026-09-27 | Secrets via `CsharpTestAutomation.Tests/appsettings.local.json`, reusing the file already used for CPF | Confirmed by user |
+| 2026-09-27 | Secrets via the existing ignored `CsharpTestAutomation.Tests/appsettings.local.json` file | Confirmed by user |
 | 2026-09-27 | Plan 5 UI tests total (Site create/update/delete, Device create, Prefix create) instead of the source attachment's single-flow recommendation | Confirmed by user (requested "at least 3-5") |

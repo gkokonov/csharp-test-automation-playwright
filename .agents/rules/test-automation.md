@@ -18,11 +18,11 @@ that exercise the application under test. Targets `net10.0` with
 - `API/DTOs/<Resource>/`: Request/response DTOs, one sub-folder per resource;
   namespace `CsharpTestAutomation.Tests.Api.Dtos.<Resource>`.
 - `API/Factories/`: NBuilder-backed DTO builders, such as
-  `CreateCpfDtoBuilder : BaseBuilder<CreateCpfDto>`, in
+  `CreateResourceDtoBuilder : BaseBuilder<CreateResourceDto>`, in
   `CsharpTestAutomation.Tests.Api.Factories`.
-- `Database/CPF/Queries/`: Resource queries and connection-base behaviour.
-- `Database/CPF/DTO/`: DB-row records.
-- `TestData/API/`: Static/well-known test data (`CpfTestData`, `WellKnownUsers`).
+- `Database/<App>/Queries/`: Resource queries and connection-base behaviour.
+- `Database/<App>/DTO/`: DB-row records.
+- `TestData/API/`: Static or well-known test data shared by API fixtures.
 - `Tests/API/`, `Tests/UI/`: Test fixtures.
 - `UI/`: Page objects and components.
 
@@ -166,9 +166,9 @@ bootstrap waits until the MSAL access token is present, bounded by
 
 ## Test Data
 
-1. Query existing data first — reuse `Database/CPF/Queries`, or add a method
-   there following the folder's pattern. Reuse the row DTO in `Database/CPF/DTO`
-   for whole-object `BeEquivalentTo` verification.
+1. Query existing data first — reuse `Database/<App>/Queries`, or add a method
+  there following the folder's pattern. Reuse its row DTOs for whole-object
+  `BeEquivalentTo` verification.
 2. Found records are **read-only**. Never mutate, update, or delete data the test
    did not create.
 3. For API tests whose scenario requires seeded environment data, use
@@ -183,9 +183,8 @@ bootstrap waits until the MSAL access token is present, bounded by
 5. Never open a connection or embed a connection string in a test. Use the
    existing query base and the shared `PostgreSqlConnectionPool`.
 6. Build request payloads with the DTO builders in `API/Factories/`
-   (`CreateCpfDtoBuilder : BaseBuilder<CreateCpfDto>`) rather than constructing
-   DTOs inline. Static and well-known values live in `TestData/API/`
-   (`CpfTestData`, `WellKnownUsers`).
+  (`CreateResourceDtoBuilder : BaseBuilder<CreateResourceDto>`) rather than
+  constructing DTOs inline. Keep shared static values in `TestData/API/`.
 
 ## Definition of Done
 

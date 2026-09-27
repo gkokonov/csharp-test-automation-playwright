@@ -28,7 +28,7 @@ public class ExampleUiTests : UiTestBase
     [Ignore("Example template only: placeholder credentials and a placeholder sign-in URL. Enable once a real environment and landing page object are wired.")]
     [AllureStory("User signs in through the Microsoft Entra ID login page")]
     [AllureSeverity(SeverityLevel.critical)]
-    [AllureOwner("CPF QA")]
+    [AllureOwner("Automation Team")]
     [AllureDescription("End-to-end UI workflow: open the login page, enter the account, handle the federated (secondary) login form, and verify the login page is dismissed after a successful sign-in.")]
     public async Task SignIn_WithValidAccount_DismissesLoginPage()
     {

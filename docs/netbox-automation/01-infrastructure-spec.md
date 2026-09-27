@@ -1,18 +1,18 @@
 # 01 — Infrastructure Spec
 
-## Phase 0 — Preserve Patterns, Then Remove Obsolete CPF Assets
+## Phase 0 — Preserve Patterns, Then Remove Obsolete Application Assets
 
-The CPF (cpg) application no longer exists. Its code is dead, but three
-harness instruction files currently use CPF classes as their **worked
-examples** and must not be left pointing at deleted files:
+The prior application no longer exists. Its code is obsolete, but three
+harness instruction files currently use application-specific classes as their
+**worked examples** and must not be left pointing at deleted files:
 
-- `docs/API_TESTING_ARCHITECTURE.md` — references `CpfAppApiClient`, `GetCpfsTests.cs`, `CpfListItemDto`/`CpfDetailDto`/`CreateCpfDto`, `CreateCpfDtoBuilder`, `RequireDbData<Guid>` example using `CpfQueries.SelectAllCpfs()`.
-- `docs/UI_TESTING_ARCHITECTURE.md` — references `[AllureOwner("CPF QA")]` in its example fixture.
-- `.agents/rules/test-automation.md` — references `Database/CPF/Queries`, `Database/CPF/DTO`, `CpfTestData`, `WellKnownUsers`, `CreateCpfDtoBuilder`.
+- `docs/API_TESTING_ARCHITECTURE.md` — used application-specific client, test, DTO, builder, and database query names.
+- `docs/UI_TESTING_ARCHITECTURE.md` — used an application-specific Allure owner in its example fixture.
+- `.agents/rules/test-automation.md` — used application-specific query, row DTO, test-data, and builder names.
 
 ### 0.a — Extract good patterns before deleting code
 
-For each instruction file above, replace the CPF-specific worked example with
+For each instruction file above, replace the application-specific worked example with
 a generic/anonymized illustration that does not name a real file (do **not**
 wait for a NetBox equivalent to exist — that would make Phase 0 depend on
 Phase 1/2 completing first, which defeats the point of a cleanup phase that
@@ -20,7 +20,7 @@ gates the rest of the work). Once the first NetBox client/test lands later,
 revisit the instruction file and swap the generic illustration for a concrete
 NetBox example if that improves clarity — track that as a follow-up note in
 `TRACKER.md`, not as a Phase 0 blocker. Patterns worth explicitly preserving
-because they are good, reusable conventions independent of CPF:
+because they are good, reusable conventions independent of the prior application:
 
 - Factory-owned, disposable typed API client shape (`IRestClientFactory` injected, owns `IRestClient`, `IDisposable`).
 - DTO folder-per-resource layout and the `{Resource}ListItemDto`/`{Resource}DetailDto`/`Create{Resource}Dto` naming table.
@@ -28,22 +28,19 @@ because they are good, reusable conventions independent of CPF:
 - `RequireDbData<T>` usage for seeded/read-only environment data.
 - `Database/<App>/Queries` + `Database/<App>/DTO` folder split with SQL-alias-to-C#-member convention.
 
-### 0.b — Remove obsolete CPF code
+### 0.b — Remove obsolete application code
 
-- `CsharpTestAutomation.Tests/Tests/API/CreateCpfTests.cs`, `GetCpfByIdTests.cs`, `GetCpfsTests.cs`
-- `CsharpTestAutomation.Tests/API/Clients/CpfAppApiClient.cs` (and any other CPF-named client)
-- `CsharpTestAutomation.Tests/API/DTOs/Cpfs/**`, other CPF-only DTO folders (`Outcomes`, `Risks` if CPF-only)
-- `CsharpTestAutomation.Tests/API/Factories/CreateCpfDtoBuilder.cs` and related builders
-- `CsharpTestAutomation.Tests/Database/CPF/**` (queries + row DTOs)
-- `CsharpTestAutomation.Tests/TestData/API/CpfTestData.cs` (and `WellKnownUsers` if CPF-only — verify it is not reused by framework self-tests first)
-- CPF-specific page objects/components under `CsharpTestAutomation.Tests/UI/Pages` and `UI/Components`
-- CPF entries in `appsettings.json` (`Api.Services.cpfappqa`, `UI.ApplicationUrl`/`UI.Authentication`, `DbSettings`) and `appsettings.local.json`
+- Application-specific API fixtures, typed clients, DTOs, and DTO builders
+- Application-specific database queries and row DTOs
+- Application-specific test data not reused by framework self-tests
+- Application-specific page objects/components and tests that depend on the retired application
+- Application URL, authentication users, database credentials, and API service entries in `appsettings.json` and `appsettings.local.json`
 
-**Keep**: `ApiTestBase`, `TestBase`, `UiTestBase`, `TestContainer`, `GlobalSetupFixture`, `PostgreSqlConnectionPool`, `ExtendedConfiguration` shape (fields get repurposed for NetBox, not deleted), the `ExampleUiTests` template, and anything in `CsharpTestAutomation.Framework` (framework has no CPF-specific code per its own layering rule).
+**Keep**: `ApiTestBase`, `TestBase`, `UiTestBase`, `TestContainer`, `GlobalSetupFixture`, `PostgreSqlConnectionPool`, `ExtendedConfiguration` shape (fields get repurposed for NetBox, not deleted), the `ExampleUiTests` template, and anything in `CsharpTestAutomation.Framework` (the framework has no application-specific code per its own layering rule).
 
 ### 0.c — Re-evaluate instructions after deletion
 
-After deletion, re-read `docs/API_TESTING_ARCHITECTURE.md`, `docs/UI_TESTING_ARCHITECTURE.md`, and `.agents/rules/test-automation.md` end-to-end and confirm every file/class/path they cite still exists. `grep_search` for `Cpf|cpg` across the whole repo (not just `CsharpTestAutomation.Tests`) before considering this phase done — do not rely on the lists above being exhaustive.
+After deletion, re-read `docs/API_TESTING_ARCHITECTURE.md`, `docs/UI_TESTING_ARCHITECTURE.md`, and `.agents/rules/test-automation.md` end-to-end and confirm every file/class/path they cite still exists. Search the whole repository for retired application identifiers (not just in `CsharpTestAutomation.Tests`) before considering this phase done — do not rely on the lists above being exhaustive.
 
 ## Configuration
 
@@ -60,7 +57,7 @@ NetBox
 
 Reuse the existing `DBConfigurationDTO` shape for Postgres (`DbSettings.Database[]` with `DbName=netbox`, `Username=netbox`, `Password`). No `PostgreSql.EnableSslMode` needed for local Docker Postgres (set `false`).
 
-Add `NetBoxSettings` to `ExtendedConfiguration`. **Resolved**: fold NetBox UI credentials (`Username`/`Password`) into the same `NetBox` config block used for API access — do not keep a separate CPF-shaped `Ui.Authentication.Users[]` list once Phase 0 removes CPF. Repurpose `UiConfigurationDTO` down to only what NetBox's single-admin-user flow needs (e.g. `StorageStateDirectory`, generalized away from its current CPF-only shape); `DbSettings` is already generic and is reused as-is. This avoids the CPF-shaped-and-NetBox-shaped-side-by-side situation the earlier draft of this spec left open.
+Add `NetBoxSettings` to `ExtendedConfiguration`. **Resolved**: fold NetBox UI credentials (`Username`/`Password`) into the same `NetBox` config block used for API access — do not keep a separate provider-specific `Ui.Authentication.Users[]` list. Repurpose `UiConfigurationDTO` down to only what NetBox's single-admin-user flow needs (e.g. `StorageStateDirectory`); `DbSettings` is already generic and is reused as-is. This avoids keeping two parallel application-specific configuration shapes.
 
 `appsettings.json` (checked in, secret fields use a placeholder value):
 
@@ -110,9 +107,9 @@ Add `NetBoxSettings` to `ExtendedConfiguration`. **Resolved**: fold NetBox UI cr
 }
 ```
 
-This follows the convention already established for the (now-removed) CPF settings: `appsettings.json` and `appsettings.local.json` carry an **identical key set**, so a developer only ever edits `appsettings.local.json` and never has to guess which keys it's missing. The only difference between the two files is that secret-bearing values (`Password`, tokens) are `PLACEHOLDER_PASSWORD`/absent in the committed file and real in the local one; non-secret values (URLs, usernames, ports, feature toggles) are identical in both. Do not add a key to only one of the two files.
+`appsettings.json` and `appsettings.local.json` carry an **identical key set**, so a developer only ever edits `appsettings.local.json` and never has to guess which keys it's missing. The only difference between the two files is that secret-bearing values (`Password`, tokens) are `PLACEHOLDER_PASSWORD`/absent in the committed file and real in the local one; non-secret values (URLs, usernames, ports, feature toggles) are identical in both. Do not add a key to only one of the two files.
 
-Local secrets go in `CsharpTestAutomation.Tests/appsettings.local.json` — the same gitignored file already used for CPF secrets, now repurposed for NetBox. CI overrides both through `NETBOX_*` environment variables per the source instructions; confirm the repo's existing configuration binder (`AppConfiguration<T>`) supports environment-variable override — verify against `CoreConfiguration`/`AppConfiguration` before implementation, do not assume.
+Local secrets go in `CsharpTestAutomation.Tests/appsettings.local.json`, a gitignored file repurposed for NetBox. CI overrides both through `NETBOX_*` environment variables per the source instructions; confirm the repo's existing configuration binder (`AppConfiguration<T>`) supports environment-variable override — verify against `CoreConfiguration`/`AppConfiguration` before implementation, do not assume.
 
 **Fail fast**: add a startup/`OneTimeSetUp` health check (NetBox root, `/api/`, and Postgres reachability) consistent with "the test framework should fail fast if required dependencies are unavailable." Model this after `GlobalSetupFixture`.
 
@@ -199,7 +196,7 @@ Defaults must satisfy the attachment's naming convention `auto-{feature}-{guid}`
 
 ## Database Layer
 
-New `Database/NetBox/Queries/` (mirrors `Database/CPF/Queries/` pattern) with **read-only** repositories:
+New `Database/NetBox/Queries/` with **read-only** repositories, following the prior resource-query pattern:
 
 ```text
 SitesDatabaseRepository   → SELECT id, name, slug, status FROM dcim_site WHERE slug = @Slug
@@ -255,4 +252,4 @@ Register cleanup via `ScenarioCleanupActions.AddCleanUpAction(Func<Task>)` immed
 ## Open Items for Implementation Time (not blocking spec approval)
 
 1. Confirm whether NetBox's PATCH endpoints require `Content-Type: application/json` explicitly (RestSharp default should suffice — verify against a real call, not assumption).
-2. Confirm real DTO field casing from `/api/schema/` (NetBox's REST API uses `snake_case` JSON field names) before finalizing `[JsonPropertyName]` values — do not assume camelCase like the CPF app. This gates tracker task 1.9 (see the DTOs section above).
+2. Confirm real DTO field casing from `/api/schema/` (NetBox's REST API uses `snake_case` JSON field names) before finalizing `[JsonPropertyName]` values — do not assume camelCase. This gates tracker task 1.9 (see the DTOs section above).
