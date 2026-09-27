@@ -175,7 +175,10 @@ public static class PlaywrightBrowserFactory
     }
 
     /// <summary>
-    /// Disposes all browsers and Playwright instance
+    /// Disposes every browser, context, and the shared Playwright instance.
+    /// This is process-wide. Call it only from an assembly-level teardown, or from a
+    /// fixture that is <c>[NonParallelizable]</c> and owns the Playwright process.
+    /// A parallel fixture must not call this method.
     /// </summary>
     public static async Task DisposeAllAsync()
     {
@@ -268,26 +271,11 @@ public static class PlaywrightBrowserFactory
 
     private static async Task<IBrowserContext> CreateBrowserContextAsync(IBrowser browser, string? storageState, HttpCredentials? httpCredentials = null)
     {
-        var contextOptions = new BrowserNewContextOptions {
-            ViewportSize = s_configuration.ViewportSize,
-            IgnoreHTTPSErrors = true,
-            RecordVideoDir = s_configuration.RecordVideoEnabled ? s_configuration.RecordDir : null,
-            BypassCSP = s_configuration.BypassCSP,
-            StorageState = storageState,
-            HttpCredentials = httpCredentials
-        };
-
-        var deviceName = s_configuration.PlaywrightDeviceName;
-
-        if (!string.IsNullOrWhiteSpace(deviceName))
-        {
-            contextOptions = s_playwrightInstance!.Devices[deviceName];
-            contextOptions.IgnoreHTTPSErrors = true;
-            if (s_configuration.RecordVideoEnabled)
-            {
-                contextOptions.RecordVideoDir = s_configuration.RecordDir;
-            }
-        }
+        BrowserNewContextOptions contextOptions = CreateContextOptions(
+            s_configuration,
+            ResolveDeviceOptions(s_configuration.PlaywrightDeviceName),
+            storageState,
+            httpCredentials);
 
         IBrowserContext context = await browser.NewContextAsync(contextOptions).ConfigureAwait(false);
 
@@ -322,7 +310,51 @@ public static class PlaywrightBrowserFactory
     }
 
     /// <summary>
+    /// Builds context options for one test. Device fields are copied onto a new object so the
+    /// cached Playwright device descriptor is not mutated. Storage state, HTTP credentials, CSP
+    /// bypass, and video settings still apply when a device name is set.
+    /// </summary>
+    internal static BrowserNewContextOptions CreateContextOptions(
+        CoreConfiguration configuration,
+        BrowserNewContextOptions? deviceOptions,
+        string? storageState,
+        HttpCredentials? httpCredentials)
+    {
+        var contextOptions = new BrowserNewContextOptions {
+            ViewportSize = deviceOptions?.ViewportSize ?? configuration.ViewportSize,
+            UserAgent = deviceOptions?.UserAgent,
+            DeviceScaleFactor = deviceOptions?.DeviceScaleFactor,
+            IsMobile = deviceOptions?.IsMobile,
+            HasTouch = deviceOptions?.HasTouch,
+            ScreenSize = deviceOptions?.ScreenSize,
+            IgnoreHTTPSErrors = true,
+            RecordVideoDir = configuration.RecordVideoEnabled ? configuration.RecordDir : null,
+            BypassCSP = configuration.BypassCSP,
+            StorageState = storageState,
+            HttpCredentials = httpCredentials
+        };
+
+        return contextOptions;
+    }
+
+    private static BrowserNewContextOptions? ResolveDeviceOptions(string? deviceName)
+    {
+        if (string.IsNullOrWhiteSpace(deviceName))
+        {
+            return null;
+        }
+
+        if (s_playwrightInstance is null || !s_playwrightInstance.Devices.TryGetValue(deviceName, out BrowserNewContextOptions? deviceOptions))
+        {
+            throw new InvalidOperationException($"Playwright device '{deviceName}' is not defined.");
+        }
+
+        return deviceOptions;
+    }
+
+    /// <summary>
     /// Gets the ID of the current test using TestIdentifier
     /// </summary>
     private static string GetCurrentTestId() => TestIdentifier.GetTestId();
 }
+

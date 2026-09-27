@@ -68,14 +68,14 @@ public static class DapperActions
     /// <param name="dbConnection">The connection to query on.</param>
     /// <param name="sqlQuery">The SQL to execute for this query.</param>
     /// <param name="parameters">The parameters to pass, if any.</param>
-    /// <param name="timeoutInSeconds">Command timeout in seconds. Defaults to <see cref="CoreConfiguration.DbExecuteTimeoutSeconds"/> when null.</param>
+    /// <param name="timeoutInSeconds">Command timeout in seconds. Defaults to <see cref="CoreConfiguration.DbQueryTimeoutSeconds"/> when null.</param>
     /// <param name="commandType">The type of command to execute.</param>
     /// <returns>Multiple entities as a list based on the parameter T that is passed.</returns>
     public static List<T> QueryAll<T>(IDbConnection dbConnection, string sqlQuery, DynamicParameters? parameters = null,
         int? timeoutInSeconds = null, CommandType commandType = CommandType.Text)
     {
         return [.. dbConnection.Query<T>(sqlQuery, parameters ?? new DynamicParameters(),
-            commandTimeout: timeoutInSeconds ?? s_config.DbExecuteTimeoutSeconds,
+            commandTimeout: timeoutInSeconds ?? s_config.DbQueryTimeoutSeconds,
             commandType: commandType)];
     }
 

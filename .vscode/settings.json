@@ -54,6 +54,8 @@
       "file": ".agents/instructions/commit-instructions.md"
     }
   ],
+  "chat.tools.compressOutput.enabled": true,
+  "chat.tools.terminal.outputCompaction": true,
   // ========== TERMINAL AUTO-APPROVE ==========
   // Every entry below is either a fixed command name with no sub-execution, or
   // an anchored regex. Bare operators are NOT auto-approvable: "&" is the

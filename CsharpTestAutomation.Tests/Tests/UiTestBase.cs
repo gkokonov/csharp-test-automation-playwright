@@ -5,6 +5,7 @@ using CsharpTestAutomation.Framework.UI;
 using CsharpTestAutomation.Tests.Authentication;
 using CsharpTestAutomation.Tests.UI.Pages;
 using Microsoft.Playwright;
+using NLog;
 
 namespace CsharpTestAutomation.Tests.Tests;
 
@@ -14,6 +15,8 @@ namespace CsharpTestAutomation.Tests.Tests;
 [Category("UI")]
 public abstract class UiTestBase : TestBase
 {
+    private static readonly Logger s_log = LogManager.GetCurrentClassLogger();
+
     private IBrowserContext? _context;
     private IPage? _page;
 
@@ -57,8 +60,24 @@ public abstract class UiTestBase : TestBase
         }
         finally
         {
-            try { await PlaywrightBrowserFactory.DisposeContextAsync(); } catch { /* swallow */ }
-            try { await PlaywrightBrowserFactory.DisposeBrowserAsync(); } catch { /* swallow */ }
+            // Keep the original test result. A disposal failure must not replace it.
+            try
+            {
+                await PlaywrightBrowserFactory.DisposeContextAsync();
+            }
+            catch (Exception ex)
+            {
+                s_log.Error(ex, "Failed to dispose the browser context.");
+            }
+
+            try
+            {
+                await PlaywrightBrowserFactory.DisposeBrowserAsync();
+            }
+            catch (Exception ex)
+            {
+                s_log.Error(ex, "Failed to dispose the browser.");
+            }
 
             _context = null;
             _page = null;

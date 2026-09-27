@@ -48,4 +48,23 @@ names, connection strings, or an application `appsettings.json`. These belong in
 
 Mirrors namespaces (`dotnet_style_namespace_match_folder`): `Common/`, `DB/`,
 `UI/`, and `API/` with `Clients/`, `Authentication/`, `Interceptors/`,
-`Logging/`, `Redaction/`, `Configuration/`, `Validation/`.
+`Logging/`, `Redaction/`, and `Configuration/`. There is no `API/Validation/`
+folder. Service and logging validation lives on the settings types.
+
+## Browser Lifecycle
+
+`PlaywrightBrowserFactory` holds process-wide Playwright state, keyed by test id.
+
+- Launch one browser per test. Do not share a page or context across tests.
+- `DisposeAllAsync` closes every browser and the shared Playwright instance. Call
+  it only from an assembly-level teardown, or from a `[NonParallelizable]` fixture
+  that owns that process. A parallel fixture must not call it.
+- Device emulation copies device fields onto a new context-options object. Do not
+  replace the options with `Devices[name]` and do not mutate that cached
+  descriptor. Storage state, HTTP credentials, `BypassCSP`, and video settings
+  still apply when `PlaywrightDeviceName` is set.
+
+## Database Timeouts
+
+Read timeouts use `DbQueryTimeoutSeconds`. Write timeouts use
+`DbExecuteTimeoutSeconds`. Do not use the execute timeout for a read.

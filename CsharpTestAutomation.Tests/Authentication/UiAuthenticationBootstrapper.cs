@@ -97,9 +97,15 @@ public static class UiAuthenticationBootstrapper
 
         // Give MSAL time to finish writing the access token to sessionStorage.
         await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-        await Task.Delay(auth.PostLoginDelayMs);
 
-        var token = await page.EvaluateAsync<string?>(TokenScanScript);
+        // Wait until MSAL writes the access token. A fixed delay fails when login is slow and
+        // wastes time when it is fast. LoginTimeoutInMs bounds the wait. Playwright 1.63
+        // WaitForFunctionAsync is non-generic and returns a handle to the truthy value.
+        IJSHandle tokenHandle = await page.WaitForFunctionAsync(
+            TokenScanScript,
+            null,
+            new PageWaitForFunctionOptions { Timeout = auth.LoginTimeoutInMs });
+        var token = await tokenHandle.JsonValueAsync<string>();
         if (string.IsNullOrEmpty(token))
         {
             throw new InvalidOperationException($"Failed to extract MSAL access token for user '{user.Key}' after login.");
@@ -115,9 +121,10 @@ public static class UiAuthenticationBootstrapper
         s_log.Debug($"Saved storage state for user '{user.Key}' to {storageStatePath}.");
 
         await page.CloseAsync();
-        await context.CloseAsync();
+        // PlaywrightBrowserFactory owns the context. The next user replaces it, and
+        // DisposeContextAsync closes the last one. Do not close it here.
 
-        return new BootstrapAuthState(token!, storageStateJson, sessionStorageJson);
+        return new BootstrapAuthState(token, storageStateJson, sessionStorageJson);
     }
 
     private static string SanitizeKey(string key)

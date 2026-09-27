@@ -141,7 +141,9 @@ payloads. Use the minimal `ApiAssertions` extensions only for transport status
 ## UI Locators and Assertions
 
 UI tests use Playwright web-first `Expect(...)`; never manual sleeps
-(`Thread.Sleep`, `Task.Delay`, or `Page.WaitForTimeoutAsync`).
+(`Thread.Sleep`, `Task.Delay`, or `Page.WaitForTimeoutAsync`). Authentication
+bootstrap waits until the MSAL access token is present, bounded by
+`LoginTimeoutInMs`. Do not add a fixed post-login delay.
 
 - **Locator Priority Hierarchy**:
     1. `GetByRole(AriaRole.<Role>, new() { Name = "..." })` — primary choice for
@@ -172,6 +174,8 @@ UI tests use Playwright web-first `Expect(...)`; never manual sleeps
 3. For API tests whose scenario requires seeded environment data, use
   `ApiTestBase.RequireDbData<T>` for nullable or empty results. Missing required
   seed data makes the test inconclusive; do not create unrelated fallback data.
+  Do not use `RequireDbData` for a row the test just created. A missing created
+  row is a failed assertion, not missing seed data.
 4. When the scenario owns its setup (for example, an API create/write test),
   create the required record through the API or a DB helper and register
   cleanup with `ScenarioCleanupActions` immediately after creation. Never

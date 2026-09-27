@@ -30,6 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="CsharpTestAutomation.Framework.Test" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 

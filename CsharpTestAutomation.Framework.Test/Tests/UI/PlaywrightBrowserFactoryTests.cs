@@ -8,7 +8,10 @@ using Microsoft.Playwright;
 
 namespace CsharpTestAutomation.Framework.Test.Tests.UI;
 
+// This fixture calls DisposeAllAsync, which closes every browser and the shared Playwright
+// instance. It must not run beside another fixture.
 [TestFixture]
+[NonParallelizable]
 [AllureNUnit]
 [AllureFeature("PlaywrightBrowserFactory")]
 [AllureSuite("Framework Tests")]

@@ -12,14 +12,6 @@ namespace CsharpTestAutomation.Tests.Integrations.Microsoft;
 /// </summary>
 public static class EntraIdTokenService
 {
-    private static readonly ExtendedConfiguration s_configuration = AppConfiguration<ExtendedConfiguration>.Instance.Settings;
-
-    private static readonly EntraIdConfigurationDTO s_entraIdSettings = s_configuration.EntraIdSettings
-        ?? throw new InvalidOperationException(
-            "EntraIdSettings configuration section is missing. Configure 'EntraIdSettings' in appsettings.");
-
-    private static readonly string s_authority = $"https://login.microsoftonline.com/{s_entraIdSettings.EntraIdTenantId}";
-
     /// <summary>
     /// In-memory token cache keyed by logical scope name (e.g. <see cref="TokenScope.InvitationApi"/>).
     /// </summary>
@@ -63,17 +55,24 @@ public static class EntraIdTokenService
 
     private static async Task<string> AcquireTokenAsync(string scopeKey)
     {
-        if (!s_entraIdSettings.EntraIdScopes.TryGetValue(scopeKey, out var scope))
+        // Load settings on use. A static initializer would fail type load when this unused
+        // service is first touched and EntraIdSettings is absent.
+        EntraIdConfigurationDTO settings = AppConfiguration<ExtendedConfiguration>.Instance.Settings.EntraIdSettings
+            ?? throw new InvalidOperationException(
+                "EntraIdSettings configuration section is missing. Configure 'EntraIdSettings' in appsettings.");
+
+        if (!settings.EntraIdScopes.TryGetValue(scopeKey, out var scope))
         {
             throw new KeyNotFoundException(
                 $"Scope key '{scopeKey}' was not found in EntraIdSettings.EntraIdScopes. " +
-                $"Available keys: {string.Join(", ", s_entraIdSettings.EntraIdScopes.Keys)}");
+                $"Available keys: {string.Join(", ", settings.EntraIdScopes.Keys)}");
         }
 
+        var authority = $"https://login.microsoftonline.com/{settings.EntraIdTenantId}";
         IConfidentialClientApplication app = ConfidentialClientApplicationBuilder
-            .Create(s_entraIdSettings.EntraIdClientId)
-            .WithClientSecret(s_entraIdSettings.EntraIdClientSecret)
-            .WithAuthority(s_authority)
+            .Create(settings.EntraIdClientId)
+            .WithClientSecret(settings.EntraIdClientSecret)
+            .WithAuthority(authority)
             .Build();
 
         AuthenticationResult result = await app

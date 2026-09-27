@@ -50,10 +50,10 @@ public class CreateCpfTests : ApiTestBase
         Guid createdId = response.Data;
         ScenarioCleanupActions.AddCleanUpAction(async () => await client.DeleteCpfAndExpectNoContentAsync(createdId));
 
-        // Verify in DB
-        CpfRow created = RequireDbData<CpfRow>(
-            CpfQueries.SelectCpfById(createdId),
-            "The created CPF was not found in the database.");
+        // A missing created row is a failed persist, not missing seed data.
+        CpfRow? persisted = CpfQueries.SelectCpfById(createdId);
+        persisted.Should().NotBeNull("the created CPF must be readable from the database");
+        CpfRow created = persisted!;
         created.PCode.Should().NotBeNullOrWhiteSpace();
 
         CpfRow expected = new(
@@ -76,9 +76,14 @@ public class CreateCpfTests : ApiTestBase
     private static (string CountryCode, string? CountryName) ResolveCountry()
     {
         List<CpfRow> cpfs = CpfQueries.SelectAllCpfs();
-        CpfRow row = string.IsNullOrWhiteSpace(CountryCode)
-            ? cpfs[0]
-            : cpfs.First(r => r.CountryCode == CountryCode);
+        if (!string.IsNullOrWhiteSpace(CountryCode))
+        {
+            CpfRow pinned = cpfs.FirstOrDefault(r => r.CountryCode == CountryCode)
+                ?? throw new InvalidOperationException($"No CPF row has country code '{CountryCode}'.");
+            return (pinned.CountryCode, pinned.CountryName);
+        }
+
+        CpfRow row = RequireDbData(cpfs, "No CPF records exist to resolve a country code.");
         return (row.CountryCode, row.CountryName);
     }
 

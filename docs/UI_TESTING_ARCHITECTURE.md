@@ -27,7 +27,7 @@ flowchart LR
     PBF -. if enabled .-> Trace[Trace .zip / Video]
 ```
 
-`Test → UiTestBase.GetPage<T>() → Page Object → IPage → Browser`, with `PlaywrightBrowserFactory` owning the per-test browser/context/page (thread-safe for parallel runs) and `UiTestBase` capturing a screenshot and browser logs on failure. Tests obtain a page via `GetPage<MSLoginPage>()`, call intent-revealing actions, enforce readiness with `WaitUntilLoadedAsync()`, and assert with `Expect(...)` / AwesomeAssertions.
+`Test → UiTestBase.GetPage<T>() → Page Object → IPage → Browser`, with `PlaywrightBrowserFactory` owning the per-test browser/context/page (keyed by test id) and `UiTestBase` capturing a screenshot and browser logs on failure. `DisposeAllAsync` is process-wide and must not run while another fixture still needs Playwright. Tests obtain a page via `GetPage<MSLoginPage>()`, call intent-revealing actions, enforce readiness with `WaitUntilLoadedAsync()`, and assert with `Expect(...)` / AwesomeAssertions.
 
 ## 2. Component Table
 
@@ -144,7 +144,7 @@ UI settings are bound from `CoreConfiguration` (extended by `ExtendedConfigurati
 | `BrowserType` | `string` | `"CHROMIUM"` | One of `CHROMIUM`, `CHROME`, `MSEDGE`, `FIREFOX`, `SAFARI`. |
 | `HeadlessMode` | `bool` | `true` | Run the browser headless. |
 | `ViewportSize` | `ViewportSize` | `1280x720` | Default viewport (ignored when `PlaywrightDeviceName` is set). |
-| `PlaywrightDeviceName` | `string` | `""` | Emulate a Playwright device profile when non-empty. |
+| `PlaywrightDeviceName` | `string` | `""` | Copy that device's viewport, user agent, and touch flags onto a new context. Storage state, HTTP credentials, and `BypassCSP` still apply. The cached device descriptor is not mutated. |
 | `PlaywrightSlowMotion` | `float` | `0` | Slow down operations by N ms (debugging). |
 | `PlaywrightArgs` | `string` | `null` | Extra browser launch args, space-separated (e.g. `--disable-gpu --no-sandbox`). |
 | `BypassCSP` | `bool` | `false` | Bypass Content-Security-Policy in the context. |
@@ -245,7 +245,7 @@ Natural places to grow the layer without changing its shape:
 
 - **More pages/components** — add `BaseUIView` / `BaseUIComponent` subclasses in `CsharpTestAutomation.Tests/UI`; no framework change needed.
 - **Authenticated sessions** — capture a `storageState` and pass it to `InitializePlaywrightEnvironmentAsync(storageState)` to skip repeated logins.
-- **New browsers/devices** — driven entirely by `BrowserType` / `PlaywrightDeviceName` configuration.
+- **New browsers/devices** — driven by `BrowserType` / `PlaywrightDeviceName`. Device emulation copies device fields. It does not replace storage state or HTTP credentials.
 - **Per-environment timeouts** — override the `*TimeoutInMs` keys in `appsettings.{Environment}.json`.
 
 > For the API testing layer, see [`API_TESTING_ARCHITECTURE.md`](API_TESTING_ARCHITECTURE.md).
@@ -256,5 +256,6 @@ Newest first. Bump the version and add a row whenever this document changes so f
 
 | Version | Date | Summary |
 | --- | --- | --- |
+| 1.2 | 2026-09-27 | Device emulation keeps storage state and credentials. `DisposeAllAsync` is process-wide. |
 | 1.1 | 2026-09-26 | Repair rule links and use the configured Playwright CLI workflow. |
 | 1.0 | 2026-09-25 | Initial version. |

@@ -4,14 +4,18 @@ using Microsoft.Extensions.Configuration;
 namespace CsharpTestAutomation.Framework.Common;
 
 /// <summary>
-/// Generic singleton configuration manager that loads and exposes strongly-typed settings
-/// from <c>appsettings.json</c> or an environment-specific override
-/// (<c>appsettings.{Environment}.json</c>), with optional environment variable merging.
+/// Generic singleton configuration manager that loads and exposes strongly-typed settings.
 /// <para>
-/// Use <see cref="Instance"/> for the default singleton backed by the standard
-/// <c>appsettings.json</c> / <c>CURRENT_ENV</c> environment variable convention.
-/// Use <see cref="InstanceWithConfigName"/> when a named configuration file is required,
-/// e.g. for isolated service configurations or parallel test fixture setups.
+/// When the <c>Environment</c> variable is set, only <c>appsettings.{Environment}.json</c> is
+/// loaded. That file replaces <c>appsettings.json</c>; it is not merged over it. Environment
+/// variables are applied only in that mode. When <c>Environment</c> is not set,
+/// <c>appsettings.json</c> is loaded and optional <c>appsettings.local.json</c> overrides it.
+/// Environment variables are not applied in the local mode.
+/// </para>
+/// <para>
+/// Use <see cref="Instance"/> for that default singleton. Use
+/// <see cref="InstanceWithConfigName"/> when a named configuration file is required, for
+/// example for isolated service configurations or parallel test fixture setups.
 /// </para>
 /// </summary>
 /// <typeparam name="TSettingsModel">

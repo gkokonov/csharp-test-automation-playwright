@@ -1,6 +1,6 @@
 // Parallel Execution
-// Fixtures run in parallel to exercise the framework's per-test isolation (per-instance RestSharp
-// clients, AsyncLocal timing in ApiLoggingInterceptor). Level is kept moderate because these tests
-// call an external service; raise or lower it per environment/rate-limit constraints.
+// Fixtures are allowed to run in parallel, but the level is 1. Application tests share one
+// bootstrapped session and one QA database. Do not raise the level until test data is unique
+// per test.
 [assembly: Parallelizable(ParallelScope.Fixtures)]
 [assembly: LevelOfParallelism(1)]

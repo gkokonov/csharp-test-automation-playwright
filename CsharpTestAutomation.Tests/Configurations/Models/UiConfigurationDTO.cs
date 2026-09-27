@@ -13,6 +13,12 @@ public class UiBootstrapAuthConfigurationDTO
 
     public int LoginTimeoutInMs { get; set; } = 30_000;
 
+    /// <summary>
+    /// Retained so older configuration files still bind. Bootstrap no longer waits this many
+    /// milliseconds. It waits until the MSAL access token appears, up to
+    /// <see cref="LoginTimeoutInMs"/>.
+    /// </summary>
+    [Obsolete("Bootstrap waits for the MSAL access token. This delay is not used.")]
     public int PostLoginDelayMs { get; set; } = 5_000;
 
     public List<BootstrapUserDTO> Users { get; set; } = [];

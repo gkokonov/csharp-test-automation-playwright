@@ -198,7 +198,7 @@ public sealed class SecureApiClient(IRestClientFactory factory, IAuthenticator? 
 
 For services protected by **Microsoft Entra ID / MSAL**, `CsharpTestAutomation.Tests` acquires a real bearer token through an interactive UI login once per run and reuses it across API tests:
 
-1. `GlobalSetupFixture` (`[OneTimeSetUp]`) calls `UiAuthenticationBootstrapper.BootstrapAllAsync(...)`, which drives a Playwright browser through the federated login for each configured user, scans `sessionStorage` for the MSAL `AccessToken`, and stores the result (token + storage state) in the process-wide `BootstrapSession`.
+1. `GlobalSetupFixture` (`[OneTimeSetUp]`) calls `UiAuthenticationBootstrapper.BootstrapAllAsync(...)`, which drives a Playwright browser through the federated login for each configured user, waits until `sessionStorage` contains the MSAL `AccessToken` (bounded by `LoginTimeoutInMs`, not a fixed delay), and stores the result (token + storage state) in the process-wide `BootstrapSession`. The factory owns the browser context and closes it after capture.
 2. `ApiTestBase` (the base class for API fixtures) exposes `BootstrapAuthenticator => new JwtAuthenticator(BootstrapSession.Default.Token)` and builds the shared `RestClientFactory` from `CoreConfiguration.Api` in its setup.
 3. A typed client (e.g. `CpfAppApiClient` for the `cpfappqa` service) receives that authenticator via `new CpfAppApiClient(RestClientFactory, BootstrapAuthenticator)`, so every request carries the bootstrapped bearer token.
 
@@ -299,6 +299,6 @@ Newest first. Bump the version and add a row whenever this document changes so f
 
 | Version | Date | Summary |
 | --- | --- | --- |
+| 1.8 | 2026-09-27 | Bootstrap waits for the MSAL token. The factory owns the browser context. |
 | 1.7 | 2026-09-26 | Align test-data helper and examples with the implementation. |
 | 1.6 | 2026-09-26 | Secure API logging defaults and update configuration reference. |
-| 1.5 | 2026-09-25 | Initial version. |
