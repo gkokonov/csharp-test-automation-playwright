@@ -11,6 +11,12 @@ public class ExtendedConfiguration : CoreConfiguration
 
     #endregion Database
 
+    #region NetBox
+
+    public NetBoxConfigurationDTO NetBox { get; set; } = new();
+
+    #endregion NetBox
+
     #region Entra ID
 
     public EntraIdConfigurationDTO? EntraIdSettings { get; set; }

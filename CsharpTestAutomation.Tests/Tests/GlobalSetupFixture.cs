@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using CsharpTestAutomation.Framework.Common;
 using CsharpTestAutomation.Framework.Common.Extensions;
-using CsharpTestAutomation.Tests.Authentication;
+using CsharpTestAutomation.Framework.Common.Utilities;
 using CsharpTestAutomation.Tests.Configurations;
 using CsharpTestAutomation.Tests.Database;
 using Microsoft.Playwright;
@@ -22,8 +22,7 @@ public class GlobalSetupFixture
         s_log.Debug("Global one-time setup starting...");
 
         LogAppsettingsValues();
-
-        await BootstrapAuthenticationAsync();
+        await CheckDependenciesAsync();
 
         s_log.Debug("Global one-time setup complete.");
     }
@@ -47,21 +46,30 @@ public class GlobalSetupFixture
         await Task.CompletedTask;
     }
 
-    private static async Task BootstrapAuthenticationAsync()
+    private static async Task CheckDependenciesAsync()
     {
-        if (s_configuration.Ui is null)
+        if (string.IsNullOrWhiteSpace(s_configuration.NetBox.ApiToken)
+            && (string.IsNullOrWhiteSpace(s_configuration.NetBox.Username)
+                || string.IsNullOrWhiteSpace(s_configuration.NetBox.Password)))
         {
-            s_log.Debug("No UI configuration present; skipping authentication bootstrap.");
-            return;
+            throw new InvalidOperationException(
+                "Configure NetBox.ApiToken or both NetBox.Username and NetBox.Password.");
         }
+
+        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+        await DependencyAvailabilityChecker.EnsureAllAvailableAsync(httpClient,
+        [
+            ("NetBox UI", s_configuration.NetBox.BaseUrl),
+            ("NetBox API", s_configuration.NetBox.ApiBaseUrl)
+        ]);
 
         try
         {
-            await UiAuthenticationBootstrapper.BootstrapAllAsync(s_configuration.Ui);
+            PostgreSqlConnectionPool.Instance.OpenConnections();
         }
         catch (Exception ex)
         {
-            s_log.Error(ex, "UI authentication bootstrap failed.");
+            s_log.Error(ex, "PostgreSQL dependency check failed.");
             throw;
         }
     }

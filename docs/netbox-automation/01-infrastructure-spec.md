@@ -107,9 +107,9 @@ Add `NetBoxSettings` to `ExtendedConfiguration`. **Resolved**: fold NetBox UI cr
 }
 ```
 
-`appsettings.json` and `appsettings.local.json` carry an **identical key set**, so a developer only ever edits `appsettings.local.json` and never has to guess which keys it's missing. The only difference between the two files is that secret-bearing values (`Password`, tokens) are `PLACEHOLDER_PASSWORD`/absent in the committed file and real in the local one; non-secret values (URLs, usernames, ports, feature toggles) are identical in both. Do not add a key to only one of the two files.
+`appsettings.json` provides committed defaults. In local mode, `appsettings.local.json` is loaded after it and can override those values. Put local credentials and machine-specific settings in `appsettings.local.json`. Keep `NetBox.ApiBaseUrl` and `Api.Services.netbox.BaseUrl` aligned because setup checks and typed API clients read them separately.
 
-Local secrets go in `CsharpTestAutomation.Tests/appsettings.local.json`, a gitignored file repurposed for NetBox. CI overrides both through `NETBOX_*` environment variables per the source instructions; confirm the repo's existing configuration binder (`AppConfiguration<T>`) supports environment-variable override — verify against `CoreConfiguration`/`AppConfiguration` before implementation, do not assume.
+For local development, leave `Environment` unset and use `appsettings.local.json`; no NetBox-specific environment-variable overrides are supported. For environment-specific runs, `AppConfiguration` selects `appsettings.{Environment}.json` and applies the framework's standard environment-variable provider.
 
 **Fail fast**: add a startup/`OneTimeSetUp` health check (NetBox root, `/api/`, and Postgres reachability) consistent with "the test framework should fail fast if required dependencies are unavailable." Model this after `GlobalSetupFixture`.
 

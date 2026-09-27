@@ -63,22 +63,21 @@ All rules are enforced by the root `.editorconfig` — follow it and do not figh
 - Test classes are `<Subject>Tests`.
 - Test methods are `<Scenario>_<Condition>_<ExpectedResult>`.
 
-## 8. External Documentation
+## 8. External Documentation & Tooling
 
-| Question type | Tool | Examples | Do NOT use for |
-| --- | --- | --- | --- |
-| Third-party / OSS libraries | **Context7 MCP** | Dapper, Playwright, NLog, Polly, Bogus, NBuilder, Allure, NUnit, RestSharp; version-specific library syntax; dependency errors from those libraries | Microsoft/.NET platform behavior, live app checks, or repo-local code patterns already shown in this codebase |
-| First-party Microsoft or .NET surface area | **Microsoft Learn MCP** | .NET 10 or C# 14 language/BCL behavior, `Microsoft.Extensions.Configuration` binding, `FrameworkReference` or `Microsoft.AspNetCore.App` resolution, MSBuild or `.slnx`, analyzer or `.editorconfig` rule IDs, nullable behavior, Azure DevOps YAML/tasks | Third-party libraries |
-| Live application DOM or rendered runtime state | **Playwright CLI skill** | UI exploration, reproducing failures, accessibility snapshots, rendered state, locator validation, screenshots, traces | Do not use for library docs, repo-local source analysis |
-| Browser diagnostics | **Chrome DevTools MCP** | Network, console, JS errors, cookies/storage, rendering, performance, Lighthouse, memory | Routine UI navigation or locator discovery |
-| Local code, generic programming, or existing repo patterns | **No MCP by default** | Simple refactors, code review, local architecture, established repo patterns | Do not spend MCP lookups on questions the local codebase already answers |
+| Scope | Tool | Key Use Cases | Do NOT Use For |
+| :--- | :--- | :--- | :--- |
+| **File Search & Indexing** | **FFF MCP** | Locating files, pattern searching, directory trees, file discovery | Web search or non-file queries |
+| **Architecture & History** | **Codebase Memory MCP / Skill** | Stored architectural decisions, domain entities, project structure patterns | Fresh file searches (use FFF) or inline refactoring |
+| **Third-Party / OSS Libraries** | **Context7 MCP** | Dapper, Playwright, NLog, Polly, Bogus, NBuilder, Allure, NUnit, RestSharp; library syntax & errors | First-party .NET, live UI, or existing repo code |
+| **1st-Party Microsoft / .NET** | **Microsoft Learn MCP** | .NET/C# BCL behavior, MSBuild, `.editorconfig`, ASP.NET Core, Azure DevOps | Third-party libraries |
+| **Live App State / UI** | **Playwright CLI skill** | UI exploration, failure repros, visual DOM inspection, locator validation, trace analysis | Library docs or static repo analysis |
+| **Browser Diagnostics** | **Chrome DevTools MCP** | Console payloads, network traffic, cookies/storage, performance, memory | Standard UI navigation or locator discovery |
+| **Local Code & Patterns** | **No MCP** | Code reviews, inline refactoring, local logic within open files | Unnecessary lookups when local code provides the answer |
 
-- Use **Playwright CLI skill** as the default browser tool; use **Chrome DevTools MCP** only for deeper diagnostics.
-- Treat browser exploration as evidence, not test code. Implement changes using existing repo abstractions and conventions.
-- Verify new or changed UI locators against the running app with Playwright CLI when possible.
-- Browser investigation order: **Playwright CLI → traces/diagnostics → Chrome DevTools MCP → source analysis**.
-- Browser tools are development-time only and are not part of CI execution.
-- Limit documentation MCP usage to **5 lookups per user question**. Playwright CLI interactions do not count toward this limit.
+- **Default Tools:** Use **FFF MCP** for file discovery and **Playwright CLI** for UI exploration (escalation: `Playwright CLI` → `Traces` → `Chrome DevTools MCP` → `Source Analysis`).
+- **Execution Rules:** Check **Codebase Memory** before large code sweeps. Validate new locators against the running app with Playwright CLI. Browser tools are dev-time only, not for CI execution.
+- **Lookup Limit:** Max **5 external doc lookups** per request (FFF, Codebase Memory, Chrome DevTools MCP, and Playwright CLI are exempt).
 
 ## 9. Completion
 

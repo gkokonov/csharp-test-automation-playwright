@@ -21,19 +21,21 @@ until this tracker and the specs in this folder are reviewed.
 
 | # | Task | Status | Notes |
 | --- | --- | --- | --- |
-| 1.1 | `NetBoxConfigurationDTO` + `ExtendedConfiguration` wiring | TODO | Fold UI credentials into `NetBox`; simplify `UiConfigurationDTO` to the NetBox flow (resolved in `01-infrastructure-spec.md`) |
-| 1.2 | `appsettings.json` / `appsettings.local.json` NetBox + DbSettings entries | TODO | Both files must carry the **same key set**; only secret values differ (`PLACEHOLDER_PASSWORD` vs real) — see `01-infrastructure-spec.md` Configuration section |
-| 1.3 | Health check (NetBox root, `/api/`, Postgres) fails fast | TODO | Model on `GlobalSetupFixture` |
-| 1.4 | `NetBoxAuthClient` (token provisioning) — design with software-design-principles skill | TODO | `Authorization: Token <value>` scheme |
-| 1.5 | `NetBoxSession` (cached token holder) + `NetBoxTokenAuthenticator` (`IAuthenticator`) | TODO | Keep provisioning/caching/header-application as separate collaborators (SRP) |
-| 1.6 | `SitesApiClient` | TODO | |
-| 1.7 | `DevicesApiClient`, `DeviceTypesApiClient`, `ManufacturersApiClient`, `DeviceRolesApiClient` | TODO | |
-| 1.8 | `IpamApiClient` (prefixes + IP addresses) | TODO | |
-| 1.9 | DTOs for Sites/Devices/DeviceTypes/Manufacturers/DeviceRoles/Ipam | TODO | **Blocked until** field casing is confirmed against `/api/schema/` — see `01-infrastructure-spec.md` Open Item 2 |
-| 1.10 | DTO builders (`CreateSiteDtoBuilder`, etc.) | TODO | Unique `auto-{feature}-{guid}` defaults |
-| 1.11 | `SitesDatabaseRepository`, `DevicesDatabaseRepository`, IPAM DB repository | TODO | Read-only, parameterized |
-| 1.12 | `NetBoxLoginPage`, `SitesListPage`, `SiteEditPage` (create + update), `SiteDetailsPage` (incl. delete) | TODO | Semantic locators only |
-| 1.13 | Decide + implement shared UI storage-state vs per-test login | TODO | Default: shared storage state via `OneTimeSetUp` |
+| 1.1 | `NetBoxConfigurationDTO` + `ExtendedConfiguration` wiring | DONE | `NetBox` settings bound and confirmed live (username/password load from `appsettings.local.json` as expected); `UiConfigurationDTO` simplification deferred to the UI infra follow-up (see below) |
+| 1.2 | `appsettings.json` / `appsettings.local.json` NetBox + DbSettings entries | DONE | Both files carry the same key set; local credentials are in the ignored file |
+| 1.3 | Health check (NetBox root, `/api/`, Postgres) fails fast | DONE | Validated live. Fixed a false failure: NetBox's `/api/` root returns `403` when unauthenticated (login-required mode) — `HttpClientExtensions.EnsureAvailableAsync` now only fails on 5xx, since a 4xx still proves the dependency is reachable |
+| 1.4 | `NetBoxAuthClient` (token provisioning) — design with software-design-principles skill | DONE | Validated live against NetBox 4.7. Fixed two live-only defects: (1) NetBox's dev server rejects a chunked-transfer POST body — switched from `PostAsJsonAsync` to a buffered `StringContent`; (2) NetBox 4.x defaults token provisioning to "v2" split key/secret tokens, which need a `Bearer <key>.<token>` header — the client now requests `version: 1` explicitly and reads the `token` field (not `key`) to match `NetBoxTokenAuthenticator`'s `Authorization: Token <value>` scheme |
+| 1.5 | `NetBoxSession` (cached token holder) + `NetBoxTokenAuthenticator` (`IAuthenticator`) | DONE | Lazy token cache and `Authorization: Token` authenticator validated live end-to-end |
+| 1.6 | `SitesApiClient` | DONE | Create/Get/FindBySlug/Update(PATCH)/Delete validated live |
+| 1.7 | `DevicesApiClient`, `DeviceTypesApiClient`, `ManufacturersApiClient`, `DeviceRolesApiClient` | DONE | Validated live, including the Device→DeviceType→Manufacturer/DeviceRole/Site prerequisite chain |
+| 1.8 | `IpamApiClient` (prefixes + IP addresses) | DONE | Prefix and IP Address create/get/update/delete validated live |
+| 1.9 | DTOs for Sites/Devices/DeviceTypes/Manufacturers/DeviceRoles/Ipam | DONE | Field casing confirmed against `NetBox REST API (4.7).json` and the live instance. Response `status` is a nested `{value,label}` object (`StatusFieldDto`); write payloads use a plain string. List and detail share one schema per resource (no separate `ListItemDto`) |
+| 1.10 | DTO builders (`CreateSiteDtoBuilder`, etc.) | DONE | `auto-{feature}-{guid}` defaults via shared `TestData/NetBox/NetBoxTestData`; FK-only builders (Device, DeviceType) intentionally leave prerequisite ids unset |
+| 1.11 | `SitesDatabaseRepository`, `DevicesDatabaseRepository`, IPAM DB repository | DONE | Read-only, parameterized; validated live against `dcim_site`, `dcim_device`, `ipam_prefix`, `ipam_ipaddress` |
+| 1.12 | `NetBoxLoginPage`, `SitesListPage`, `SiteEditPage` (create + update), `SiteDetailsPage` (incl. delete) | TODO | Deferred — moved to a new UI infrastructure spec (see below), tracked separately from the API/DB infra in this phase |
+| 1.13 | Decide + implement shared UI storage-state vs per-test login | TODO | Deferred — moved to the new UI infrastructure spec alongside 1.12 |
+
+**Scope note (2026-09-27):** Phase 1 API/DB infrastructure (1.1–1.11) is complete and was validated end-to-end against the live local NetBox instance (create → DB read → update → find → delete across Site, Manufacturer, DeviceRole, DeviceType, Device, Prefix, and IP Address, with full cleanup). UI page objects and the storage-state decision (1.12–1.13) are deferred to a follow-up UI infrastructure spec, to be authored before Phase 3 (Site UI tests) starts.
 
 ## Phase 2 — Site API Tests
 
@@ -101,3 +103,4 @@ until this tracker and the specs in this folder are reviewed.
 | 2026-09-27 | New NetBox-specific auth flow, not reusing MSAL `BootstrapSession`; designed using the software-design-principles skill (separate provisioning/session/authenticator collaborators) | Confirmed by user |
 | 2026-09-27 | Secrets via the existing ignored `CsharpTestAutomation.Tests/appsettings.local.json` file | Confirmed by user |
 | 2026-09-27 | Plan 5 UI tests total (Site create/update/delete, Device create, Prefix create) instead of the source attachment's single-flow recommendation | Confirmed by user (requested "at least 3-5") |
+| 2026-09-27 | Phase 1 split: API/DB infra (1.1-1.11) implemented and live-validated in this session; UI page objects + storage-state decision (1.12-1.13) deferred to a follow-up UI infrastructure spec | Confirmed by user |

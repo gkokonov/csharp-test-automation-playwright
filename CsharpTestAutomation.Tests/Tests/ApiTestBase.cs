@@ -12,8 +12,7 @@ public abstract class ApiTestBase : TestBase
 {
     protected RestClientFactory RestClientFactory { get; private set; } = null!;
 
-    protected IAuthenticator BootstrapAuthenticator =>
-        new JwtAuthenticator(BootstrapSession.Default.Token);
+    protected IAuthenticator NetBoxAuthenticator => new NetBoxTokenAuthenticator(NetBoxSession.Default);
 
     protected static T RequireDbData<T>(object? candidate, string missingDataMessage)
     {

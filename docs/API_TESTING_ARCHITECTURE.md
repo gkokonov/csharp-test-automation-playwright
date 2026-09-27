@@ -33,8 +33,8 @@ The **suggested** typed-client pattern injects the `IRestClientFactory`, creates
 | `ApiSettings` / `ApiServiceSettings` / `ApiLoggingSettings` | Configuration bound from the `Api` key in `appsettings.json`. `ApiServiceSettings.Validate(name)` and `ApiLoggingSettings.Validate()` fail fast on empty/invalid `BaseUrl`, non-positive `TimeoutSeconds`, or non-positive `MaxBodySizeBytes`. |
 | `IRestClientFactory` / `RestClientFactory` | Creates configured `IRestClient` instances per named service. Construct via `new RestClientFactory(apiSettings, proxy?)`, passing `CoreConfiguration.Api` as the settings. Internally wires `ApiLogSanitizer` → `ApiLoggingInterceptor`, validates settings, applies an optional **explicit** `IWebProxy` (proxy is opt-in and not derived from `ProxyMode`/`ProxyServer`), accepts an optional client-wide `IAuthenticator`, and sets `ThrowOnAnyError=false` + `FailOnDeserializationError=true`. Both opt into `#nullable enable`, so the optional `IWebProxy?` / `IAuthenticator?` parameters are explicitly annotated. |
 | Typed API client | Consuming-project class (for example, the illustrative `ExampleApiClient`). The **suggested** shape injects an `IRestClientFactory`, creates and **owns** its `IRestClient` (service name held as a private `const`), implements `IDisposable` (`(_client as IDisposable)?.Dispose()`), builds `RestRequest`s, and returns RestSharp's native `RestResponse` / `RestResponse<T>`. No framework base class. |
-| `ApiTestBase` (Tests project) | Optional NUnit base class for API fixtures in `CsharpTestAutomation.Tests`. Builds the shared `RestClientFactory` from `CoreConfiguration.Api` in setup and exposes `BootstrapAuthenticator` (a `JwtAuthenticator` over the UI-bootstrapped token) and `RequireDbData<T>`. Not part of the framework. |
-| `IApiLogSanitizer` / `ApiLogSanitizer` | Redacts sensitive headers and JSON body fields by default; never throws. Used **only** by the logging interceptor. |
+| `ApiTestBase` (Tests project) | NUnit base class for API fixtures in `CsharpTestAutomation.Tests`. Builds the shared `RestClientFactory` from `CoreConfiguration.Api` in setup and exposes `NetBoxAuthenticator` and `RequireDbData<T>`. Not part of the framework. |
+| `IApiLogSanitizer` / `ApiLogSanitizer` | Redacts sensitive headers and JSON body fields when enabled; never throws. Used **only** by the logging interceptor. |
 | `ApiHeaderExtractor` / `ApiBodyFormatter` | Read request/response headers and bodies from the RestSharp `RestResponse` for logging; never mutate it. |
 | `ApiLogEntry` | Behavior-free snapshot of one call. |
 | `ApiLoggingInterceptor` | RestSharp interceptor: the sole place that sanitizes, truncates, and **pretty-prints** (JSON / XML / URL-encoded form) bodies before logging to NLog and attaching request/response to Allure. |
@@ -79,7 +79,7 @@ The full test-data policy (read-only seeded data, inconclusive missing prerequis
 
 ## 4. Adding a New API Test
 
-Plain NUnit `[TestFixture]` — no base class required, or derive from `ApiTestBase` when you need `RequireDbData` or `BootstrapAuthenticator`.
+Plain NUnit `[TestFixture]` — no base class required, or derive from `ApiTestBase` when you need `RequireDbData` or `NetBoxAuthenticator`.
 
 1. Class-level: `[AllureNUnit]`, `[AllureSuite]`, `[AllureFeature]`. Test-level: `[Test]`, `[AllureStory]`.
 2. In `[SetUp]`, build one `IRestClientFactory` via `new RestClientFactory(config.Api)` and pass it to each typed client's constructor. The client creates and owns its own `IRestClient`.
@@ -146,7 +146,7 @@ Authentication uses **RestSharp's native model** directly — the framework does
 | Bearer / JWT token | Pass `new JwtAuthenticator(token)` to `Create("<service>", authenticator)` |
 | API key header (e.g. `X-Api-Key`) | `request.AddOrUpdateHeader("X-Api-Key", value)` |
 | JWT **and** API key together | Client-wide authenticator + per-request `AddOrUpdateHeader(...)` |
-| Entra ID / MSAL bearer (UI-bootstrapped) | `new JwtAuthenticator(BootstrapSession.Default.Token)` from `ApiTestBase.BootstrapAuthenticator` (see below) |
+| NetBox API token | `new NetBoxTokenAuthenticator(NetBoxSession.Default)` from `ApiTestBase.NetBoxAuthenticator` (see below) |
 
 **Per-request control (negative tests).** RestSharp lets a request override the client-wide authenticator by assigning `RestRequest.Authenticator`:
 
@@ -193,15 +193,13 @@ public sealed class SecureApiClient(IRestClientFactory factory, IAuthenticator? 
 }
 ```
 
-### UI-bootstrapped JWT (worked example)
+### NetBox API token (application flow)
 
-For services protected by **Microsoft Entra ID / MSAL**, `CsharpTestAutomation.Tests` acquires a real bearer token through an interactive UI login once per run and reuses it across API tests:
+NetBox authentication is independent of the UI login. `NetBoxAuthClient` provisions a token through `POST users/tokens/provision/` using the configured username and password. `NetBoxSession` uses a configured token when present or lazily caches the provisioned token for the run. `NetBoxTokenAuthenticator` applies it to requests using NetBox's configured `Authorization: Token <value>` scheme.
 
-1. `GlobalSetupFixture` (`[OneTimeSetUp]`) calls `UiAuthenticationBootstrapper.BootstrapAllAsync(...)`, which drives a Playwright browser through the federated login for each configured user, waits until `sessionStorage` contains the MSAL `AccessToken` (bounded by `LoginTimeoutInMs`, not a fixed delay), and stores the result (token + storage state) in the process-wide `BootstrapSession`. The factory owns the browser context and closes it after capture.
-2. `ApiTestBase` (the base class for API fixtures) exposes `BootstrapAuthenticator => new JwtAuthenticator(BootstrapSession.Default.Token)` and builds the shared `RestClientFactory` from `CoreConfiguration.Api` in its setup.
-3. A typed client receives that authenticator when constructed, so every request carries the bootstrapped bearer token. Names and code examples in this section are illustrative templates.
+`ApiTestBase` exposes `NetBoxAuthenticator => new NetBoxTokenAuthenticator(NetBoxSession.Default)` and builds the shared `RestClientFactory` from `CoreConfiguration.Api` in setup. A typed client receives this authenticator when it is constructed, so each request receives the token header. Provisioning request and response content is not sent through the API logging interceptor. API request headers pass through the configured sanitizer; sensitive values are redacted only when `Api.Logging.RedactSensitiveData` is `true`.
 
-An API fixture can pass the bootstrapped authenticator to a typed client. This flow lives entirely in `CsharpTestAutomation.Tests` — the framework contributes only the RestSharp-native `IAuthenticator` plumbing in `RestClientFactory`; it owns no Entra ID/MSAL logic.
+NetBox-specific token provisioning lives in `CsharpTestAutomation.Tests`; the framework supplies only RestSharp's `IAuthenticator` plumbing and owns no NetBox credentials or token provisioning logic.
 
 > A framework-level OAuth2 / client-credentials `IAuthenticator` (token fetched from a token endpoint
 > rather than a UI login) remains out of scope.
@@ -221,7 +219,7 @@ Log level: `Info` for 2xx, `Warn` for 4xx, `Error` for 5xx or a transport except
 - `API Request - {METHOD} {resource}`
 - `API Response - {statusCode} {METHOD} {resource}`
 
-Attachment content is redacted by default. Set `Api.Logging.RedactSensitiveData` to `false` only for controlled debugging where reports and logs have restricted access. Full request/response detail in NLog is disabled by default; if enabled, it uses the same configured sanitization. Bodies are truncated to `MaxBodySizeBytes` with a `[TRUNCATED]` suffix and then **pretty-printed**: JSON is indented, XML is indented, and URL-encoded form data is rendered as `key: value` lines. Pretty-printing runs after truncation, so a truncated JSON fragment that no longer parses is emitted as-is.
+Attachment content is redacted when `Api.Logging.RedactSensitiveData` is set to `true`. Full request/response detail in NLog is disabled by default; if enabled, it uses the same configured sanitization. Bodies are truncated to `MaxBodySizeBytes` with a `[TRUNCATED]` suffix and then **pretty-printed**: JSON is indented, XML is indented, and URL-encoded form data is rendered as `key: value` lines. Pretty-printing runs after truncation, so a truncated JSON fragment that no longer parses is emitted as-is.
 
 Sanitization, truncation, and formatting apply **only** to log/Allure output — the `RestResponse` returned to tests always holds the raw, untruncated response, so assertions run against exactly what the server sent.
 
@@ -230,9 +228,7 @@ Sanitization, truncation, and formatting apply **only** to log/Allure output —
 
 ## 8. Redaction
 
-Redaction is **on by default** for API log and Allure content. Sensitive values are replaced with `***REDACTED***` before they are retained. Set `Api.Logging.RedactSensitiveData` to `false` only for controlled debugging; raw values can include tokens and credentials.
-
-When disabled, `ApiLogSanitizer` returns its input unchanged. When enabled, `ApiLogSanitizer` replaces values with `***REDACTED***` and never throws (invalid JSON is returned unchanged).
+`appsettings.json` sets redaction **off** for API log and Allure content. The `ApiLoggingSettings` model defaults it to `true` when the setting is omitted. When enabled, sensitive values are replaced with `***REDACTED***` before they are retained. Set `Api.Logging.RedactSensitiveData` to `true` to redact them.
 
 **Default redacted headers** (case-insensitive): `Authorization`, `Proxy-Authorization`, `Cookie`, `Set-Cookie`.
 
@@ -266,7 +262,7 @@ Bound from the `Api` key in `CsharpTestAutomation.Tests/appsettings.json`.
 | `AttachOnFailureOnly` | `bool` | `true` | When `true`, attach only for failed calls; when `false`, attach for every call. |
 | `MaxBodySizeBytes` | `int` | `15000` | Max body bytes retained before truncation **in logs/attachments only** (the `RestResponse` keeps the raw body). Validated to be greater than zero. |
 | `LogFullDetail` | `bool` | `false` | When `true`, write full request/response details at Debug level after configured sanitization. |
-| `RedactSensitiveData` | `bool` | `true` | When `true`, redact sensitive headers/body fields before logging and attachment. Disable only for controlled debugging. |
+| `RedactSensitiveData` | `bool` | `false` in `appsettings.json` (model fallback: `true`) | When `true`, redact sensitive headers/body fields before logging and attachment. |
 | `AdditionalRedactedFields` | `IList<string>` | `[]` | Extra JSON field names appended to the built-in body redaction list (used only when `RedactSensitiveData` is `true`). |
 
 ### Example
@@ -285,7 +281,7 @@ Bound from the `Api` key in `CsharpTestAutomation.Tests/appsettings.json`.
       "AttachOnFailureOnly": true,
       "MaxBodySizeBytes": 15000,
       "LogFullDetail": false,
-      "RedactSensitiveData": true,
+      "RedactSensitiveData": false,
       "AdditionalRedactedFields": []
     }
   }
@@ -298,5 +294,6 @@ Newest first. Bump the version and add a row whenever this document changes so f
 
 | Version | Date | Summary |
 | --- | --- | --- |
+| 1.10 | 2026-09-27 | Document NetBox token authentication and clarify API logging configuration. |
 | 1.9 | 2026-09-27 | Replace application-specific examples with generic resource templates. |
 | 1.8 | 2026-09-27 | Bootstrap waits for the MSAL token. The factory owns the browser context. |
