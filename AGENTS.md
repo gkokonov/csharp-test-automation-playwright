@@ -42,26 +42,21 @@ Quality gates for `CsharpTestAutomation.Framework`: `TreatWarningsAsErrors=true`
 
 Folder layout mirrors namespaces (`dotnet_style_namespace_match_folder`); detailed folder structure is defined in `.agents/rules/framework.md`.
 
-## 6. Coding Style & Conventions
+## 6. Coding Standards
 
-All rules are enforced by the root `.editorconfig` — follow it and do not fight the analyzers.
+- The root `.editorconfig` is authoritative for mechanical formatting, naming, using placement, whitespace, and analyzer-backed C# style. Do not duplicate or override those rules in prose.
+- Read `.agents/rules/csharp.md` when editing C# code.
+- Apply scoped rules when working in `CsharpTestAutomation.Framework/**` or `CsharpTestAutomation.Tests/**`.
+- Prefer existing repository patterns. Do not add abstractions, suppress diagnostics, or change style settings only to make a change pass validation.
+- Before completing code changes, run the relevant formatter/analyzer, build, and focused tests. Fix diagnostics introduced by the change.
 
-- **Modern C# 14 / .NET 10**: prefer file-scoped namespaces, primary constructors, collection expressions (`[]`), target-typed `new`, switch expressions, pattern matching, the `field` keyword, and `System.Threading.Lock` over `object` locks.
-- **`var` usage**: follow the three editorconfig rules — (1) always use `var` for built-in types (`int`, `string`, `bool`, `double`, etc.) regardless of what the right-hand side looks like; (2) use `var` when the type is apparent from the right-hand side (`var x = new Foo()`, `var x = new List<string>()`, tuple deconstruction such as `(var countryCode, var countryName) = ResolveCountry();`); (3) do **not** use `var` in all other cases (e.g. non-built-in method return values, LINQ results, cast expressions where the type is not written out explicitly).
-- **Usings**: placed outside the namespace, `System.*` directives sorted first, no separated import groups.
-- **Naming** (IDE1006 = warning): `s_camelCase` for private/internal static fields, `_camelCase` for private/internal instance fields, PascalCase for constants, types, and members, `I`-prefixed interfaces.
-- **Layout**: 4-space indentation (2 for `*.json`, `*.csproj`, `*.xml`; tab-indented at width 4 for `*.sln`/`*.props`/`*.targets`), `lf` line endings (`crlf` only for `*.cmd`/`*.bat`), UTF-8, final newline, braces always, Allman braces. Expression-bodied accessors/properties/lambdas are fine; use block bodies for methods/constructors.
-- Write concise, idiomatic, object-oriented + functional code; favor LINQ and lambdas for collection operations; use descriptive names (`IsUserSignedIn`, `CalculateTotal`).
-- Do not add method and class comments unless they explain "why" or clarify non-obvious intent; prefer self-explanatory code and XML docs on public members only for `CsharpTestAutomation.Framework`.
-- **Async everywhere**: all I/O (Playwright, DB, file, network) is async — use `async`/`await` with `Task`/`Task<T>` and never block with `.Result`/`.Wait()` in new code. (`ScenarioCleanupActions.CleanUp()` bridges to async only for synchronous callers.) **Exception**: NUnit assertion helper methods cannot be async by NUnit convention; use `.GetAwaiter().GetResult()` only inside synchronous assertion helpers, and add a comment referencing this NUnit constraint so reviewers do not flag it as a violation.
-- **`ConfigureAwait`**: `.ConfigureAwait(false)` in `CsharpTestAutomation.Framework` only. Test projects use plain `await` (NUnit's synchronization context).
+If documentation conflicts with `.editorconfig`, `.editorconfig` wins for mechanical formatting and analyzer-backed style. Treat other conflicts as documentation defects and update the owning rule file when the convention changes.
 
-## 7. Naming Conventions
+## 7. C# and Test Naming References
 
-- File names mirror class names. Namespaces mirror folder paths case-insensitively (`dotnet_style_namespace_match_folder`).
-- **Folder / namespace casing**: Namespaces mirror folder paths case-insensitively. For the intentional uppercase `API/` folder casing in `CsharpTestAutomation.Tests`, see `.agents/rules/test-automation.md`.
-- Test classes are `<Subject>Tests`.
-- Test methods are `<Scenario>_<Condition>_<ExpectedResult>`.
+- File names normally mirror their primary types, and namespaces follow folder paths. See `.agents/rules/csharp.md` for semantic conventions.
+- Test classes are `<Subject>Tests`; test methods are `<Scenario>_<Condition>_<ExpectedResult>`.
+- The intentional uppercase `API/` folder exception is documented in `.agents/rules/test-automation.md`.
 
 ## 8. External Documentation & Tooling
 
