@@ -23,6 +23,11 @@
         "--headless",
         "--no-usage-statistics"
       ]
+    },
+    "codebase-memory-mcp": {
+      "command": "C:/Users/georg/AppData/Local/Programs/codebase-memory-mcp/codebase-memory-mcp.exe",
+      "args": [],
+      "type": "stdio"
     }
   }
 }
