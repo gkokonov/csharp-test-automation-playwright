@@ -76,7 +76,6 @@ If documentation conflicts with `.editorconfig`, `.editorconfig` wins for mechan
 
 ## 9. Completion
 
-- For longer tasks, give concise progress updates when supported.
 - Validate changed behavior with the most relevant available checks; never claim validation you did not perform.
 - Final response: summarize changes, key files, validation outcome, and material limitations or unresolved issues.
 - Keep the response proportional to the task.

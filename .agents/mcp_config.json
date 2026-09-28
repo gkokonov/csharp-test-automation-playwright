@@ -15,11 +15,6 @@
       "type": "http",
       "url": "https://learn.microsoft.com/api/mcp"
     },
-    "codebase-memory-mcp": {
-      "command": "C:/Users/georg/AppData/Local/Programs/codebase-memory-mcp/codebase-memory-mcp.exe",
-      "args": [],
-      "type": "stdio"
-    },
     "fff": {
       "command": "C:/Users/georg/AppData/Local/fff-mcp/bin/fff-mcp.exe",
       "args": []
