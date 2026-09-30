@@ -11,22 +11,25 @@ namespace CsharpTestAutomation.Framework.API.Redaction;
 /// HTTP headers and JSON body fields with <c>***REDACTED***</c>; otherwise both methods pass their
 /// input through unchanged. Both methods are defensive and never throw.
 /// </summary>
-/// <param name="settings">Logging settings controlling whether redaction is applied and which body fields to redact.</param>
+/// <param name="settings">Logging settings controlling whether redaction is applied and which headers and body fields to redact.</param>
 public sealed class ApiLogSanitizer(ApiLoggingSettings settings) : IApiLogSanitizer
 {
     private const string RedactedValue = "***REDACTED***";
 
     private static readonly Logger s_log = LogManager.GetCurrentClassLogger();
 
-    private static readonly HashSet<string> s_redactedHeaders = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly string[] s_defaultRedactedHeaders =
+    [
         "Authorization",
         "Proxy-Authorization",
         "Cookie",
         "Set-Cookie"
-    };
+    ];
 
     private readonly bool _redactionEnabled = settings.RedactSensitiveData;
+
+    private readonly HashSet<string> _redactedHeaders =
+        BuildNameSet(s_defaultRedactedHeaders, settings.AdditionalRedactedHeaders);
 
     private readonly HashSet<string> _redactedBodyFields = BuildBodyFields(settings);
 
@@ -44,7 +47,7 @@ public sealed class ApiLogSanitizer(ApiLoggingSettings settings) : IApiLogSaniti
         {
             foreach (KeyValuePair<string, string> header in headers)
             {
-                result[header.Key] = s_redactedHeaders.Contains(header.Key) ? RedactedValue : header.Value;
+                result[header.Key] = _redactedHeaders.Contains(header.Key) ? RedactedValue : header.Value;
             }
         }
         catch (Exception ex)
@@ -140,5 +143,25 @@ public sealed class ApiLogSanitizer(ApiLoggingSettings settings) : IApiLogSaniti
         }
 
         return fields;
+    }
+
+    private static HashSet<string> BuildNameSet(IEnumerable<string> defaults, IEnumerable<string>? additional)
+    {
+        var names = new HashSet<string>(defaults, StringComparer.OrdinalIgnoreCase);
+
+        if (additional is null)
+        {
+            return names;
+        }
+
+        foreach (var name in additional)
+        {
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                names.Add(name);
+            }
+        }
+
+        return names;
     }
 }

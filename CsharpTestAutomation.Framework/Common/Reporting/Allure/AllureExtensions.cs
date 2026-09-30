@@ -20,7 +20,7 @@ public static class AllureExtensions
     /// </summary>
     /// <param name="page">Current page.</param>
     /// <param name="title">Title of the screenshot shown in the report.</param>
-    public static async Task CaptureScreenshotAsync(IPage page, string title)
+    public static async Task CaptureScreenshotAsync(IPage? page, string title)
     {
         try
         {
@@ -38,7 +38,7 @@ public static class AllureExtensions
             await page.ScreenshotAsync(new PageScreenshotOptions {
                 Path = filePath,
                 FullPage = false
-            });
+            }).ConfigureAwait(false);
 
             AllureApi.AddAttachment(title, "image/png", filePath);
         }
@@ -54,7 +54,7 @@ public static class AllureExtensions
     /// </summary>
     /// <param name="context">The browser context whose pages are inspected.</param>
     /// <param name="title">Attachment title; defaults to <c>"Browser Logs"</c>.</param>
-    public static async Task CaptureBrowserLogsAsync(IBrowserContext context, string? title = null)
+    public static async Task CaptureBrowserLogsAsync(IBrowserContext? context, string? title = null)
     {
         try
         {
@@ -82,7 +82,7 @@ public static class AllureExtensions
                                 }
                                 return '';
                             })()
-                        ");
+                        ").ConfigureAwait(false);
 
                     if (!string.IsNullOrEmpty(jsErrors))
                     {

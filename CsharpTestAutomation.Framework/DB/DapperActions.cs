@@ -39,9 +39,8 @@ public static class DapperActions
     public static T? Query<T>(IDbConnection dbConnection, string sqlQuery, DynamicParameters? parameters = null,
         int? timeoutInSeconds = null, CommandType commandType = CommandType.Text)
     {
-        return dbConnection.Query<T>(sqlQuery, parameters ?? new DynamicParameters(),
-                commandTimeout: timeoutInSeconds ?? s_config.DbQueryTimeoutSeconds, commandType: commandType)
-            .FirstOrDefault();
+        return dbConnection.QueryFirstOrDefault<T>(sqlQuery, parameters ?? new DynamicParameters(),
+            commandTimeout: timeoutInSeconds ?? s_config.DbQueryTimeoutSeconds, commandType: commandType);
     }
 
     /// <summary>
@@ -56,9 +55,9 @@ public static class DapperActions
     public static IDictionary<string, object>? Query(IDbConnection dbConnection, string sqlQuery,
         DynamicParameters? parameters = null, int? timeoutInSeconds = null, CommandType commandType = CommandType.Text)
     {
-        return dbConnection.Query(sqlQuery, parameters ?? new DynamicParameters(),
-                commandTimeout: timeoutInSeconds ?? s_config.DbQueryTimeoutSeconds, commandType: commandType)
-            .Cast<IDictionary<string, object>>().FirstOrDefault();
+        return dbConnection.QueryFirstOrDefault<object>(sqlQuery, parameters ?? new DynamicParameters(),
+            commandTimeout: timeoutInSeconds ?? s_config.DbQueryTimeoutSeconds, commandType: commandType)
+            as IDictionary<string, object>;
     }
 
     /// <summary>

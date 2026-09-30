@@ -6,16 +6,12 @@ namespace CsharpTestAutomation.Framework.Common;
 /// <summary>
 /// Generic singleton configuration manager that loads and exposes strongly-typed settings.
 /// <para>
-/// When the <c>Environment</c> variable is set, only <c>appsettings.{Environment}.json</c> is
-/// loaded. That file replaces <c>appsettings.json</c>; it is not merged over it. Environment
-/// variables are applied only in that mode. When <c>Environment</c> is not set,
-/// <c>appsettings.json</c> is loaded and optional <c>appsettings.local.json</c> overrides it.
-/// Environment variables are not applied in the local mode.
-/// </para>
-/// <para>
-/// Use <see cref="Instance"/> for that default singleton. Use
-/// <see cref="InstanceWithConfigName"/> when a named configuration file is required, for
-/// example for isolated service configurations or parallel test fixture setups.
+/// <see cref="Instance"/> layers sources in this order, later sources overriding earlier ones:
+/// <c>appsettings.json</c>, <c>appsettings.{Environment}.json</c> (when the <c>Environment</c>
+/// environment variable is set), the optional <c>appsettings.local.json</c>, and environment variables.
+/// <c>appsettings.json</c> is required unless an environment file is used; the environment file is required
+/// when <c>Environment</c> is set. Use <see cref="InstanceWithConfigName"/> when a named configuration
+/// file is required, for example for isolated service configurations or parallel test fixture setups.
 /// </para>
 /// </summary>
 /// <typeparam name="TSettingsModel">
@@ -26,6 +22,8 @@ namespace CsharpTestAutomation.Framework.Common;
 public class AppConfiguration<TSettingsModel>
     where TSettingsModel : class, new()
 {
+    private const string EnvironmentVariableName = "Environment";
+
     private static readonly Lazy<AppConfiguration<TSettingsModel>> s_instance = new(() => new AppConfiguration<TSettingsModel>());
     private static readonly ConcurrentDictionary<string, AppConfiguration<TSettingsModel>> s_namedInstances = new();
 
@@ -33,25 +31,30 @@ public class AppConfiguration<TSettingsModel>
 
     private AppConfiguration()
     {
-        var currentEnvironment = Environment.GetEnvironmentVariable("Environment")!;
-        if (!string.IsNullOrWhiteSpace(currentEnvironment))
-        {
-            _configuration = new ConfigurationBuilder()
-                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddJsonFile($"appsettings.{currentEnvironment}.json")
-                .AddEnvironmentVariables() // this will overwrite keys with the same name and their values
-                .Build();
-        }
-        else
-        {
-            _configuration = new ConfigurationBuilder()
-                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddJsonFile("appsettings.json")
-                .AddJsonFile("appsettings.local.json", optional: true)
-                .Build();
-        }
+        _configuration = BuildDefaultConfiguration(
+            AppDomain.CurrentDomain.BaseDirectory,
+            Environment.GetEnvironmentVariable(EnvironmentVariableName));
 
         SetConfigurationValue();
+    }
+
+    internal static IConfiguration BuildDefaultConfiguration(string basePath, string? environmentName)
+    {
+        var hasEnvironment = !string.IsNullOrWhiteSpace(environmentName);
+
+        IConfigurationBuilder builder = new ConfigurationBuilder()
+            .SetBasePath(basePath)
+            .AddJsonFile("appsettings.json", optional: hasEnvironment);
+
+        if (hasEnvironment)
+        {
+            builder.AddJsonFile($"appsettings.{environmentName}.json");
+        }
+
+        return builder
+            .AddJsonFile("appsettings.local.json", optional: true)
+            .AddEnvironmentVariables()
+            .Build();
     }
 
     private AppConfiguration(string configurationName, bool loadEnvironmentVariables)

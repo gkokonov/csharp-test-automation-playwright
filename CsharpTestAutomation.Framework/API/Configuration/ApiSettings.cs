@@ -91,6 +91,12 @@ public class ApiLoggingSettings
     public IList<string> AdditionalRedactedFields { get; set; } = [];
 
     /// <summary>
+    /// Additional HTTP header names appended to the built-in redaction list, for example
+    /// <c>X-Api-Key</c>. Only applied when <see cref="RedactSensitiveData"/> is <see langword="true"/>.
+    /// </summary>
+    public IList<string> AdditionalRedactedHeaders { get; set; } = [];
+
+    /// <summary>
     /// Validates the logging settings, throwing <see cref="InvalidOperationException"/> when a value
     /// is out of range.
     /// </summary>

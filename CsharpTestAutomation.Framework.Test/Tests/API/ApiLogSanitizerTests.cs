@@ -50,6 +50,22 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
+    public void SanitizeHeaders_AdditionalConfiguredHeader_IsRedacted()
+    {
+        var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings {
+            RedactSensitiveData = true,
+            AdditionalRedactedHeaders = ["X-Api-Key"]
+        });
+        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
+            ["X-Api-Key"] = "secret"
+        };
+
+        IReadOnlyDictionary<string, string> result = sanitizer.SanitizeHeaders(headers);
+
+        result["X-Api-Key"].Should().Be("***REDACTED***");
+    }
+
+    [Test]
     public void SanitizeHeaders_CaseInsensitiveMatch_IsRedacted()
     {
         IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {

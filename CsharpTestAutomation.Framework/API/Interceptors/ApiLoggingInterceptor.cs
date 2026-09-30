@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Xml;
@@ -17,22 +18,28 @@ namespace CsharpTestAutomation.Framework.API.Interceptors;
 /// RestSharp <see cref="Interceptor"/> that records a snapshot of every API call to NLog
 /// and, when enabled, attaches request/response details to the Allure report. The interceptor
 /// is defensive: any failure is logged and swallowed so it can never break test execution.
+/// Log events carry the NUnit test full name in the <c>TestName</c> scope property
+/// (<c>${scopeproperty:TestName}</c>) so parallel test output can be correlated.
 /// </summary>
 /// <param name="sanitizer">Sanitizer applied to headers and bodies before logging.</param>
 /// <param name="settings">Logging settings controlling truncation and Allure attachments.</param>
 public sealed class ApiLoggingInterceptor(IApiLogSanitizer sanitizer, ApiLoggingSettings settings) : Interceptor
 {
+    /// <summary>NLog scope property that holds the full name of the NUnit test that made the call.</summary>
+    public const string TestNameScopeProperty = "TestName";
+
     private const string TruncationSuffix = " [TRUNCATED]";
     private const string AttachmentMimeType = "text/plain";
     private const string AttachmentExtension = ".txt";
 
     private static readonly Logger s_log = LogManager.GetCurrentClassLogger();
-    private static readonly AsyncLocal<long> s_startTimestamp = new();
+    // RestSharp runs BeforeRequest in a nested async method, so an AsyncLocal set there may not reach AfterRequest.
+    private readonly ConditionalWeakTable<RestRequest, StrongBox<long>> _startTimestamps = new();
 
     /// <inheritdoc />
     public override ValueTask BeforeRequest(RestRequest request, CancellationToken cancellationToken)
     {
-        s_startTimestamp.Value = Stopwatch.GetTimestamp();
+        _startTimestamps.AddOrUpdate(request, new StrongBox<long>(Stopwatch.GetTimestamp()));
         return default;
     }
 
@@ -41,8 +48,13 @@ public sealed class ApiLoggingInterceptor(IApiLogSanitizer sanitizer, ApiLogging
     {
         try
         {
-            var startTimestamp = s_startTimestamp.Value;
-            TimeSpan elapsed = startTimestamp == 0 ? TimeSpan.Zero : Stopwatch.GetElapsedTime(startTimestamp);
+            using IDisposable testScope =
+                ScopeContext.PushProperty(TestNameScopeProperty, TestContext.CurrentContext.Test.FullName);
+
+            TimeSpan elapsed = _startTimestamps.TryGetValue(response.Request, out StrongBox<long>? startTimestamp)
+                ? Stopwatch.GetElapsedTime(startTimestamp.Value)
+                : TimeSpan.Zero;
+            _startTimestamps.Remove(response.Request);
 
             IReadOnlyDictionary<string, string> requestHeaders =
                 sanitizer.SanitizeHeaders(ApiHeaderExtractor.ExtractRequestHeaders(response));
@@ -259,11 +271,25 @@ public sealed class ApiLoggingInterceptor(IApiLogSanitizer sanitizer, ApiLogging
 
     private string Truncate(string value)
     {
-        if (string.IsNullOrEmpty(value) || value.Length <= settings.MaxBodySizeBytes)
+        var maxBytes = settings.MaxBodySizeBytes;
+        if (string.IsNullOrEmpty(value) || Encoding.UTF8.GetByteCount(value) <= maxBytes)
         {
             return value;
         }
 
-        return string.Concat(value.AsSpan(0, settings.MaxBodySizeBytes), TruncationSuffix);
+        var byteCount = 0;
+        var charCount = 0;
+        foreach (Rune rune in value.EnumerateRunes())
+        {
+            byteCount += rune.Utf8SequenceLength;
+            if (byteCount > maxBytes)
+            {
+                break;
+            }
+
+            charCount += rune.Utf16SequenceLength;
+        }
+
+        return string.Concat(value.AsSpan(0, charCount), TruncationSuffix);
     }
 }

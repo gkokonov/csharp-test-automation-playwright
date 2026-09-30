@@ -19,6 +19,11 @@ The project sets `<Nullable>enable</Nullable>` for the entire project. Nullable
 annotations and warnings are active in every source file, and warnings are
 errors in Debug and Release builds.
 
+| Situation | Rule |
+| --- | --- |
+| New file | Do not add a `#nullable` directive; the project setting already applies. Annotate reference types with `?` wherever `null` is legal. |
+| Nullability warning | Fix the contract with a narrower type, a guard, or a correct annotation. Do not silence it with `!`, `#nullable disable`, or a pragma. |
+
 Use `?` for values that may be null and guard required non-null inputs (for
 example, with `ArgumentNullException.ThrowIfNull`). Do not add `#nullable enable`
 or `#nullable disable` directives; the project setting applies to every file.
