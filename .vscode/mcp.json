@@ -1,23 +1,22 @@
 {
   "servers": {
     "context7": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp"
-      ],
-      "env": {
-        "CONTEXT7_API_KEY": "${env:CONTEXT7_API_KEY}"
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:CONTEXT7_API_KEY}"
       }
     },
     "microsoft-learn": {
       "type": "http",
-      "url": "https://learn.microsoft.com/api/mcp"
+      "url": "https://learn.microsoft.com/api/mcp?maxTokenBudget=5000"
     },
     "chrome-devtools": {
-      "command": "npx",
+      "type": "stdio",
+      "command": "cmd",
       "args": [
+        "/c",
+        "npx",
         "-y",
         "chrome-devtools-mcp@latest",
         "--headless",
@@ -25,8 +24,8 @@
       ]
     },
     "fff": {
-      "command": "C:/Users/georg/AppData/Local/fff-mcp/bin/fff-mcp.exe",
-      "args": []
+      "type": "stdio",
+      "command": "${env:LOCALAPPDATA}/fff-mcp/bin/fff-mcp.exe"
     },
     "codegraph": {
       "type": "stdio",
@@ -35,7 +34,7 @@
         "serve",
         "--mcp",
         "--path",
-        "C:/GK/Sources/csharp-test-automation-playwright"
+        "${workspaceFolder}"
       ]
     }
   }

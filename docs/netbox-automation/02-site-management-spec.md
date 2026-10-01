@@ -5,9 +5,11 @@ First feature. Establishes conventions reused by Device (03) and IPAM (04).
 ## API Tests (`Tests/API/SitesApiTests.cs`)
 
 Fixture: `[AllureSuite("API")] [AllureFeature("Site Management")]`. Derive from
-plain `[TestFixture]` (or `ApiTestBase` if `RequireDbData` is needed — unlikely
-for pure create/read/update/delete). Build `SitesApiClient` via
-`IRestClientFactory` in `[SetUp]`; dispose in `[TearDown]`.
+`ApiTestBase` (mandatory for every API test fixture — see
+`.agents/rules/test-automation.md` "API Test Fixtures"). Build `SitesApiClient`
+from the inherited `RestClientFactory`/`NetBoxAuthenticator` in an overridden
+`OnSetUpAsync()`, and register it with `ApiTestBase.RegisterClient(...)` (not
+`TestContainer` directly) so it is disposed after `ScenarioCleanupActions` runs.
 
 | Test | Steps | Key Assertions |
 | --- | --- | --- |

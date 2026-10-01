@@ -33,7 +33,7 @@ The **suggested** typed-client pattern injects the `IRestClientFactory`, creates
 | `ApiSettings` / `ApiServiceSettings` / `ApiLoggingSettings` | Configuration bound from the `Api` key in `appsettings.json`. `ApiServiceSettings.Validate(name)` and `ApiLoggingSettings.Validate()` fail fast on empty/invalid `BaseUrl`, non-positive `TimeoutSeconds`, or non-positive `MaxBodySizeBytes`. |
 | `IRestClientFactory` / `RestClientFactory` | Creates configured `IRestClient` instances per named service. Construct via `new RestClientFactory(apiSettings, proxy?)`, passing `CoreConfiguration.Api` as the settings. Internally wires `ApiLogSanitizer` → `ApiLoggingInterceptor`, validates settings, applies an optional **explicit** `IWebProxy` (proxy is opt-in and not derived from `ProxyMode`/`ProxyServer`), accepts an optional client-wide `IAuthenticator`, and sets `ThrowOnAnyError=false` + `FailOnDeserializationError=true`. Both opt into `#nullable enable`, so the optional `IWebProxy?` / `IAuthenticator?` parameters are explicitly annotated. |
 | Typed API client | Consuming-project class (for example, the illustrative `ExampleApiClient`). The **suggested** shape injects an `IRestClientFactory`, creates and **owns** its `IRestClient` (service name held as a private `const`), implements `IDisposable` (`(_client as IDisposable)?.Dispose()`), builds `RestRequest`s, and returns RestSharp's native `RestResponse` / `RestResponse<T>`. No framework base class. |
-| `ApiTestBase` (Tests project) | NUnit base class for API fixtures in `CsharpTestAutomation.Tests`. Builds the shared `RestClientFactory` from `CoreConfiguration.Api` in setup and exposes `NetBoxAuthenticator` and `RequireDbData<T>`. Not part of the framework. |
+| `ApiTestBase` (Tests project) | **Mandatory** NUnit base class for every API fixture in `CsharpTestAutomation.Tests` — this is the reason the class exists, so a plain `[TestFixture]` is never used for API tests even when a fixture does not need `RequireDbData`. Builds the shared `RestClientFactory` from `CoreConfiguration.Api` in setup and exposes `NetBoxAuthenticator`, `RequireDbData<T>`, and `RegisterClient`/`GetClient<T>` (thin wrappers around `TestContainer.Register`/`Get` that give disposable typed clients correct, cleanup-ordered disposal without fixtures touching `TestContainer` directly). Not part of the framework. |
 | `IApiLogSanitizer` / `ApiLogSanitizer` | Redacts sensitive headers and JSON body fields when enabled; never throws. Used **only** by the logging interceptor. |
 | `ApiHeaderExtractor` / `ApiBodyFormatter` | Read request/response headers and bodies from the RestSharp `RestResponse` for logging; never mutate it. |
 | `ApiLogEntry` | Behavior-free snapshot of one call. |
@@ -79,14 +79,49 @@ The full test-data policy (read-only seeded data, inconclusive missing prerequis
 
 ## 4. Adding a New API Test
 
-Plain NUnit `[TestFixture]` — no base class required, or derive from `ApiTestBase` when you need `RequireDbData` or `NetBoxAuthenticator`.
+Every API test fixture derives from `ApiTestBase` (never a plain `[TestFixture]`). This is the
+single reason `ApiTestBase` exists: it supplies the shared `RestClientFactory`, `NetBoxAuthenticator`,
+`RequireDbData`, and — via its own base `TestBase` — the `ScenarioCleanupActions` wiring and the
+`RegisterClient`/`GetClient` helpers (see below) that every fixture needs, regardless of whether a
+given test happens to use `RequireDbData`.
 
-1. Class-level: `[AllureNUnit]`, `[AllureSuite]`, `[AllureFeature]`. Test-level: `[Test]`, `[AllureStory]`.
-2. In `[SetUp]`, build one `IRestClientFactory` via `new RestClientFactory(config.Api)` and pass it to each typed client's constructor. The client creates and owns its own `IRestClient`.
-3. Hold **one field per client** and dispose each in `[TearDown]` via `_client.Dispose()`. With several clients in one fixture, share the single factory and dispose each client. `RestClientFactory` is **not** `IDisposable` — never dispose the factory.
-4. Assert on the returned `RestResponse<T>` with **AwesomeAssertions**. Use the minimal `ApiAssertions` extensions only for transport status (`ShouldHaveCompletedTransport`) and JSONPath (`ShouldHaveJsonPathValue`).
+1. Class-level: `[AllureSuite]`, `[AllureFeature]` (`[AllureNUnit]`/`[TestFixture]`/`[Category("API")]`
+  are already applied by `TestBase`/`ApiTestBase` and must not be repeated). Test-level: `[Test]`,
+  `[AllureStory]`, `[AllureSeverity]`, `[AllureOwner]`.
+2. Override `OnSetUpAsync()` (calling `await base.OnSetUpAsync()` first, which builds
+  `RestClientFactory`) to construct each typed client from the inherited `RestClientFactory` and
+  `NetBoxAuthenticator`.
+3. **Register each disposable typed client with `ApiTestBase.RegisterClient(...)`** instead of
+  holding a plain field, and expose it to test methods through a computed property backed by
+  `ApiTestBase.GetClient<T>()`:
+  ```csharp
+  private FooApiClient FooClient => GetClient<FooApiClient>();
+
+  protected override async Task OnSetUpAsync()
+  {
+      await base.OnSetUpAsync();
+      RegisterClient(new FooApiClient(RestClientFactory, NetBoxAuthenticator));
+  }
+  ```
+  `RegisterClient`/`GetClient` are thin wrappers `ApiTestBase` puts around
+  `TestContainer.Register`/`Get` — a fixture never calls `TestContainer` itself. This matters for two
+  reasons:
+  - `TestBase.TearDownAsync()` runs `ScenarioCleanupActions.CleanUpAsync()` **before**
+    `TestContainer.DisposeServicesAsync()`, so a client registered this way is disposed only *after*
+    the cleanup actions that call it (e.g. a delete) have run — never before.
+  - A plain disposable field triggers the `NUnit1032` analyzer (since nothing in this class's own
+    `[TearDown]` disposes it — the container does, in the base class, after teardown returns). A
+    property computed from `GetClient<T>()` is not itself a disposable field, so the analyzer has
+    nothing to flag. Suppressing the analyzer instead is not an option in this repository.
+  `RestClientFactory` is **not** `IDisposable` — never dispose or register it.
+4. Register cleanup via the inherited `ScenarioCleanupActions.AddCleanUpAction(...)`, not a
+  locally-constructed `ScenarioCleanupActions` instance.
+5. Assert on the returned `RestResponse<T>` with **AwesomeAssertions**. Use the minimal `ApiAssertions`
+  extensions only for transport status (`ShouldHaveCompletedTransport`) and JSONPath
+  (`ShouldHaveJsonPathValue`).
 
 For test-case design, naming, required attributes, assertion style, test data, and Definition of Done, see `.agents\rules\test-automation.md`. Those rules apply to every test in the project and are not restated here.
+
 
 ## 5. DTO Conventions
 
@@ -146,7 +181,7 @@ Authentication uses **RestSharp's native model** directly — the framework does
 | Bearer / JWT token | Pass `new JwtAuthenticator(token)` to `Create("<service>", authenticator)` |
 | API key header (e.g. `X-Api-Key`) | `request.AddOrUpdateHeader("X-Api-Key", value)` |
 | JWT **and** API key together | Client-wide authenticator + per-request `AddOrUpdateHeader(...)` |
-| NetBox API token | `new NetBoxTokenAuthenticator(NetBoxSession.Default)` from `ApiTestBase.NetBoxAuthenticator` (see below) |
+| NetBox API token | `NetBoxTokenAuthenticator.Default` from `ApiTestBase.NetBoxAuthenticator` (see below) |
 
 **Per-request control (negative tests).** RestSharp lets a request override the client-wide authenticator by assigning `RestRequest.Authenticator`:
 
@@ -197,7 +232,7 @@ public sealed class SecureApiClient(IRestClientFactory factory, IAuthenticator? 
 
 NetBox authentication is independent of the UI login. `NetBoxAuthClient` provisions a token through `POST users/tokens/provision/` using the configured username and password. `NetBoxSession` uses a configured token when present or lazily caches the provisioned token for the run. `NetBoxTokenAuthenticator` applies it to requests using NetBox's configured `Authorization: Token <value>` scheme.
 
-`ApiTestBase` exposes `NetBoxAuthenticator => new NetBoxTokenAuthenticator(NetBoxSession.Default)` and builds the shared `RestClientFactory` from `CoreConfiguration.Api` in setup. A typed client receives this authenticator when it is constructed, so each request receives the token header. Provisioning request and response content is not sent through the API logging interceptor. API request headers pass through the configured sanitizer; sensitive values are redacted only when `Api.Logging.RedactSensitiveData` is `true`.
+`ApiTestBase` exposes `NetBoxAuthenticator => NetBoxTokenAuthenticator.Default` and builds the shared `RestClientFactory` from `CoreConfiguration.Api` in setup. `NetBoxTokenAuthenticator.Default` is the single owner of `new NetBoxTokenAuthenticator(NetBoxSession.Default)` — construct the authenticator this way everywhere rather than restating the expression. A typed client receives this authenticator when it is constructed, so each request receives the token header. Provisioning request and response content is not sent through the API logging interceptor. API request headers pass through the configured sanitizer; sensitive values are redacted only when `Api.Logging.RedactSensitiveData` is `true`.
 
 NetBox-specific token provisioning lives in `CsharpTestAutomation.Tests`; the framework supplies only RestSharp's `IAuthenticator` plumbing and owns no NetBox credentials or token provisioning logic.
 

@@ -60,6 +60,41 @@ NUnit relies on its single-threaded synchronization context, so suppressing
 context capture is unwanted here. `.ConfigureAwait(false)` belongs only in the
 reusable `CsharpTestAutomation.Framework` library.
 
+## API Test Fixtures
+
+Every API test fixture derives from `ApiTestBase` — that is the reason the
+class exists, so a plain `[TestFixture]` is never used for an API test, even
+when the fixture has no need for `RequireDbData`. Do not duplicate
+`[AllureNUnit]`, `[TestFixture]`, or `[Category("API")]` on the fixture; they
+are already applied by `TestBase`/`ApiTestBase`.
+
+- Build each typed client in an overridden `OnSetUpAsync()`
+  (`await base.OnSetUpAsync()` first, which populates the inherited
+  `RestClientFactory`), using the inherited `RestClientFactory` and
+  `NetBoxAuthenticator`. Register it with `ApiTestBase.RegisterClient(...)`
+  (**not** a plain field), and expose it to test methods through a computed
+  property backed by `ApiTestBase.GetClient<T>()`:
+  ```csharp
+  private FooApiClient FooClient => GetClient<FooApiClient>();
+
+  protected override async Task OnSetUpAsync()
+  {
+      await base.OnSetUpAsync();
+      RegisterClient(new FooApiClient(RestClientFactory, NetBoxAuthenticator));
+  }
+  ```
+  `RegisterClient`/`GetClient` are thin, intention-revealing wrappers around
+  `TestContainer.Register`/`Get` — fixtures never call `TestContainer` directly.
+  The reason a plain disposable field does not work: `TestBase` disposes
+  everything registered via `RegisterClient` only **after**
+  `ScenarioCleanupActions.CleanUpAsync()` runs, so the client stays usable for
+  any delete call a cleanup action performs; a plain field would also trip the
+  `NUnit1032` analyzer, since nothing in the fixture's own (non-existent)
+  `[TearDown]` disposes it, and suppressing that analyzer is not an option (see
+  `.agents/rules/csharp.md` on not suppressing diagnostics to pass validation).
+- Register cleanup via the inherited `ScenarioCleanupActions` property, never a
+  locally-constructed `ScenarioCleanupActions` instance.
+
 ## Test Case Authoring
 
 Prefer data-driven tests over creating many near-duplicate standalone test
@@ -185,6 +220,15 @@ post-login delay.
 6. Build request payloads with the DTO builders in `API/Factories/`
   (`CreateResourceDtoBuilder : BaseBuilder<CreateResourceDto>`) rather than
   constructing DTOs inline. Keep shared static values in `TestData/API/`.
+7. Prefer **Bogus** (`Faker`/`Randomizer`) over raw `Guid.NewGuid()` or
+  `Random`/`Random.Shared` calls for generated/unique test-data values (names,
+  slugs, free-form identifiers, synthetic addresses, and similar). A single
+  shared `static readonly Faker` instance is safe across concurrently executing
+  fixtures — Bogus documents its `Randomizer` primitives (the `Faker.Random`
+  facet) as thread-safe. Fixed, domain-constrained values (for example an
+  enum's literal members, or a short human-readable label meant to stay
+  recognizable in logs/UI) remain plain constants; only values that exist to be
+  unique or varied move to Bogus.
 
 ## Definition of Done
 

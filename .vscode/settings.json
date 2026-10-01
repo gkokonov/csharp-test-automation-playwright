@@ -2,8 +2,7 @@
   // ========== EDITOR ==========
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.organizeImports": "explicit",
-    "source.fixAll": "explicit"
+    "source.organizeImports": "explicit"
   },
   "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
   "dotnet.defaultSolution": "CsharpTestAutomation.slnx",
@@ -19,7 +18,7 @@
     120
   ],
   "editor.codeLens": true,
-  // ========== FILE NESTING (ERGONOMIC) ==========
+  // ========== FILE NESTING ==========
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
     "*.cs": "${basename}.Test.cs, ${basename}Tests.cs",
@@ -40,12 +39,11 @@
     "**/bin": true,
     "**/obj": true
   },
-  // ========== ANALYZER PERFORMANCE ==========
-  "omnisharp.enableEditorConfigSupport": true,
   // ========== TESTING ==========
   "testing.gutterEnabled": true,
-  // ========== COPILOT CUSTOMIZATION ==========
+  // ========== COPILOT / AGENTS ==========
   "chat.useAgentsMdFile": true,
+  "chat.useNestedAgentsMdFiles": true,
   "chat.hookFilesLocations": {
     ".agents/hooks.json": true
   },
@@ -54,28 +52,20 @@
       "file": ".agents/instructions/commit-instructions.md"
     }
   ],
+  // Reduce unnecessary agent context usage.
   "chat.tools.compressOutput.enabled": true,
   "chat.tools.terminal.outputCompaction": true,
   // ========== TERMINAL AUTO-APPROVE ==========
-  // Every entry below is either a fixed command name with no sub-execution, or
-  // an anchored regex. Bare operators are NOT auto-approvable: "&" is the
-  // PowerShell call operator and "." is dot-source, so approving either lets any
-  // executable or script run unprompted. Both were removed.
+  // Keep this list narrow. Terminal auto-approval is a convenience,
+  // not a security boundary.
   "chat.tools.terminal.autoApprove": {
     "dotnet build": true,
     "dotnet restore": true,
     "dotnet test": true,
-    "ForEach-Object": true,
     "Group-Object": true,
     "Get-Unique": true,
     "ConvertFrom-Json": true,
-    "/^powershell -NoProfile -ExecutionPolicy Bypass \\.\\\\scripts\\\\Refresh-DbToken\\.ps1 -RunOnce$/": {
-      "approve": true,
-      "matchCommandLine": true
-    },
-    // Replaces the need for a bare "&": anchored to the one call-operator
-    // invocation that was actually being used (the dotnet build task).
-    "/^& '?C:\\\\Program Files\\\\dotnet\\\\dotnet\\.exe'? (build|test|restore) /": {
+    "/^& '?C:\\\\Program Files\\\\dotnet\\\\dotnet\\.exe'? (build|test|restore)\\b/": {
       "approve": true,
       "matchCommandLine": true
     }

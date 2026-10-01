@@ -41,12 +41,12 @@ until this tracker and the specs in this folder are reviewed.
 
 | # | Task | Status | Notes |
 | --- | --- | --- | --- |
-| 2.1 | `CreateSite_ShouldReturnCreatedSite` | TODO | |
-| 2.2 | `CreateSite_ShouldPersistSiteInDatabase` | TODO | |
-| 2.3 | `GetSite_ShouldReturnMatchingSiteBySlug` | TODO | |
-| 2.4 | `UpdateSite_ShouldChangeStatus` | TODO | |
-| 2.5 | `DeleteSite_ShouldRemoveSite` | TODO | |
-| 2.6 | All Site API tests green x3 consecutive runs | TODO | Gate before Phase 3 |
+| 2.1 | `CreateSite_ShouldReturnCreatedSite` | DONE | `Tests/API/SitesApiTests.cs`; derives from `ApiTestBase` (corrected from an initial plain-`[TestFixture]` implementation per user feedback — every API fixture now derives from `ApiTestBase`) |
+| 2.2 | `CreateSite_ShouldPersistSiteInDatabase` | DONE | Verifies both layers: REST GET equivalence to the create response, and a direct `SitesDatabaseRepository` Postgres row check (confirmed by user) |
+| 2.3 | `GetSite_ShouldReturnMatchingSiteBySlug` | DONE | |
+| 2.4 | `UpdateSite_ShouldChangeStatus` | DONE | Added `UpdateSiteDtoBuilder` (`planned` status + updated description) for consistency with the builder convention |
+| 2.5 | `DeleteSite_ShouldRemoveSite` | DONE | |
+| 2.6 | All Site API tests green x3 consecutive runs | DONE | 5/5 passed on 3 consecutive live runs against the local NetBox instance (re-verified after the `ApiTestBase`/Bogus rework) |
 
 ## Phase 3 — Site UI Tests
 
@@ -105,3 +105,6 @@ until this tracker and the specs in this folder are reviewed.
 | 2026-09-27 | Plan 5 UI tests total (Site create/update/delete, Device create, Prefix create) instead of the source attachment's single-flow recommendation | Confirmed by user (requested "at least 3-5") |
 | 2026-09-27 | Phase 1 API/DB infrastructure (1.1-1.11) implemented; UI objects and storage-state decision were initially deferred | Confirmed by user |
 | 2026-10-01 | Use one shared Playwright storage state per run, captured in `OneTimeSetUp` and removed after UI tests | Spec default |
+| 2026-10-01 | `CreateSite_ShouldPersistSiteInDatabase` verifies persistence at both layers: a REST GET re-fetch equivalence check, and a direct Postgres row check via `SitesDatabaseRepository` | Confirmed by user |
+| 2026-10-01 | Every API test fixture derives from `ApiTestBase` (superseding `02-site-management-spec.md`'s plain-`[TestFixture]` suggestion) — it registers typed clients via `ApiTestBase.RegisterClient`/`GetClient<T>` (added to remove direct `TestContainer` use from fixtures) so disposal happens after `ScenarioCleanupActions` runs, and uses the inherited `ScenarioCleanupActions`/`NetBoxAuthenticator` rather than fixture-local copies | Confirmed by user |
+| 2026-10-01 | Test-data value generation (unique names/slugs/prefixes/IPs) prefers Bogus (`Faker`/`Randomizer`) over raw `Guid`/`Random`; fixed domain constants (status enum values, human-readable description labels) stay as plain constants | Confirmed by user |

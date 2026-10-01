@@ -1,26 +1,21 @@
 {
   "mcpServers": {
     "context7": {
-      "command": "npx",
+      "command": "cmd",
       "args": [
+        "/c",
+        "npx",
         "-y",
         "@upstash/context7-mcp"
-      ],
-      "env": {
-        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
-      }
+      ]
     },
     "microsoft-learn": {
-      "name": "microsoft-learn",
-      "type": "http",
-      "url": "https://learn.microsoft.com/api/mcp"
+      "serverUrl": "https://learn.microsoft.com/api/mcp"
     },
     "fff": {
-      "command": "C:/Users/georg/AppData/Local/fff-mcp/bin/fff-mcp.exe",
-      "args": []
+      "command": "C:/Users/georg/AppData/Local/fff-mcp/bin/fff-mcp.exe"
     },
     "codegraph": {
-      "type": "stdio",
       "command": "codegraph",
       "args": [
         "serve",
