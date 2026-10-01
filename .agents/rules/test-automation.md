@@ -142,8 +142,8 @@ payloads. Use the minimal `ApiAssertions` extensions only for transport status
 
 UI tests use Playwright web-first `Expect(...)`; never manual sleeps
 (`Thread.Sleep`, `Task.Delay`, or `Page.WaitForTimeoutAsync`). Authentication
-bootstrap waits until the MSAL access token is present, bounded by
-`LoginTimeoutInMs`. Do not add a fixed post-login delay.
+setup waits for a semantic signed-in readiness signal. Do not add a fixed
+post-login delay.
 
 - **Locator Priority Hierarchy**:
     1. `GetByRole(AriaRole.<Role>, new() { Name = "..." })` — primary choice for

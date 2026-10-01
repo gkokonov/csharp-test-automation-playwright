@@ -25,7 +25,7 @@ public class ExtendedConfiguration : CoreConfiguration
 
     #region UI
 
-    public UiConfigurationDTO? Ui { get; set; }
+    public UiConfigurationDTO Ui { get; set; } = new();
 
     #endregion UI
 }

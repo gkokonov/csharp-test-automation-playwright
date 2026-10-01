@@ -25,7 +25,7 @@ Each prerequisite gets its own builder (`CreateManufacturerDtoBuilder`, `CreateD
 
 Mirror the Site pattern: DB read via new `DevicesDatabaseRepository` (`SELECT id, name, site_id, status FROM dcim_device WHERE name = @Name`).
 
-## UI Test (`Tests/UI/DeviceManagementUiTests.cs`)
+## UI Test (`Tests/UI/NetBox/DeviceManagementUiTests.cs`)
 
 One scenario — `CreateDevice_ShouldPersistAcrossLayers` — extending the Site
 UI pattern to Device (part of this increment's 3-5 planned UI tests; see

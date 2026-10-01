@@ -21,7 +21,7 @@ until this tracker and the specs in this folder are reviewed.
 
 | # | Task | Status | Notes |
 | --- | --- | --- | --- |
-| 1.1 | `NetBoxConfigurationDTO` + `ExtendedConfiguration` wiring | DONE | `NetBox` settings bound and confirmed live (username/password load from `appsettings.local.json` as expected); `UiConfigurationDTO` simplification deferred to the UI infra follow-up (see below) |
+| 1.1 | `NetBoxConfigurationDTO` + `ExtendedConfiguration` wiring | DONE | NetBox settings are bound; `UiConfigurationDTO` now contains only the shared storage-state directory |
 | 1.2 | `appsettings.json` / `appsettings.local.json` NetBox + DbSettings entries | DONE | Both files carry the same key set; local credentials are in the ignored file |
 | 1.3 | Health check (NetBox root, `/api/`, Postgres) fails fast | DONE | Validated live. Fixed a false failure: NetBox's `/api/` root returns `403` when unauthenticated (login-required mode) — `HttpClientExtensions.EnsureAvailableAsync` now only fails on 5xx, since a 4xx still proves the dependency is reachable |
 | 1.4 | `NetBoxAuthClient` (token provisioning) — design with software-design-principles skill | DONE | Validated live against NetBox 4.7. Fixed two live-only defects: (1) NetBox's dev server rejects a chunked-transfer POST body — switched from `PostAsJsonAsync` to a buffered `StringContent`; (2) NetBox 4.x defaults token provisioning to "v2" split key/secret tokens, which need a `Bearer <key>.<token>` header — the client now requests `version: 1` explicitly and reads the `token` field (not `key`) to match `NetBoxTokenAuthenticator`'s `Authorization: Token <value>` scheme |
@@ -32,10 +32,10 @@ until this tracker and the specs in this folder are reviewed.
 | 1.9 | DTOs for Sites/Devices/DeviceTypes/Manufacturers/DeviceRoles/Ipam | DONE | Field casing confirmed against `NetBox REST API (4.7).json` and the live instance. Response `status` is a nested `{value,label}` object (`StatusFieldDto`); write payloads use a plain string. List and detail share one schema per resource (no separate `ListItemDto`) |
 | 1.10 | DTO builders (`CreateSiteDtoBuilder`, etc.) | DONE | `auto-{feature}-{guid}` defaults via shared `TestData/NetBox/NetBoxTestData`; FK-only builders (Device, DeviceType) intentionally leave prerequisite ids unset |
 | 1.11 | `SitesDatabaseRepository`, `DevicesDatabaseRepository`, IPAM DB repository | DONE | Read-only, parameterized; validated live against `dcim_site`, `dcim_device`, `ipam_prefix`, `ipam_ipaddress` |
-| 1.12 | `NetBoxLoginPage`, `SitesListPage`, `SiteEditPage` (create + update), `SiteDetailsPage` (incl. delete) | TODO | Deferred — moved to a new UI infrastructure spec (see below), tracked separately from the API/DB infra in this phase |
-| 1.13 | Decide + implement shared UI storage-state vs per-test login | TODO | Deferred — moved to the new UI infrastructure spec alongside 1.12 |
+| 1.12 | `NetBoxLoginPage`, `SitesListPage`, `SiteEditPage` (create + update), `SiteDetailsPage` (incl. delete) | DONE | Added semantic page actions and a shared delete-confirmation component |
+| 1.13 | Decide + implement shared UI storage-state vs per-test login | DONE | One `OneTimeSetUp` login captures storage state for each UI test context; `OneTimeTearDown` removes the state file. This follows the spec's default recommendation |
 
-**Scope note (2026-09-27):** Phase 1 API/DB infrastructure (1.1–1.11) is complete and was validated end-to-end against the live local NetBox instance (create → DB read → update → find → delete across Site, Manufacturer, DeviceRole, DeviceType, Device, Prefix, and IP Address, with full cleanup). UI page objects and the storage-state decision (1.12–1.13) are deferred to a follow-up UI infrastructure spec, to be authored before Phase 3 (Site UI tests) starts.
+**Scope note (2026-10-01):** Phase 1 infrastructure (1.1–1.13) is implemented. NetBox UI tests have not been added yet; no NetBox application tests were available to run for this phase.
 
 ## Phase 2 — Site API Tests
 
@@ -100,7 +100,8 @@ until this tracker and the specs in this folder are reviewed.
 | 2026-09-27 | Reuse existing 3 projects instead of new `NetBox.*.Tests` projects | Confirmed by user |
 | 2026-09-27 | Remove legacy application assets after extracting reusable patterns and checking instructions for dangling references | Confirmed by user |
 | 2026-09-27 | Specs stored under `docs/netbox-automation/` | Confirmed by user |
-| 2026-09-27 | New NetBox-specific auth flow, not reusing MSAL `BootstrapSession`; designed using the software-design-principles skill (separate provisioning/session/authenticator collaborators) | Confirmed by user |
+| 2026-09-27 | New NetBox-specific API authentication flow, separate from federated UI authentication; designed using the software-design-principles skill (separate provisioning/session/authenticator collaborators) | Confirmed by user |
 | 2026-09-27 | Secrets via the existing ignored `CsharpTestAutomation.Tests/appsettings.local.json` file | Confirmed by user |
 | 2026-09-27 | Plan 5 UI tests total (Site create/update/delete, Device create, Prefix create) instead of the source attachment's single-flow recommendation | Confirmed by user (requested "at least 3-5") |
-| 2026-09-27 | Phase 1 split: API/DB infra (1.1-1.11) implemented and live-validated in this session; UI page objects + storage-state decision (1.12-1.13) deferred to a follow-up UI infrastructure spec | Confirmed by user |
+| 2026-09-27 | Phase 1 API/DB infrastructure (1.1-1.11) implemented; UI objects and storage-state decision were initially deferred | Confirmed by user |
+| 2026-10-01 | Use one shared Playwright storage state per run, captured in `OneTimeSetUp` and removed after UI tests | Spec default |

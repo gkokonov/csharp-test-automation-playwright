@@ -125,6 +125,17 @@ Every `BaseUIView` declares a `PageReadyLocator` — a locator that becomes visi
 - **Setup** (`OnSetUpAsync` → `InitializePlaywrightEnvironmentAsync`): initialize Playwright, create a context (optionally from a `storageState`), and open a page.
 - **Teardown** (`OnTearDownAsync`): on failure, attach a **screenshot** and, when `CaptureBrowserLogs` is `true`, **browser logs** to Allure; then dispose the context (auto-saving a trace if `TraceEnabled`) and the browser.
 
+### NetBox authenticated UI state
+
+NetBox UI authentication is independent of API token provisioning. `NetBoxUiSetupFixture`
+uses `NetBoxLoginPage` once in `OneTimeSetUp`, captures browser storage state under
+`Ui.StorageStateDirectory`, and removes the file in `OneTimeTearDown`. NetBox UI fixtures
+derive from `NetBoxUiTestBase`, which creates a fresh browser context from that state for
+each test. Like every other context, the login context's trace is saved when `TraceEnabled`
+is `true` — NetBox test accounts are not treated as sensitive secrets. The storage-state file
+contains authenticated browser state, is ignored by Git, and is not logged or attached to
+Allure.
+
 Optional artifacts are produced by the factory based on configuration:
 
 - **Tracing** (`TraceEnabled`): a Playwright trace `.zip` per context is written to `TraceDir` on context disposal (open with `playwright show-trace`).
@@ -157,6 +168,7 @@ UI settings are bound from `CoreConfiguration` (extended by `ExtendedConfigurati
 | `RecordVideoEnabled` | `bool` | `false` | Record video per context, saved to `RecordDir`. |
 | `RecordDir` | `string` | `<output>/Videos` | Output directory for recorded video. |
 | `ReportDir` | `string` | `<output>/Report` | Reporting output directory. |
+| `Ui.StorageStateDirectory` | `string` | `"playwright/.auth"` | Temporary location for the shared NetBox browser-authentication state. |
 
 ### Timeouts (milliseconds)
 
@@ -256,6 +268,6 @@ Newest first. Bump the version and add a row whenever this document changes so f
 
 | Version | Date | Summary |
 | --- | --- | --- |
+| 1.3 | 2026-10-01 | `DisposeContextAsync` always saves the trace when `TraceEnabled` is set; dropped the discard-trace overload. |
 | 1.2 | 2026-09-27 | Device emulation keeps storage state and credentials. `DisposeAllAsync` is process-wide. |
 | 1.1 | 2026-09-26 | Repair rule links and use the configured Playwright CLI workflow. |
-| 1.0 | 2026-09-25 | Initial version. |

@@ -35,7 +35,7 @@ within its range (e.g. `{prefix-base}.10/{mask}`).
 IP Address → Prefix (address depends on prefix only loosely in NetBox — no FK
 enforcement — but still delete address first to avoid dangling test data).
 
-## UI Test (`Tests/UI/IpamManagementUiTests.cs`)
+## UI Test (`Tests/UI/NetBox/IpamManagementUiTests.cs`)
 
 One scenario — `CreatePrefix_ShouldPersistAcrossLayers`:
 

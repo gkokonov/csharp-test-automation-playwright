@@ -19,14 +19,15 @@ for pure create/read/update/delete). Build `SitesApiClient` via
 
 Cleanup: register the delete call right after create in every test (idempotent — swallow `404` on cleanup).
 
-## UI Tests (`Tests/UI/SiteManagementUiTests.cs`)
+## UI Tests (`Tests/UI/NetBox/SiteManagementUiTests.cs`)
 
 Three focused scenarios — create, update, delete — giving Site feature full
 UI CRUD coverage rather than the single create-only flow the source
 attachment recommends (see `00-overview.md` Decisions for the rationale).
 Fixture: `[AllureSuite("UI")] [AllureFeature("Site Management")]`, derived
-from `UiTestBase` (which applies `[Category("UI")]` itself — do not repeat
-it on the fixture).
+from `NetBoxUiTestBase` (which wires the shared authenticated storage state
+and, via `UiTestBase`, applies `[Category("UI")]` itself — do not repeat it
+on the fixture).
 
 ### `CreateSite_ShouldPersistAcrossLayers`
 

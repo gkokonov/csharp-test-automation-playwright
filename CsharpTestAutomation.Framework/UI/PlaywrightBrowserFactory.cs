@@ -108,7 +108,8 @@ public static class PlaywrightBrowserFactory
     }
 
     /// <summary>
-    /// Disposes browser context for current test
+    /// Disposes the current context, saving its trace to <see cref="CoreConfiguration.TraceDir"/>
+    /// when <see cref="CoreConfiguration.TraceEnabled"/> is <see langword="true"/>.
     /// </summary>
     public static async Task DisposeContextAsync()
     {
@@ -131,13 +132,13 @@ public static class PlaywrightBrowserFactory
 
                     var traceFile = Path.Combine(traceDir, $"{sanitizedName}_{timestamp}.zip");
 
-                    await context.Tracing.StopAsync(new() { Path = traceFile });
+                    await context.Tracing.StopAsync(new() { Path = traceFile }).ConfigureAwait(false);
 
                     s_log.Debug($"Saved Playwright trace to {traceFile}.");
                 }
                 catch (Exception ex)
                 {
-                    s_log.Error(ex, "Failed to stop and save trace!");
+                    s_log.Error(ex, $"Failed to stop Playwright tracing for test {testId}.");
                 }
             }
 
@@ -357,4 +358,3 @@ public static class PlaywrightBrowserFactory
     /// </summary>
     private static string GetCurrentTestId() => TestIdentifier.GetTestId();
 }
-

@@ -124,7 +124,7 @@ testable collaborators:
 NetBoxAuthClient        → POST users/tokens/provision/ (username/password in, token out). Pure HTTP concern, no caching.
 NetBoxSession           → holds the token for the run (lazy-provisions via NetBoxAuthClient on first access, or
                            short-circuits to NetBox.ApiToken from configuration when already supplied). Single
-                           responsibility: "what is today's valid token", analogous in role (not shape) to BootstrapSession.
+                           responsibility: "what is today's valid token".
 NetBoxTokenAuthenticator → RestSharp IAuthenticator that reads NetBoxSession's current token and applies it as
                            `Authorization: Token <value>` (NetBox's own scheme, not Bearer/JwtAuthenticator).
 ```
@@ -211,7 +211,7 @@ Row DTOs in `Database/NetBox/DTO/` (e.g. `SiteRowDto`), aliased columns matching
 New page objects in `UI/Pages/NetBox/` (folder is illustrative; match existing `UI/Pages` layout) deriving from `BaseUIView`/`BaseUIComponent`:
 
 ```text
-NetBoxLoginPage     → username/password fields, sign-in button, PageReadyLocator on the dashboard heading
+NetBoxLoginPage     → username/password fields, sign-in button, PageReadyLocator on the login heading; sign-in waits for NetBox's authenticated user-menu control (the live dashboard has no heading)
 SitesListPage       → navigate, "Add" action → SiteEditPage; row-level "Delete" action → confirmation dialog
 SiteEditPage        → CreateSiteAsync(name, slug, status, description) / UpdateAsync(status, description) → returns SiteDetailsPage (NetBox redirects to the detail view on successful save)
 SiteDetailsPage     → read displayed fields for assertions; DeleteAsync() → confirms the delete dialog, returns SitesListPage
@@ -235,7 +235,7 @@ Use semantic locators (`GetByRole`, `GetByLabel`) per `.agents/rules/test-automa
 
 ## UI Session Reuse
 
-`NetBoxSession` (see the API Token Provisioning section above) covers API auth only. UI login uses `NetBoxLoginPage` directly — no MSAL bridging needed, and it is a separate concern from `NetBoxSession` (do not let the page object reach into the API session or vice versa). Default recommendation: shared Playwright `storageState` captured once in `OneTimeSetUp`, consistent with `PlaywrightBrowserFactory`'s existing `storageState` support noted in `docs/UI_TESTING_ARCHITECTURE.md`. Confirm this choice (vs per-test login) in the tracker once Phase 1 implementation starts.
+`NetBoxSession` (see the API Token Provisioning section above) covers API auth only. UI login uses `NetBoxLoginPage` directly and does not access `NetBoxSession`. Use one shared Playwright `storageState` captured in `OneTimeSetUp`, then create a fresh browser context from that file per test. Remove the file in `OneTimeTearDown`; see `docs/UI_TESTING_ARCHITECTURE.md`.
 
 ## Allure Evidence
 

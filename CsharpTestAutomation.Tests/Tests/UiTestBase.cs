@@ -1,8 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using CsharpTestAutomation.Framework.Common.Reporting.Allure;
 using CsharpTestAutomation.Framework.UI;
-using CsharpTestAutomation.Tests.Authentication;
 using CsharpTestAutomation.Tests.UI.Pages;
 using Microsoft.Playwright;
 using NLog;
@@ -89,31 +87,6 @@ public abstract class UiTestBase : TestBase
         await PlaywrightBrowserFactory.InitializeAsync();
         Context = await PlaywrightBrowserFactory.CreateContextAsync(storageState);
         Page = await PlaywrightBrowserFactory.CreatePageAsync();
-    }
-
-    protected async Task InitializeAuthenticatedPlaywrightEnvironmentAsync(BootstrapAuthState state)
-    {
-        await PlaywrightBrowserFactory.InitializeAsync();
-        Context = await PlaywrightBrowserFactory.CreateContextAsync(state.StorageStateJson);
-        await Context.AddInitScriptAsync(BuildSessionStorageRestoreScript(state.SessionStorageJson));
-        Page = await PlaywrightBrowserFactory.CreatePageAsync();
-    }
-
-    // Playwright storage state does not capture sessionStorage, so restore it via an init script
-    // that runs before any page script. The snapshot is JSON-encoded so embedded quotes are safe.
-    private static string BuildSessionStorageRestoreScript(string sessionStorageJson)
-    {
-        var literal = JsonSerializer.Serialize(sessionStorageJson);
-        return $$"""
-            () => {
-                try {
-                    const entries = JSON.parse({{literal}});
-                    for (const [key, value] of Object.entries(entries)) {
-                        window.sessionStorage.setItem(key, value);
-                    }
-                } catch { }
-            }
-            """;
     }
 
     /// <summary>

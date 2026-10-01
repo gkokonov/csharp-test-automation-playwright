@@ -1,8 +1,8 @@
 # NetBox Automation — Overview
 
-Spec set for the first NetBox SUT automation increment. This is a **planning
-document set only** — no implementation code is part of this change. Use the
-tracker (`TRACKER.md`) to follow implementation once work starts.
+Specifications for the first NetBox SUT automation increment. Phase 1
+infrastructure is implemented in the repository; later phases remain planned.
+Use the tracker (`TRACKER.md`) for current implementation status.
 
 ## Decisions (confirmed by user, 2026-09-27)
 
@@ -11,7 +11,7 @@ tracker (`TRACKER.md`) to follow implementation once work starts.
 | Project structure | Reuse the existing three projects (`CsharpTestAutomation.Framework`, `CsharpTestAutomation.Tests`, `CsharpTestAutomation.Framework.Test`) instead of the attachment's suggested `NetBox.*.Tests` / `Test.Infrastructure` layout | The repo already has a working, convention-documented framework/test split (see `AGENTS.md`, `docs/API_TESTING_ARCHITECTURE.md`, `docs/UI_TESTING_ARCHITECTURE.md`). Introducing parallel projects would duplicate infrastructure the attachment itself says to avoid. |
 | Legacy application assets | Removed after reusable patterns were extracted. The architecture and authoring instructions use generic resource examples and no longer point to retired application files. | The prior application is no longer available; its clients, DTOs, page objects, and DB queries are obsolete. |
 | Spec storage | `docs/netbox-automation/*.md` | Keeps NetBox planning separate from architecture references in `docs/`, mirrors `docs/known-defects/` precedent for topic subfolders. |
-| NetBox auth | New, NetBox-specific lightweight auth flow (API token provisioning + plain-credential UI login) — does **not** reuse `BootstrapSession` / `UiAuthenticationBootstrapper`. Design it using the **software-design-principles** skill (SRP/DIP/composition) rather than ad hoc | Those two classes are MSAL/Entra-ID specific (interactive federated login, JWT-from-UI bridging). NetBox uses local `admin`/`admin` credentials and a directly provisioned REST token — a materially simpler flow that would only be contorted by forcing it through the MSAL-shaped abstraction. Applying the design-principles skill keeps token provisioning, token application, and token caching as separate, independently testable collaborators instead of one god class. |
+| NetBox auth | NetBox-specific lightweight auth (API token provisioning + plain-credential UI login), separate from federated identity auth. Design it using the **software-design-principles** skill (SRP/DIP/composition) rather than ad hoc | NetBox uses local administrator credentials and a directly provisioned REST token. Separate token provisioning, token application, and token caching because they have independent contracts. UI authentication uses a shared Playwright storage state and does not use the API token. |
 | Secrets | `CsharpTestAutomation.Tests/appsettings.local.json` (gitignored). It **mirrors the full key set** of the committed `appsettings.json` — only secret values (`Password`, tokens) differ between the two; every non-secret key must exist in both files | Existing, already-ignored mechanism; keeps `NETBOX_*` env vars as the CI override path per the attachment. Mirroring the full structure means a developer only ever edits `appsettings.local.json` and never has to guess which keys it's missing. |
 | UI test coverage | **5 UI tests** total: Site create/update/delete (`02-site-management-spec.md`), Device create (`03-device-management-spec.md`), Prefix create (`04-ipam-spec.md`) | User explicitly requested at least 3-5 UI tests, superseding the source attachment's "implement one focused UI CRUD workflow" recommendation. Spreading them across create/update/delete on Site (the most-exercised feature) plus one create flow each for Device and Prefix demonstrates the page-object pattern extends cleanly to every feature, without building a full UI CRUD suite for every resource. |
 
