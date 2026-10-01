@@ -62,6 +62,7 @@ If documentation conflicts with `.editorconfig`, `.editorconfig` wins for mechan
 
 | Scope | Tool | Key Use Cases | Do NOT Use For |
 | :--- | :--- | :--- | :--- |
+| **Code Understanding & Call Paths** | **CodeGraph MCP/CLI** | Finding symbol definitions, usages, and call paths in one call; blast-radius of a change | Repos with no `.codegraph/` directory, or non-code (docs, config prose) questions |
 | **File Search & Indexing** | **FFF MCP** | Locating files, pattern searching, directory trees, file discovery | Web search or non-file queries |
 | **Architecture & History** | **Codebase Memory MCP / Skill** | Stored architectural decisions, domain entities, project structure patterns | Fresh file searches (use FFF) or inline refactoring |
 | **Third-Party / OSS Libraries** | **Context7 MCP** | Dapper, Playwright, NLog, Polly, Bogus, NBuilder, Allure, NUnit, RestSharp; library syntax & errors | First-party .NET, live UI, or existing repo code |
@@ -70,9 +71,20 @@ If documentation conflicts with `.editorconfig`, `.editorconfig` wins for mechan
 | **Browser Diagnostics** | **Chrome DevTools MCP** | Console payloads, network traffic, cookies/storage, performance, memory | Standard UI navigation or locator discovery |
 | **Local Code & Patterns** | **No MCP** | Code reviews, inline refactoring, local logic within open files | Unnecessary lookups when local code provides the answer |
 
-- **Default Tools:** Use **FFF MCP** for file discovery and **Playwright CLI** for UI exploration (escalation: `Playwright CLI` → `Traces` → `Chrome DevTools MCP` → `Source Analysis`).
+- **Default Tools:** Reach for **CodeGraph** before grep/find or reading files to understand or locate code; use **FFF MCP** for plain file discovery and **Playwright CLI** for UI exploration (escalation: `Playwright CLI` → `Traces` → `Chrome DevTools MCP` → `Source Analysis`).
 - **Execution Rules:** Check **Codebase Memory** before large code sweeps. Validate new locators against the running app with Playwright CLI. Browser tools are dev-time only, not for CI execution.
-- **Lookup Limit:** Max **5 external doc lookups** per request (FFF, Codebase Memory, Chrome DevTools MCP, and Playwright CLI are exempt).
+- **Lookup Limit:** Max **5 external doc lookups** per request (CodeGraph, FFF, Codebase Memory, Chrome DevTools MCP, and Playwright CLI are exempt).
+
+<!-- CODEGRAPH_START -->
+### CodeGraph
+
+In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
+
+- **MCP tool** (when available): `codegraph_explore` answers most code questions in one call — the relevant symbols' verbatim source plus the call paths between them, including dynamic-dispatch hops grep can't follow. Name a file or symbol in the query to read its current line-numbered source. If it's listed but deferred, load it by name via tool search.
+- **Shell** (always works): `codegraph explore "<symbol names or question>"` prints the same output.
+
+If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
+<!-- CODEGRAPH_END -->
 
 ## 9. Completion
 
