@@ -304,3 +304,4 @@ CsharpTestAutomation.Tests/appsettings.local.json
 **/playwright/.auth/
 /auth.json
 storage-state-*.json
+graphify-out/
