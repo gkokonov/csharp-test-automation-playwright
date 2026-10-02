@@ -21,8 +21,8 @@ dotnet restore
 dotnet build .\CsharpTestAutomation.slnx
 dotnet test .\CsharpTestAutomation.Framework.Test\CsharpTestAutomation.Framework.Test.csproj
 dotnet test .\CsharpTestAutomation.Tests\CsharpTestAutomation.Tests.csproj
-dotnet test .\CsharpTestAutomation.slnx                           # all projects
-dotnet test --filter "FullyQualifiedName~<FixtureName>"        # narrow run while iterating
+dotnet test .\CsharpTestAutomation.slnx                         # all projects
+dotnet test --filter "FullyQualifiedName~<FixtureName>"        # narrow run while iterating
 ```
 
 `TreatWarningsAsErrors=true` in Debug and Release across all three projects. A warning is a build failure.
@@ -64,7 +64,7 @@ Use the **smallest set of tools needed**. Prefer repository evidence over extern
 
 | Scope | Tool | Use For |
 | :--- | :--- | :--- |
-| **Code Navigation** | **CodeGraph MCP** | Symbols, implementations, callers/callees, dependencies, execution paths. Use first when `.codegraph/` exists. |
+| **Code Navigation & Graph** | **Graphify** | Workspace dependency graphs, structural analysis, symbols, callers/callees, and component mapping. |
 | **File Discovery** | **FFF MCP** | Files, directories, filename/pattern searches, configs, fixtures, resources. |
 | **Third-Party / OSS** | **Context7 MCP** | APIs, syntax, configuration, and errors for Dapper, Playwright, NLog, Polly, Bogus, NBuilder, Allure, NUnit, RestSharp. |
 | **Microsoft / .NET** | **Microsoft Learn MCP** | .NET/C# BCL, MSBuild, `.editorconfig`, ASP.NET Core, Azure SDKs, Azure DevOps. |
@@ -72,10 +72,10 @@ Use the **smallest set of tools needed**. Prefer repository evidence over extern
 | **Browser Diagnostics** | **Chrome DevTools MCP** | Network, console, cookies/storage, performance, memory. |
 | **Known Local Code** | **No external lookup** | Code review, refactoring, or behavior already established by repository evidence. |
 
-- **Selection:** Local code → CodeGraph/FFF → official docs → runtime tools. Do not call multiple tools pre-emptively; escalate only when current evidence is insufficient.
+- **Selection:** Existing prompt context → Graphify / FFF MCP → Official docs → Runtime tools. Do not use standard file sweeps or preemptive external searches when Graphify or FFF MCP can locate the target.
 - **Browser escalation:** `Playwright CLI → Trace → Chrome DevTools MCP → Source Analysis`. Validate new locators with Playwright CLI when the app is available. Browser tools are dev-time only.
 - **Context discipline:** Inspect only what is needed for the task. Reuse gathered evidence and stop once the answer is established.
-- **Lookup limit:** Max **5 documentation lookups** per request across Context7 and Microsoft Learn. CodeGraph, FFF, Playwright, and Chrome DevTools are exempt.
+- **Lookup limit:** Max **5 documentation lookups** per request across Context7 and Microsoft Learn. Graphify, FFF, Playwright, and Chrome DevTools are exempt.
 
 ## 9. Completion
 
