@@ -215,8 +215,11 @@ post-login delay.
   create the required record through the API or a DB helper and register
   cleanup with `ScenarioCleanupActions` immediately after creation. Never
   mutate, update, or delete a record the test did not create.
-5. Never open a connection or embed a connection string in a test. Use the
-   existing query base and the shared `PostgreSqlConnectionPool`.
+5. Never open a connection or embed a connection string in a test. Call the
+`Database/<App>/Queries` repository methods; they take no connection. Each
+repository acquires a short-lived connection from the shared
+`PostgreSqlConnectionPool` through its `<App>Database.Run(...)` helper, which
+disposes the connection after the query.
 6. Build request payloads with the DTO builders in `API/Factories/`
   (`CreateResourceDtoBuilder : BaseBuilder<CreateResourceDto>`) rather than
   constructing DTOs inline. Keep shared static values in `TestData/API/`.

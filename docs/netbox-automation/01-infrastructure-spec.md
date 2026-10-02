@@ -204,7 +204,7 @@ DevicesDatabaseRepository → SELECT id, name, site_id, status FROM dcim_device 
 IpamDatabaseRepository    → prefix/ip-address lookups by CIDR or id
 ```
 
-Row DTOs in `Database/NetBox/DTO/` (e.g. `SiteRowDto`), aliased columns matching C# member names per `.agents/rules/test-automation.md` (`snake_case` → PascalCase alias in SQL). Use `DapperActions.Query<T>`/`QueryAll<T>` against `PostgreSqlConnectionPool.Instance.GetConnection("netbox")` — never open ad-hoc connections in tests. Parameterize every query; no string concatenation.
+Row DTOs in `Database/NetBox/DTO/` (e.g. `SiteRowDto`), aliased columns matching C# member names per `.agents/rules/test-automation.md` (`snake_case` → PascalCase alias in SQL). Use `DapperActions.Query<T>`/`QueryAll<T>` through `NetBoxDatabase.Run` (wraps `PostgreSqlConnectionPool.Instance.GetConnection("netbox")` and disposes the connection) — never open ad-hoc connections in tests. Parameterize every query; no string concatenation.
 
 ## Browser Layer
 

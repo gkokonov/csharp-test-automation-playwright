@@ -7,10 +7,8 @@ using CsharpTestAutomation.Tests.Api.Clients;
 using CsharpTestAutomation.Tests.Api.Dtos.Common;
 using CsharpTestAutomation.Tests.Api.Dtos.Sites;
 using CsharpTestAutomation.Tests.Api.Factories;
-using CsharpTestAutomation.Tests.Database;
 using CsharpTestAutomation.Tests.Database.NetBox.DTO;
 using CsharpTestAutomation.Tests.Database.NetBox.Queries;
-using Npgsql;
 using RestSharp;
 
 namespace CsharpTestAutomation.Tests.Tests.Api;
@@ -85,8 +83,7 @@ public class SitesApiTests : ApiTestBase
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         getResponse.Data.Should().BeEquivalentTo(created);
 
-        using NpgsqlConnection connection = PostgreSqlConnectionPool.Instance.GetConnection("netbox");
-        SiteRowDto? row = SitesDatabaseRepository.GetBySlug(connection, created.Slug);
+        SiteRowDto? row = SitesDatabaseRepository.GetBySlug(created.Slug);
 
         using (new AssertionScope())
         {

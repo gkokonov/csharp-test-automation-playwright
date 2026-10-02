@@ -1,13 +1,12 @@
 using CsharpTestAutomation.Framework.DB;
 using CsharpTestAutomation.Tests.Database.NetBox.DTO;
 using Dapper;
-using Npgsql;
 
 namespace CsharpTestAutomation.Tests.Database.NetBox.Queries;
 
 public static class IpamDatabaseRepository
 {
-    public static PrefixRowDto? GetPrefixByCidr(NpgsqlConnection connection, string prefix)
+    public static PrefixRowDto? GetPrefixByCidr(string prefix)
     {
         const string sql = """
             SELECT id, prefix::text AS "Prefix", status, description
@@ -15,10 +14,11 @@ public static class IpamDatabaseRepository
             WHERE prefix = @Prefix::cidr
             """;
 
-        return DapperActions.Query<PrefixRowDto>(connection, sql, new DynamicParameters(new { Prefix = prefix }));
+        return NetBoxDatabase.Run(connection =>
+            DapperActions.Query<PrefixRowDto>(connection, sql, new DynamicParameters(new { Prefix = prefix })));
     }
 
-    public static IpAddressRowDto? GetIpAddressByAddress(NpgsqlConnection connection, string address)
+    public static IpAddressRowDto? GetIpAddressByAddress(string address)
     {
         const string sql = """
             SELECT id, host(address) AS "Address", status, description
@@ -26,6 +26,7 @@ public static class IpamDatabaseRepository
             WHERE address = @Address::inet
             """;
 
-        return DapperActions.Query<IpAddressRowDto>(connection, sql, new DynamicParameters(new { Address = address }));
+        return NetBoxDatabase.Run(connection =>
+            DapperActions.Query<IpAddressRowDto>(connection, sql, new DynamicParameters(new { Address = address })));
     }
 }
