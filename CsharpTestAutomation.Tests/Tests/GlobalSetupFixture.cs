@@ -1,11 +1,11 @@
-using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using CsharpTestAutomation.Framework.Common;
 using CsharpTestAutomation.Framework.Common.Extensions;
 using CsharpTestAutomation.Framework.Common.Utilities;
 using CsharpTestAutomation.Tests.Configurations;
 using CsharpTestAutomation.Tests.Database;
-using Microsoft.Playwright;
 using NLog;
 
 namespace CsharpTestAutomation.Tests.Tests;
@@ -75,44 +75,21 @@ public class GlobalSetupFixture
     }
 
     /// <summary>
-    /// Logs appsettings values for the current environment.
+    /// Logs the full configuration object graph (nested DTOs and models) for the current environment.
+    /// Values of sensitive keys are redacted.
     /// </summary>
     private static void LogAppsettingsValues()
     {
         s_log.Debug("Log appsettings values for execution environment: " + (Environment.GetEnvironmentVariable("Environment") ?? "local"));
 
-        // Create dictionary to hold property values
-        var configValues = new Dictionary<string, string>();
-
-        // Get all instance properties from ExtendedConfiguration and its base class CoreConfiguration
-        Type type = typeof(ExtendedConfiguration);
-        PropertyInfo[] properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-
-        foreach (PropertyInfo pi in properties)
+        try
         {
-            try
-            {
-                // Get the property value from s_configuration instance and convert to string if
-                // not null
-                var value = pi.GetValue(s_configuration);
-
-                // Handle ViewportSize specially
-                if (pi.Name == nameof(CoreConfiguration.ViewportSize) && value is ViewportSize viewportSize)
-                {
-                    configValues[pi.Name] = $"{viewportSize.Width}x{viewportSize.Height}";
-                }
-                else
-                {
-                    configValues[pi.Name] = value?.ToString() ?? string.Empty;
-                }
-            }
-            catch (Exception ex)
-            {
-                configValues[pi.Name] = $"Error retrieving value: {ex.Message}";
-            }
+            JsonNode? node = JsonSerializer.SerializeToNode(s_configuration, s_configuration.GetType(), JsonExtensions.DefaultOptions);
+            s_log.Debug(node?.ToJsonString(JsonExtensions.DefaultOptions) ?? "null");
         }
-
-        var output = JsonSerializer.Serialize(configValues, JsonExtensions.DefaultOptions);
-        s_log.Debug(output);
+        catch (Exception ex)
+        {
+            s_log.Warn(ex, "Unable to log appsettings values.");
+        }
     }
 }
