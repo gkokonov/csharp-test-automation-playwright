@@ -52,11 +52,11 @@ until this tracker and the specs in this folder are reviewed.
 
 | # | Task | Status | Notes |
 | --- | --- | --- | --- |
-| 3.1 | `CreateSite_ShouldPersistAcrossLayers` (UI → API → DB validation) | TODO | |
-| 3.2 | `UpdateSite_ShouldReflectChangedStatusAcrossLayers` | TODO | Site created via API setup |
-| 3.3 | `DeleteSite_ShouldRemoveSiteAcrossLayers` | TODO | Site created via API setup; no cleanup needed (test deletes it) |
-| 3.4 | API cleanup wired and verified idempotent (create/update tests) | TODO | |
-| 3.5 | All 3 Site UI tests green x3 consecutive headless runs | TODO | Gate before Phase 4 |
+| 3.1 | `CreateSite_ShouldPersistAcrossLayers` (UI → API → DB validation) | DONE | UI creates via Playwright (slug filled before name to prevent NetBox JS auto-generation); API + DB layers asserted post-create |
+| 3.2 | `UpdateSite_ShouldReflectChangedStatusAcrossLayers` | DONE | Site created via API setup; UI updates status + description; API + DB layers verified |
+| 3.3 | `DeleteSite_ShouldRemoveSiteAcrossLayers` | DONE | Site created via API setup; UI deletes; list page, API 404, DB null all verified |
+| 3.4 | API cleanup wired and verified idempotent (create/update tests) | DONE | `ScenarioCleanupActions` registered at creation time; `DeleteSiteAsync` tolerates 404 |
+| 3.5 | All 3 Site UI tests green x3 consecutive headless runs | DONE | 3/3 passed on 3 consecutive runs against local NetBox instance |
 
 ## Phase 4 — Device Automation
 

@@ -6,7 +6,7 @@ namespace CsharpTestAutomation.Tests.UI.Pages.NetBox;
 public sealed class SitesListPage(IPage page) : BaseUIView(page)
 {
     private SiteDeleteConfirmationDialog DeleteConfirmation =>
-        new(Page, Page.GetByRole(AriaRole.Dialog));
+        new(Page, Page.Locator("#htmx-modal"));
 
     protected override ILocator PageReadyLocator =>
         Page.GetByRole(AriaRole.Heading, new() { Name = "Sites", Exact = true });
@@ -26,9 +26,15 @@ public sealed class SitesListPage(IPage page) : BaseUIView(page)
         return editPage;
     }
 
+    public ILocator GetSiteRow(string nameOrSlug) =>
+        Page.GetByRole(AriaRole.Row).Filter(new() { HasText = nameOrSlug });
+
+    public async Task<bool> ContainsSiteAsync(string nameOrSlug) =>
+        await GetSiteRow(nameOrSlug).CountAsync() > 0;
+
     public async Task DeleteSiteAsync(string slug)
     {
-        ILocator siteRow = Page.GetByRole(AriaRole.Row).Filter(new() { HasText = slug });
+        ILocator siteRow = GetSiteRow(slug);
         await siteRow.GetByRole(AriaRole.Link, new() { Name = "Delete", Exact = true }).ClickAsync();
         await DeleteConfirmation.ConfirmAsync();
         await WaitUntilLoadedAsync();

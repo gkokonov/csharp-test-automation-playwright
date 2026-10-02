@@ -41,6 +41,18 @@ public class PlaywrightContextOptionsTests
     }
 
     [Test]
+    public void CreateContextOptions_WithMissingStorageStateFile_ThrowsFileNotFound()
+    {
+        Action act = () => PlaywrightBrowserFactory.CreateContextOptions(
+            new CoreConfiguration(),
+            deviceOptions: null,
+            storageState: "missing\\state.json",
+            httpCredentials: null);
+
+        act.Should().Throw<FileNotFoundException>().WithMessage("*missing*state.json*");
+    }
+
+    [Test]
     public void CreateContextOptions_WithDevice_CopiesDeviceFieldsAndKeepsSessionOptions()
     {
         var configuration = new CoreConfiguration {

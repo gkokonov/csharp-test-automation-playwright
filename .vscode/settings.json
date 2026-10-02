@@ -52,6 +52,11 @@
       "file": ".agents/instructions/commit-instructions.md"
     }
   ],
+  "github.copilot.chat.reviewSelection.instructions": [
+    {
+      "file": ".agents/instructions/copilot-review-instructions.md"
+    }
+  ],
   // Reduce unnecessary agent context usage.
   "chat.tools.compressOutput.enabled": true,
   "chat.tools.terminal.outputCompaction": true,

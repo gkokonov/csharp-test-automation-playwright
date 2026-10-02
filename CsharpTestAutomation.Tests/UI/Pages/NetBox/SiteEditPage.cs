@@ -7,7 +7,7 @@ public sealed class SiteEditPage(IPage page) : BaseUIView(page)
 {
     private ILocator Name => Page.GetByLabel("Name");
 
-    private ILocator Slug => Page.GetByLabel("Slug");
+    private ILocator Slug => Page.GetByRole(AriaRole.Textbox, new() { Name = "Slug" });
 
     // NetBox's accessible combobox is a hidden helper input; the form value is held by this select.
     private ILocator Status => Page.Locator("select[name='status']");
@@ -20,7 +20,12 @@ public sealed class SiteEditPage(IPage page) : BaseUIView(page)
     public async Task<SiteDetailsPage> CreateSiteAsync(CreateSiteDto site)
     {
         await Name.FillAsync(site.Name);
-        await Slug.FillAsync(site.Slug);
+
+        // Triple-click then type to simulate user keyboard input, so NetBox's JS marks the
+        // slug field as manually edited and stops auto-generating it from the Name field.
+        await Slug.ClickAsync(new() { ClickCount = 3 });
+        await Slug.PressSequentiallyAsync(site.Slug, new() { Delay = 20 });
+
         await Status.SelectOptionAsync(site.Status);
         await Description.FillAsync(site.Description);
         await Page.GetByRole(AriaRole.Button, new() { Name = "Create", Exact = true }).ClickAsync();

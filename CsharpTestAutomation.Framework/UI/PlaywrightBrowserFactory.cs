@@ -321,6 +321,14 @@ public static class PlaywrightBrowserFactory
         string? storageState,
         HttpCredentials? httpCredentials)
     {
+        // Storage state is either inline JSON (an object) or a file path; anything else is a path.
+        bool isFilePath = !string.IsNullOrWhiteSpace(storageState) && !storageState.TrimStart().StartsWith('{');
+
+        if (isFilePath && !File.Exists(storageState))
+        {
+            throw new FileNotFoundException($"Playwright storage state file was not found: '{storageState}'.", storageState);
+        }
+
         var contextOptions = new BrowserNewContextOptions {
             ViewportSize = deviceOptions?.ViewportSize ?? configuration.ViewportSize,
             UserAgent = deviceOptions?.UserAgent,
@@ -331,7 +339,8 @@ public static class PlaywrightBrowserFactory
             IgnoreHTTPSErrors = true,
             RecordVideoDir = configuration.RecordVideoEnabled ? configuration.RecordDir : null,
             BypassCSP = configuration.BypassCSP,
-            StorageState = storageState,
+            StorageStatePath = isFilePath ? storageState : null,
+            StorageState = !isFilePath ? storageState : null,
             HttpCredentials = httpCredentials
         };
 

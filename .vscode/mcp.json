@@ -26,16 +26,6 @@
     "fff": {
       "type": "stdio",
       "command": "${env:LOCALAPPDATA}/fff-mcp/bin/fff-mcp.exe"
-    },
-    "codegraph": {
-      "type": "stdio",
-      "command": "codegraph",
-      "args": [
-        "serve",
-        "--mcp",
-        "--path",
-        "${workspaceFolder}"
-      ]
     }
   }
 }
