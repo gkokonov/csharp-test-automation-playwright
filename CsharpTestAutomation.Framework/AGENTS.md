@@ -1,5 +1,15 @@
 # Framework Scope
 
-Before changing this project, read the repository [AGENTS.md](../AGENTS.md) and the canonical [framework rules](../.agents/rules/framework.md). The rules file contains the detailed C# conventions and boundaries for this reusable library.
+Before edits or reviews, read the root [AGENTS.md](../AGENTS.md), the shared
+[C# rules](../.agents/rules/csharp.md), and the canonical
+[framework rules](../.agents/rules/framework.md).
+Keep application clients, settings, data, and steps in `CsharpTestAutomation.Tests`.
 
-Use the framework project build and self-test commands listed in the repository instructions. Keep application-specific clients, settings, and test data in `CsharpTestAutomation.Tests`.
+Run from the repository root; replace `<Subject>Tests` with the affected fixture:
+
+```pwsh
+dotnet build .\CsharpTestAutomation.Framework\CsharpTestAutomation.Framework.csproj
+dotnet test .\CsharpTestAutomation.Framework.Test\CsharpTestAutomation.Framework.Test.csproj --filter "FullyQualifiedName~<Subject>Tests"
+```
+
+Run the self-test project without the filter when a change spans fixtures.

@@ -13,12 +13,13 @@ required = false
 
 [mcp_servers.chrome-devtools]
 command = "cmd.exe"
-args = ["/d", "/c", "npx", "-y", "chrome-devtools-mcp@latest", "--headless", "--no-usage-statistics"]
+args = ["/d", "/c", "npx", "--prefer-offline", "-y", "chrome-devtools-mcp@latest", "--headless", "--no-usage-statistics"]
+env_vars = ["SystemRoot", "PROGRAMFILES", "LOCALAPPDATA", "APPDATA", "USERPROFILE"]
 startup_timeout_sec = 60
 required = false
 
 [mcp_servers.fff]
-command = "C:/Users/georg/AppData/Local/fff-mcp/bin/fff-mcp.exe"
-
-[windows]
-sandbox = "elevated" # Options: elevated, unelevated
+command = "powershell.exe"
+args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", "& (Join-Path $env:LOCALAPPDATA 'fff-mcp/bin/fff-mcp.exe'); exit $LASTEXITCODE"]
+env_vars = ["LOCALAPPDATA"]
+required = false

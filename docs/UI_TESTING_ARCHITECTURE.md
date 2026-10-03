@@ -261,7 +261,11 @@ For test-case design, required attributes, assertion style, and Definition of Do
 
 Before writing a page object or component for a new screen, inspect the running application with the repository's [Playwright CLI skill](../.agents/skills/playwright-cli/SKILL.md). Use its accessibility snapshot and locator-generation commands to check the live DOM instead of guessing from a design mock or stale screenshot.
 
-This is an authoring and diagnosis aid only. The CLI does not replace the test harness: committed tests remain NUnit tests using Microsoft.Playwright for .NET. See `AGENTS.md` for browser-tool routing and the semantic-locator preference order (`GetByRole` → `GetByLabel` → `GetByText` → `GetByTestId` → CSS as a last resort).
+This is an authoring and diagnosis aid only. Committed tests remain NUnit tests
+using Microsoft.Playwright for .NET. Read the
+[tooling instructions](../.agents/instructions/tooling.md) for browser routing
+and the [UI rules](../.agents/rules/ui-testing.md) for the locator order,
+readiness, and Playwright assertions.
 
 ## 9. Extension Points
 

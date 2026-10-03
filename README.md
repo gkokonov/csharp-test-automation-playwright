@@ -41,6 +41,10 @@ dotnet test .\CsharpTestAutomation.Tests\CsharpTestAutomation.Tests.csproj --fil
 
 ## Agent Guidance
 
-See [AGENTS.md](AGENTS.md) for repository instructions and [agent support](docs/AGENT_SUPPORT.md) for Copilot, Codex, Antigravity, and Devin discovery. Set `CONTEXT7_API_KEY` in the local agent environment if the optional Context7 MCP server is used; do not store the key in the repository.
+See [AGENTS.md](AGENTS.md) for task routing and [agent support](docs/AGENT_SUPPORT.md)
+for Copilot, Codex, and Antigravity discovery. The root targets 60–80 lines with
+a 100-line maximum; project entry points load shared and applicable layer rules.
+Set `CONTEXT7_API_KEY` in the local agent environment for the optional Context7
+MCP server; do not store the key in the repository.
 
 For local Windows Codex clients, open and trust this repository, then start a fresh session. Codex uses the root and scoped `AGENTS.md` files, `.agents/skills/`, and the project MCP settings in `.codex/config.toml`. VS Code's `.vscode/mcp.json` remains the Copilot adapter. See [Windows Codex setup and checks](docs/AGENT_SUPPORT.md#codex-on-windows) for prerequisites, environment setup, and connection checks.

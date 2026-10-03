@@ -1,10 +1,13 @@
 # Framework Self-Test Scope
 
-Read the repository [AGENTS.md](../AGENTS.md) before changing this project. These tests validate reusable framework behavior; do not add application-specific endpoints, DTOs, credentials, or environment assumptions here.
+Before edits or reviews, read the root [AGENTS.md](../AGENTS.md) and shared
+[C# rules](../.agents/rules/csharp.md). These tests validate reusable framework
+behavior; do not add application endpoints, DTOs, credentials, or environment assumptions.
 
 Use NUnit and the existing test utilities. Use WireMock.Net for HTTP behavior and the in-memory SQLite setup for database behavior. Keep tests deterministic and local; do not call external services.
 
-Name test methods `Verify_[ExpectedBehavior]_When_[StateUnderTest]` when the
+Name test classes `<Subject>Tests`. Name methods
+`Verify_[ExpectedBehavior]_When_[StateUnderTest]` when the
 state adds useful context. Use a shorter `Verify_[ExpectedBehavior]` name when
 it stays clear, such as `Verify_DatabaseConnection_StaysOpen`.
 
@@ -24,5 +27,9 @@ targets are not null before checking their members.
 Run the focused test project with:
 
 ```pwsh
-dotnet test .\CsharpTestAutomation.Framework.Test\CsharpTestAutomation.Framework.Test.csproj
+dotnet build .\CsharpTestAutomation.Framework.Test\CsharpTestAutomation.Framework.Test.csproj
+dotnet test .\CsharpTestAutomation.Framework.Test\CsharpTestAutomation.Framework.Test.csproj --filter "FullyQualifiedName~<Subject>Tests"
 ```
+
+Run from the repository root; replace `<Subject>Tests` with the affected fixture.
+Remove the filter for the full project. Use plain `await`; no `.ConfigureAwait(false)`.

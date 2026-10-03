@@ -52,7 +52,9 @@ Guid resourceId = RequireDbData<Guid>(
 
 Use `RequireDbData<T>(object? candidate, string missingDataMessage)` for nullable single query results, including nullable value types such as `Guid?`. Pass the query result directly; do not manually check for null and call `Assert.Inconclusive(...)`. For collection queries, use `RequireDbData<T>(IReadOnlyCollection<T>? candidates, string missingDataMessage)`, which marks null or empty collections inconclusive and returns a random row. These helpers are in the application test project, not the reusable framework.
 
-The full test-data policy (read-only seeded data, inconclusive missing prerequisites, and cleanup for test-owned records) lives in `.agents/rules/test-automation.md`.
+Read the [shared test rules](../.agents/rules/test-automation.md) for data
+ownership and cleanup, and the [API rules](../.agents/rules/api-testing.md)
+for fixture registration, missing seed data, request builders, and API assertions.
 
 ## 3. Adding a New Typed API Client
 
@@ -124,7 +126,9 @@ given test happens to use `RequireDbData`.
   extensions only for transport status (`ShouldHaveCompletedTransport`) and JSONPath
   (`ShouldHaveJsonPathValue`).
 
-For test-case design, naming, required attributes, assertion style, test data, and Definition of Done, see `.agents\rules\test-automation.md`. Those rules apply to every test in the project and are not restated here.
+For test design, names, attributes, assertions, data, and completion, read the
+[shared test rules](../.agents/rules/test-automation.md). The
+[API rules](../.agents/rules/api-testing.md) own API authoring requirements.
 
 ### Reusable API Steps
 

@@ -17,6 +17,14 @@ which borrows fixture-registered clients and the inherited cleanup stack.
 
 Each prerequisite gets its own builder (`CreateManufacturerDtoBuilder`, `CreateDeviceTypeDtoBuilder`, `CreateDeviceRoleDtoBuilder`) with unique `auto-{feature}-{guid}` names. Register cleanup immediately in creation order. LIFO cleanup executes deepest dependencies first: Device → DeviceType → Manufacturer, with DeviceRole and Site deleted after their Devices.
 
+Create every destination Site before its Device. Register cleanup in creation
+order so Devices are deleted before Sites, types, roles, and manufacturers.
+Delete cleanup accepts `204` and `404`; other failures must remain visible.
+For shared ownership and step conventions, read the
+[test rules](../../.agents/rules/test-automation.md); API and UI scenarios also
+follow their [API](../../.agents/rules/api-testing.md) and
+[UI](../../.agents/rules/ui-testing.md) rules, respectively.
+
 ## API Tests (`Tests/API/DevicesApiTests.cs`)
 
 | Test | Notes |

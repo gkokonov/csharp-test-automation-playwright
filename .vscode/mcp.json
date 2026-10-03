@@ -17,6 +17,7 @@
       "args": [
         "/c",
         "npx",
+        "--prefer-offline",
         "-y",
         "chrome-devtools-mcp@latest",
         "--headless",
