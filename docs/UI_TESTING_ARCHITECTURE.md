@@ -136,6 +136,18 @@ is `true` — NetBox test accounts are not treated as sensitive secrets. The sto
 contains authenticated browser state, is ignored by Git, and is not logged or attached to
 Allure.
 
+Device forms use NetBox's visible searchable comboboxes. `DeviceEditPage` fills
+each semantic combobox and clicks its accessible option; the option text can
+include a description or manufacturer. Device detail values are scoped to table
+rows by their accessible row headers (`Site`, `Role`, `Model`, `Status`, and
+`Description`). The UI fixture creates prerequisites through the API and
+registers Device cleanup by its unique name and site before submitting the form.
+Page objects accept form values and display names; they do not depend on the
+steps or create API prerequisites. Shared API prerequisite workflows live in
+`Steps/API/NetBox/DeviceSteps.cs` and can serve both API and UI fixtures.
+Reusable UI workflows that coordinate page objects belong in `Steps/UI/<App>/`
+and use the `Steps` suffix. Add that layer only when a repeated workflow needs it.
+
 Optional artifacts are produced by the factory based on configuration:
 
 - **Tracing** (`TraceEnabled`): a Playwright trace `.zip` per context is written to `TraceDir` on context disposal (open with `playwright show-trace`).

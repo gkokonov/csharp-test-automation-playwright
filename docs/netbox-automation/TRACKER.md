@@ -62,13 +62,13 @@ until this tracker and the specs in this folder are reviewed.
 
 | # | Task | Status | Notes |
 | --- | --- | --- | --- |
-| 4.1 | Prerequisite builders (Manufacturer, DeviceType, DeviceRole) | TODO | |
-| 4.2 | Device API CRUD tests | TODO | |
-| 4.3 | Device filter/search test | TODO | |
-| 4.4 | `DevicesListPage`, `DeviceEditPage`, `DeviceDetailsPage` | TODO | Semantic locators only |
-| 4.5 | `CreateDevice_ShouldPersistAcrossLayers` UI test | TODO | Prerequisites via API only |
-| 4.6 | Cleanup order verified even on failure | TODO | |
-| 4.7 | Green x3 consecutive runs (API + UI) | TODO | Gate before Phase 5 |
+| 4.1 | Prerequisite builders (Manufacturer, DeviceType, DeviceRole) | DONE | Reused the builders completed in Phase 1; `Steps/API/NetBox/DeviceSteps` creates owned prerequisites and registers cleanup immediately. |
+| 4.2 | Device API CRUD tests | DONE | `DevicesApiTests`: create, exact-name lookup, PATCH with/without site change, and delete; persisted Device fields checked against PostgreSQL. Added optional `Site` to PATCH DTO and an update builder. |
+| 4.3 | Device filter/search test | DONE | `site_id` filter tested with two matching Devices and one Device at another owned site; exact-name search is covered separately. |
+| 4.4 | `DevicesListPage`, `DeviceEditPage`, `DeviceDetailsPage` | DONE | Semantic headings, comboboxes, options, row headers, and links; locators checked against live NetBox 4.7. |
+| 4.5 | `CreateDevice_ShouldPersistAcrossLayers` UI test | DONE | One UI create scenario passed live with API-only prerequisites, semantic detail assertions, and REST/PostgreSQL checks. |
+| 4.6 | Cleanup order verified even on failure | DONE | Two API interruption cases passed. The initial UI assertion failure also deleted Device, Site, Role, DeviceType, then Manufacturer successfully. |
+| 4.7 | Green x3 consecutive runs (API + UI) | DONE | 17/17 passed on three consecutive live headless runs: 8 Device API cases, 1 Device UI case, and 8 existing Site regressions. Results: `artifacts/netbox-phase4/netbox-final-{1,2,3}.trx`. |
 
 ## Phase 5 — IPAM Automation
 
@@ -84,14 +84,30 @@ until this tracker and the specs in this folder are reviewed.
 
 ## Cross-Cutting Gates (recheck at end of each phase)
 
-- [ ] `dotnet build .\CsharpTestAutomation.slnx` is warning-clean.
-- [ ] No secrets (password, API token) appear in logs or Allure attachments.
-- [ ] Every created record registers cleanup at creation time.
-- [ ] No fixed/shared test data names across parallel-safe tests.
-- [ ] Allure metadata complete (suite/feature/story/severity/owner) on every new test.
-- [ ] No duplicate infrastructure introduced beyond what's spec'd here.
-- [ ] Owning instruction file (`.agents/rules/test-automation.md`, `docs/API_TESTING_ARCHITECTURE.md`, `docs/UI_TESTING_ARCHITECTURE.md`) updated if a new pattern is introduced.
+- [x] `dotnet build .\CsharpTestAutomation.slnx` is warning-clean.
+- [x] Phase 4 API request/response logs and Allure attachments redact credentials. Startup configuration logging writes raw values as expected by the user; configuration redaction is deferred. Historical ignored Allure output predating this phase still contains unredacted authorization headers.
+- [x] Every created record registers cleanup at creation time.
+- [x] No fixed/shared test data names across parallel-safe tests.
+- [x] Allure metadata complete (suite/feature/story/severity/owner) on every new test.
+- [x] No duplicate infrastructure introduced beyond what's spec'd here.
+- [x] Owning instruction file (`.agents/rules/test-automation.md`, `docs/API_TESTING_ARCHITECTURE.md`, `docs/UI_TESTING_ARCHITECTURE.md`) updated if a new pattern is introduced.
 - [ ] Exactly 5 UI tests implemented by end of Phase 5 (3 Site, 1 Device, 1 Prefix) per the confirmed UI-coverage decision below.
+
+**Phase 4 review (2026-10-03):** One read-only reviewer subagent pass completed.
+The main agent fixed its finding: cleanup registration is in creation order,
+while LIFO execution deletes dependents first. API redaction is enabled in the
+committed and ignored local configuration. Phase 4 attachments generated before
+that correction were sanitized. Formatting/analyzer verification and the
+solution build passed. Four planned UI scenarios now exist; Prefix remains
+Phase 5 work.
+
+**Steps refactor (2026-10-03):** Device prerequisite operations and their result
+record now live in `Steps/API/NetBox/` as `DeviceSteps` and `DevicePrerequisites`.
+Both Device fixtures use the new namespace. The root instructions, authoring
+rules, architecture references, and Device spec record this convention.
+The solution build and formatter verification passed; all 9 existing Device
+API/UI cases passed in the focused live headless run. Results:
+`artifacts/netbox-phase4/device-steps-refactor.trx`.
 
 ## Decision Log
 
@@ -108,3 +124,5 @@ until this tracker and the specs in this folder are reviewed.
 | 2026-10-01 | `CreateSite_ShouldPersistSiteInDatabase` verifies persistence at both layers: a REST GET re-fetch equivalence check, and a direct Postgres row check via `SitesDatabaseRepository` | Confirmed by user |
 | 2026-10-01 | Every API test fixture derives from `ApiTestBase` (superseding `02-site-management-spec.md`'s plain-`[TestFixture]` suggestion) — it registers typed clients via `ApiTestBase.RegisterClient`/`GetClient<T>` (added to remove direct `TestContainer` use from fixtures) so disposal happens after `ScenarioCleanupActions` runs, and uses the inherited `ScenarioCleanupActions`/`NetBoxAuthenticator` rather than fixture-local copies | Confirmed by user |
 | 2026-10-01 | Test-data value generation (unique names/slugs/prefixes/IPs) prefers Bogus (`Faker`/`Randomizer`) over raw `Guid`/`Random`; fixed domain constants (status enum values, human-readable description labels) stay as plain constants | Confirmed by user |
+| 2026-10-03 | Startup configuration logging writes values without redaction as expected. Correct its comment; configuration redaction is deferred until requested. | Confirmed by user |
+| 2026-10-03 | Reusable workflows and prerequisite operations live in `Steps/API/<App>/` or `Steps/UI/<App>/`, chosen by their implementation. Classes use the `Steps` suffix. Device prerequisite operations and their result record live together in `Steps/API/NetBox/`; constants and generated values remain in `TestData/`. | Confirmed by user |

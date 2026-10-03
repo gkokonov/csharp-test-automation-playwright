@@ -2,6 +2,12 @@
 
 Implemented after Site automation is stable. Extends Site conventions.
 
+Implementation uses the repository's `Verify_[ExpectedBehavior]_When_[StateUnderTest]`
+test names. The scenario names below identify the planned behavior. Prerequisite
+builders already exist from Phase 1 and are reused through `DeviceSteps`
+in `Steps/API/NetBox/`,
+which borrows fixture-registered clients and the inherited cleanup stack.
+
 ## Prerequisites (create via API only, never via UI)
 
 - `Manufacturer` (`ManufacturersApiClient.CreateManufacturerAsync`)
@@ -9,7 +15,7 @@ Implemented after Site automation is stable. Extends Site conventions.
 - `DeviceRole` (`DeviceRolesApiClient.CreateDeviceRoleAsync`)
 - `Site` (`SitesApiClient.CreateSiteAsync`, reused from Site feature)
 
-Each prerequisite gets its own builder (`CreateManufacturerDtoBuilder`, `CreateDeviceTypeDtoBuilder`, `CreateDeviceRoleDtoBuilder`) with unique `auto-{feature}-{guid}` names. Register cleanup for each, deepest dependency first: Device → DeviceType → Manufacturer / DeviceRole / Site (Manufacturer, DeviceRole, Site have no further dependents among these four).
+Each prerequisite gets its own builder (`CreateManufacturerDtoBuilder`, `CreateDeviceTypeDtoBuilder`, `CreateDeviceRoleDtoBuilder`) with unique `auto-{feature}-{guid}` names. Register cleanup immediately in creation order. LIFO cleanup executes deepest dependencies first: Device → DeviceType → Manufacturer, with DeviceRole and Site deleted after their Devices.
 
 ## API Tests (`Tests/API/DevicesApiTests.cs`)
 
@@ -17,13 +23,17 @@ Each prerequisite gets its own builder (`CreateManufacturerDtoBuilder`, `CreateD
 | --- | --- |
 | `CreateDevice_ShouldReturnCreatedDevice` | POST `/dcim/devices/` with Site/DeviceType/DeviceRole ids from prerequisites |
 | `GetDevice_ShouldReturnMatchingDeviceByName` | `GET /dcim/devices/?name={name}` (NetBox device names are typically unique per site — confirm filter semantics against the running SUT) |
-| `UpdateDevice_ShouldChangeStatusAndSite` | PATCH `status`, optionally re-parent to a second Site created for this test |
+| `UpdateDevice_ShouldChangeStatusAndSite` | Two cases: PATCH status/description without a site field, and PATCH with a second owned Site. Create the second Site before the Device so cleanup can delete the Device first. |
 | `DeleteDevice_ShouldRemoveDevice` | Delete + verify 404 |
 | `FilterDevices_ShouldReturnOnlyMatchingSite` | `GET /dcim/devices/?site_id={id}` returns only devices for that site — validates filter/search coverage called out in the source instructions |
 
 ## Cross-Layer Validation
 
 Mirror the Site pattern: DB read via new `DevicesDatabaseRepository` (`SELECT id, name, site_id, status FROM dcim_device WHERE name = @Name`).
+
+The implemented DB projection also includes `device_type_id`, `role_id`, and
+`description` so assertions compare every persisted field represented by the
+Device API DTO. Derived URLs and display labels are excluded from DB comparison.
 
 ## UI Test (`Tests/UI/NetBox/DeviceManagementUiTests.cs`)
 
@@ -40,9 +50,11 @@ And the Device can be retrieved through the REST API (GET /dcim/devices/?name=..
 And the Device exists in PostgreSQL (DevicesDatabaseRepository)
 ```
 
-Cleanup: register API deletes for the Device (fetched by name via the API
-after UI creation) and all prerequisites, deepest dependency first, same as
-the API tests above. No other Device UI scenarios (update/delete) are
+Cleanup: register lookup-based Device cleanup before UI submission (find by its
+unique name through the API and restrict deletion to its owned prerequisite
+Site). Register prerequisite deletes immediately in creation order; LIFO cleanup
+then deletes the Device before all prerequisites even if UI assertions fail.
+No other Device UI scenarios (update/delete) are
 planned this increment — add only if time permits.
 
 ## Definition of Done (Device feature)

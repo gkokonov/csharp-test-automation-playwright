@@ -94,6 +94,7 @@ given test happens to use `RequireDbData`.
 3. **Register each disposable typed client with `ApiTestBase.RegisterClient(...)`** instead of
   holding a plain field, and expose it to test methods through a computed property backed by
   `ApiTestBase.GetClient<T>()`:
+
   ```csharp
   private FooApiClient FooClient => GetClient<FooApiClient>();
 
@@ -103,25 +104,38 @@ given test happens to use `RequireDbData`.
       RegisterClient(new FooApiClient(RestClientFactory, NetBoxAuthenticator));
   }
   ```
+
   `RegisterClient`/`GetClient` are thin wrappers `ApiTestBase` puts around
   `TestContainer.Register`/`Get` — a fixture never calls `TestContainer` itself. This matters for two
   reasons:
-  - `TestBase.TearDownAsync()` runs `ScenarioCleanupActions.CleanUpAsync()` **before**
+
+- `TestBase.TearDownAsync()` runs `ScenarioCleanupActions.CleanUpAsync()` **before**
     `TestContainer.DisposeServicesAsync()`, so a client registered this way is disposed only *after*
     the cleanup actions that call it (e.g. a delete) have run — never before.
-  - A plain disposable field triggers the `NUnit1032` analyzer (since nothing in this class's own
+- A plain disposable field triggers the `NUnit1032` analyzer (since nothing in this class's own
     `[TearDown]` disposes it — the container does, in the base class, after teardown returns). A
     property computed from `GetClient<T>()` is not itself a disposable field, so the analyzer has
     nothing to flag. Suppressing the analyzer instead is not an option in this repository.
   `RestClientFactory` is **not** `IDisposable` — never dispose or register it.
-4. Register cleanup via the inherited `ScenarioCleanupActions.AddCleanUpAction(...)`, not a
+
+1. Register cleanup via the inherited `ScenarioCleanupActions.AddCleanUpAction(...)`, not a
   locally-constructed `ScenarioCleanupActions` instance.
-5. Assert on the returned `RestResponse<T>` with **AwesomeAssertions**. Use the minimal `ApiAssertions`
+2. Assert on the returned `RestResponse<T>` with **AwesomeAssertions**. Use the minimal `ApiAssertions`
   extensions only for transport status (`ShouldHaveCompletedTransport`) and JSONPath
   (`ShouldHaveJsonPathValue`).
 
 For test-case design, naming, required attributes, assertion style, test data, and Definition of Done, see `.agents\rules\test-automation.md`. Those rules apply to every test in the project and are not restated here.
 
+### Reusable API Steps
+
+Reusable prerequisite chains and API workflows live in `Steps/API/<App>/`,
+with namespace `CsharpTestAutomation.Tests.Steps.Api.<App>` and class names
+such as `DeviceSteps`. Both API and UI fixtures can call API steps. Steps
+borrow the fixture's registered clients and cleanup stack, register cleanup
+when resources are created, and leave behavior assertions in the tests.
+Keep step-result records beside their steps. Request construction stays in
+typed clients, payload building in `API/Factories/`, and generated values in
+`TestData/`. See the authoring rules for the full steps convention.
 
 ## 5. DTO Conventions
 

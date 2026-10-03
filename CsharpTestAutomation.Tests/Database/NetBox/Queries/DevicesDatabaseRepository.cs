@@ -9,7 +9,9 @@ public static class DevicesDatabaseRepository
     public static DeviceRowDto? GetByName(string name)
     {
         const string sql = """
-            SELECT id, name, site_id AS "SiteId", status
+            SELECT id AS "Id", name AS "Name", site_id AS "SiteId",
+                device_type_id AS "DeviceTypeId", role_id AS "RoleId",
+                status AS "Status", description AS "Description"
             FROM dcim_device
             WHERE name = @Name
             """;

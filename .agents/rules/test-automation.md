@@ -2,13 +2,13 @@
 applyTo: "CsharpTestAutomation.Tests/**/*.cs"
 trigger: glob
 globs: "CsharpTestAutomation.Tests/**/*.cs"
-description: "Application test, client, DTO, builder, page object, and test data conventions."
+description: "Application test, client, DTO, builder, page object, steps, and test data conventions."
 ---
 
 # CsharpTestAutomation.Tests — Authoring Instructions
 
 Conventions for the **application test project** (`CsharpTestAutomation.Tests`):
-typed API clients, DTOs, DTO builders, page objects, test data, and the tests
+typed API clients, DTOs, DTO builders, page objects, reusable steps, test data, and the tests
 that exercise the application under test. Targets `net10.0` with
 `<Nullable>enable</Nullable>` and references `CsharpTestAutomation.Framework`.
 
@@ -23,6 +23,11 @@ that exercise the application under test. Targets `net10.0` with
 - `Database/<App>/Queries/`: Resource queries and connection-base behaviour.
 - `Database/<App>/DTO/`: DB-row records.
 - `TestData/API/`: Static or well-known test data shared by API fixtures.
+- `TestData/<App>/`: Application constants, generated values, and datasets.
+- `Steps/API/<App>/`: Reusable API workflows and prerequisite steps in
+  `CsharpTestAutomation.Tests.Steps.Api.<App>`.
+- `Steps/UI/<App>/`: Reusable UI workflows above page objects in
+  `CsharpTestAutomation.Tests.Steps.UI.<App>`.
 - `Tests/API/`, `Tests/UI/`: Test fixtures.
 - `UI/`: Page objects and components.
 
@@ -31,6 +36,8 @@ that exercise the application under test. Targets `net10.0` with
 `dotnet_style_namespace_match_folder` compares case-insensitively. Use the
 upper-case form in file paths and the Pascal-case form in `namespace` and
 `using` declarations. Do not "correct" either one.
+
+The same casing convention applies to `Steps/API/`: use `Steps.Api` in namespaces.
 
 ## Comments
 
@@ -236,6 +243,45 @@ disposes the connection after the query.
   enum's literal members, or a short human-readable label meant to stay
   recognizable in logs/UI) remain plain constants; only values that exist to be
   unique or varied move to Bogus.
+
+## Reusable Steps
+
+Put reusable executable workflows and prerequisite operations in
+`Steps/API/<App>/` or `Steps/UI/<App>/`. Name classes for their feature or
+workflow with the `Steps` suffix, such as `DeviceSteps` or `LoginSteps`. Choose
+the folder by how the steps operate: API steps can be used by both API and UI
+tests. Keep small step-result records, such as `DevicePrerequisites`, beside
+the steps that return them. Constants and generated values stay in `TestData/`;
+request payload builders stay in `API/Factories/`.
+
+Steps compose existing typed API clients or page objects. API clients own
+endpoint requests; page objects own locators, individual UI actions, and
+readiness. Add steps when a repeated workflow or prerequisite chain needs
+coordination; avoid one-to-one wrappers around existing client/page methods.
+Page objects and clients must not depend on steps or test fixtures.
+
+Steps borrow the fixture's registered typed clients and inherited
+`ScenarioCleanupActions`; they do not own clients or create a separate cleanup
+stack. Keep step state per test; do not share mutable state between tests.
+Register each created record before validating its response or creating its
+dependents. Prerequisite steps can reject failed setup responses; operations
+under test must still return the native `RestResponse<T>` to the fixture.
+Tests own the behavior assertions.
+
+Create all destination sites before their Devices. Register cleanup in creation
+order so the LIFO stack deletes Devices before sites, types, roles, and
+manufacturers. For UI creates, register a lookup-based cleanup action before
+submission, using the unique test-owned name and prerequisite site to identify
+the Device if submission, navigation, or an assertion fails. Delete actions
+accept `204` and `404`; other failures must remain visible.
+
+## Diagnostic Logging
+
+API request/response logging redaction must be enabled for normal NetBox test
+runs so expected `404` responses do not retain raw Authorization headers in
+Allure attachments. Startup configuration logging writes values without
+redaction; this is expected behavior, and configuration redaction is deferred
+until the user requests it.
 
 ## Definition of Done
 

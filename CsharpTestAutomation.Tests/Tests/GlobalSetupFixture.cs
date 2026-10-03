@@ -93,7 +93,7 @@ public class GlobalSetupFixture
 
     /// <summary>
     /// Logs the full configuration object graph (nested DTOs and models) for the current environment.
-    /// Values of sensitive keys are redacted.
+    /// Values are written without redaction.
     /// </summary>
     private static void LogAppsettingsValues()
     {

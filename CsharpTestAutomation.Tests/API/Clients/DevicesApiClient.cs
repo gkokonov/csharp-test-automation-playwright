@@ -37,6 +37,12 @@ public sealed class DevicesApiClient(IRestClientFactory factory, IAuthenticator?
         return _client.ExecuteAsync<DeviceDetailDto>(request, cancellationToken);
     }
 
+    public Task<RestResponse<PagedResultDto<DeviceDetailDto>>> FindDevicesBySiteAsync(int siteId, CancellationToken cancellationToken = default)
+    {
+        RestRequest request = new RestRequest(Resource).AddQueryParameter("site_id", siteId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        return _client.ExecuteAsync<PagedResultDto<DeviceDetailDto>>(request, cancellationToken);
+    }
+
     public Task<RestResponse> DeleteDeviceAsync(int id, CancellationToken cancellationToken = default)
     {
         var request = new RestRequest($"{Resource}{id}/", Method.Delete);

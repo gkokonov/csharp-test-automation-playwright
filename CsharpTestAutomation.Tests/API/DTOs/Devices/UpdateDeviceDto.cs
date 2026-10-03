@@ -7,6 +7,10 @@ namespace CsharpTestAutomation.Tests.Api.Dtos.Devices;
 /// </summary>
 public sealed record UpdateDeviceDto
 {
+    [JsonPropertyName("site")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Site { get; set; }
+
     [JsonPropertyName("status")]
     public string Status { get; set; } = string.Empty;
 
