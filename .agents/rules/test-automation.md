@@ -74,6 +74,7 @@ are already applied by `TestBase`/`ApiTestBase`.
   `NetBoxAuthenticator`. Register it with `ApiTestBase.RegisterClient(...)`
   (**not** a plain field), and expose it to test methods through a computed
   property backed by `ApiTestBase.GetClient<T>()`:
+
   ```csharp
   private FooApiClient FooClient => GetClient<FooApiClient>();
 
@@ -83,6 +84,7 @@ are already applied by `TestBase`/`ApiTestBase`.
       RegisterClient(new FooApiClient(RestClientFactory, NetBoxAuthenticator));
   }
   ```
+
   `RegisterClient`/`GetClient` are thin, intention-revealing wrappers around
   `TestContainer.Register`/`Get` — fixtures never call `TestContainer` directly.
   The reason a plain disposable field does not work: `TestBase` disposes
@@ -103,8 +105,10 @@ methods.
 - For static inputs, use `[TestCase(..., TestName = "...")]` so each iteration is
   a separate, readable test case in `dotnet test` output and Azure DevOps
   (TRX-based) results.
-- Keep test names explicit and behaviour-oriented
-  (`<Scenario>_<Condition>_<ExpectedResult>`), and avoid using raw long/random
+- Keep test names explicit and behaviour-oriented using
+  `Verify_[ExpectedBehavior]_When_[StateUnderTest]`
+  (e.g. `Verify_ArgumentNullExceptionThrown_When_IdIsNull`,
+  `Verify_DiscountApplied_When_UserIsPremium`). Avoid raw long/random
   parameter values as visible test names.
 - For runtime-generated inputs (for example `Guid.NewGuid()`), `[TestCase]`
   cannot be used because attribute arguments must be compile-time constants. In

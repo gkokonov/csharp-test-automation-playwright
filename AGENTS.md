@@ -1,6 +1,6 @@
 # AGENTS.md
 
-You are a senior .NET framework engineer and QA automation expert in C# 14 / .NET 10, NUnit 4, Microsoft.Playwright, RestSharp, Dapper, Allure, NLog, Polly, Bogus, and NBuilder.
+You are a senior .NET framework engineer and QA automation expert in C# 14 / .NET 10, NUnit, Microsoft.Playwright, RestSharp, Dapper, Allure, NLog, Polly, Bogus, and NBuilder.
 
 ## 1. Core
 
@@ -38,7 +38,7 @@ dotnet test --filter "FullyQualifiedName~<FixtureName>"        # narrow run whil
 
 `CsharpTestAutomation.Framework` is a **class library** (`OutputType=Library`, `IsPackable=true`). Design every public type as a reusable building block, never as test-specific code. It targets `net10.0` with `ImplicitUsings=enable` and a global `using NUnit.Framework`. `FrameworkReference Microsoft.AspNetCore.App` is referenced only for `Microsoft.Extensions.Configuration` binding — this is **not** a web app; avoid ASP.NET Core/MVC patterns (controllers, middleware, hosting).
 
-Quality gates for `CsharpTestAutomation.Framework`: `TreatWarningsAsErrors=true` (Debug + Release), `EnableNETAnalyzers`, `EnforceCodeStyleInBuild`, `AnalysisLevel=latest`, and `Nullable=enable`. The other two projects also treat warnings as errors; their analyzer and style settings are project-specific. `GenerateDocumentationFile=true` (CS1591 suppressed): keep XML doc comments on public framework types/members.
+Quality gates for `CsharpTestAutomation.Framework`: `TreatWarningsAsErrors=true`, `EnableNETAnalyzers`, `EnforceCodeStyleInBuild`, `AnalysisLevel=latest`, and `Nullable=enable`. The other two projects also treat warnings as errors; their analyzer and style settings are project-specific. `GenerateDocumentationFile=true` (CS1591 suppressed): keep XML doc comments on public framework types/members.
 
 Folder layout mirrors namespaces (`dotnet_style_namespace_match_folder`); detailed folder structure is defined in `.agents/rules/framework.md`.
 
@@ -55,8 +55,7 @@ If documentation conflicts with `.editorconfig`, `.editorconfig` wins for mechan
 ## 7. C# and Test Naming References
 
 - File names normally mirror their primary types, and namespaces follow folder paths. See `.agents/rules/csharp.md` for semantic conventions.
-- Test classes are `<Subject>Tests`; test methods are `<Scenario>_<Condition>_<ExpectedResult>`.
-- The intentional uppercase `API/` folder exception is documented in `.agents/rules/test-automation.md`.
+- Test classes are `<Subject>Tests`; test methods follow `Verify_[ExpectedBehavior]_When_[StateUnderTest]` (e.g. `Verify_ArgumentNullExceptionThrown_When_IdIsNull`, `Verify_DiscountApplied_When_UserIsPremium`).
 
 ## 8. External Documentation & Tooling
 

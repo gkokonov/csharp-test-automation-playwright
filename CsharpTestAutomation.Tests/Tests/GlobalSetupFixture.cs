@@ -1,7 +1,9 @@
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using CsharpTestAutomation.Framework.Common;
 using CsharpTestAutomation.Framework.Common.Extensions;
+using CsharpTestAutomation.Framework.Common.Reporting.Allure;
 using CsharpTestAutomation.Framework.Common.Utilities;
 using CsharpTestAutomation.Tests.Configurations;
 using CsharpTestAutomation.Tests.Database;
@@ -21,6 +23,7 @@ public class GlobalSetupFixture
         s_log.Debug("Global one-time setup starting...");
 
         LogAppsettingsValues();
+        WriteAllureEnvironment();
         await CheckDependenciesAsync();
 
         s_log.Debug("Global one-time setup complete.");
@@ -71,6 +74,21 @@ public class GlobalSetupFixture
             s_log.Error(ex, "PostgreSQL dependency check failed.");
             throw;
         }
+    }
+
+    private static void WriteAllureEnvironment()
+    {
+        AllureEnvironmentWriter.Write(
+        [
+            new("Environment", Environment.GetEnvironmentVariable("Environment") ?? "local"),
+            new("NetBox.BaseUrl", s_configuration.NetBox.BaseUrl),
+            new("NetBox.ApiBaseUrl", s_configuration.NetBox.ApiBaseUrl),
+            new("Browser", s_configuration.BrowserType),
+            new("Headless", s_configuration.HeadlessMode.ToString()),
+            new("BuildNumber", s_configuration.BuildNumber),
+            new("OS", RuntimeInformation.OSDescription),
+            new("DotNet", Environment.Version.ToString()),
+        ]);
     }
 
     /// <summary>
