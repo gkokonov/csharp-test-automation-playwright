@@ -3,7 +3,7 @@ using Microsoft.Playwright;
 
 namespace CsharpTestAutomation.Tests.UI.Pages.MSEntraID;
 
-public class MSLoginPage(IPage page) : BaseUIView(page)
+public class MSLoginPage(IPage page) : BaseUIPage(page)
 {
     private readonly ILocator _accountInput = page.Locator("[name='loginfmt']");
     private readonly ILocator _nextButton = page.GetByRole(AriaRole.Button, new() { Name = "Next" });

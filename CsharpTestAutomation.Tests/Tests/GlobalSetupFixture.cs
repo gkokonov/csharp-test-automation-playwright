@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using CsharpTestAutomation.Framework.Common;
 using CsharpTestAutomation.Framework.Common.Extensions;
 using CsharpTestAutomation.Framework.Common.Utilities;

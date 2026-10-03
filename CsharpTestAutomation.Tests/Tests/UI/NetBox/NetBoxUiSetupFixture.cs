@@ -42,7 +42,7 @@ public sealed class NetBoxUiSetupFixture
         {
             IBrowserContext context = await PlaywrightBrowserFactory.CreateContextAsync();
             IPage page = await PlaywrightBrowserFactory.CreatePageAsync();
-            NetBoxLoginPage loginPage = BaseUIView.Create<NetBoxLoginPage>(page);
+            NetBoxLoginPage loginPage = BaseUIPage.Create<NetBoxLoginPage>(page);
             await loginPage.OpenAsync();
             await loginPage.SignInAsync(s_configuration.NetBox.Username, s_configuration.NetBox.Password);
             await context.StorageStateAsync(new() { Path = StorageStatePath });

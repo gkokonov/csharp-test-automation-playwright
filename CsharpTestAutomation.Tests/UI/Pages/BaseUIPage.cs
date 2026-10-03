@@ -10,7 +10,7 @@ namespace CsharpTestAutomation.Tests.UI.Pages;
 /// <see cref="WaitUntilLoadedAsync"/>, and use <see cref="GetPage{TPage}"/> to return the next page
 /// object from an action that already navigated.
 /// </summary>
-public abstract class BaseUIView(IPage page) : BaseUIObject(page)
+public abstract class BaseUIPage(IPage page) : BaseUIObject(page)
 {
     /// <summary>
     /// Locator that becomes visible only once this page has finished loading (for example a unique
@@ -37,8 +37,8 @@ public abstract class BaseUIView(IPage page) : BaseUIObject(page)
     /// Builds the page object the user lands on after an action that already performed the
     /// navigation, so callers can write <c>return GetPage&lt;NextPage&gt;();</c>.
     /// </summary>
-    protected TPage GetPage<TPage>() where TPage : BaseUIView => Create<TPage>(Page);
+    protected TPage GetPage<TPage>() where TPage : BaseUIPage => Create<TPage>(Page);
 
-    public static TPage Create<TPage>(IPage page) where TPage : BaseUIView =>
+    public static TPage Create<TPage>(IPage page) where TPage : BaseUIPage =>
         (TPage)Activator.CreateInstance(typeof(TPage), page)!;
 }

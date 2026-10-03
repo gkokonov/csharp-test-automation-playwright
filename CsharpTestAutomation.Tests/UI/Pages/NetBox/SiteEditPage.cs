@@ -3,7 +3,7 @@ using Microsoft.Playwright;
 
 namespace CsharpTestAutomation.Tests.UI.Pages.NetBox;
 
-public sealed class SiteEditPage(IPage page) : BaseUIView(page)
+public sealed class SiteEditPage(IPage page) : BaseUIPage(page)
 {
     private ILocator Name => Page.GetByLabel("Name");
 

@@ -36,9 +36,9 @@ flowchart LR
 | `TestBase` | Root fixture (`[TestFixture]`, `[AllureNUnit]`). Owns the per-test `TestContainer` and `ScenarioCleanupActions`, runs `[SetUp]`/`[TearDown]`, and exposes overridable `OnSetUpAsync` / `OnTearDownAsync` hooks (no base call required). |
 | `UiTestBase` | Base fixture for UI tests (`[Category("UI")]`). Owns the Playwright `Context`/`Page` via `PlaywrightBrowserFactory`, initializes them in `OnSetUpAsync`, captures a screenshot (and browser logs when `CaptureBrowserLogs` is `true`) on failure, then disposes context + browser. Exposes `GetPage<T>()`. |
 | `BaseUIObject` | Shared base for **both** pages and components. Centralizes the `IPage`, strongly-typed `ExtendedConfiguration`, and the web-first `Expect(ILocator)` entry point. Its static constructor sets the global default Expect timeout from configuration. |
-| `BaseUIView` | Base class for **full-page** objects. Declares the abstract `PageReadyLocator` readiness signal and provides `IsLoadedAsync()` (no wait), `WaitUntilLoadedAsync()` (waits up to `LongTimeoutInMS`), `GetPage<TPage>()` for post-navigation transitions, and the static `Create<TPage>(IPage)` factory. |
+| `BaseUIPage` | Base class for **full-page** objects. Declares the abstract `PageReadyLocator` readiness signal and provides `IsLoadedAsync()` (no wait), `WaitUntilLoadedAsync()` (waits up to `LongTimeoutInMS`), `GetPage<TPage>()` for post-navigation transitions, and the static `Create<TPage>(IPage)` factory. |
 | `BaseUIComponent` | Base class for **reusable fragments** (nav bars, grids, dialogs, forms). Scoped to a `Root` locator so the same component can appear multiple times / across pages without ambiguity. Compose inside pages rather than inheriting. |
-| Page object | Consuming-project class (e.g. `MSLoginPage`) deriving from `BaseUIView`. Wraps `IPage`, builds locators, exposes intent-revealing async actions, declares `PageReadyLocator`, and composes components. No navigation/readiness logic leaks into tests. |
+| Page object | Consuming-project class (e.g. `MSLoginPage`) deriving from `BaseUIPage`. Wraps `IPage`, builds locators, exposes intent-revealing async actions, declares `PageReadyLocator`, and composes components. No navigation/readiness logic leaks into tests. |
 | UI component | Consuming-project class (e.g. `SecondaryLoginForm`) deriving from `BaseUIComponent`. Builds child locators from `Root` and exposes focused actions (e.g. `SignInAsync`). |
 | `PlaywrightBrowserFactory` | Static, thread-safe factory that initializes Playwright, launches the configured browser, and creates a context + page **per test** (keyed by test id). Applies viewport, proxy, HTTP credentials, video, and tracing from configuration; auto-saves traces and closes resources on disposal. |
 | `PlaywrightTimeouts` | Facade exposing configuration-backed timeout values (browser start, navigation, actions, short/medium/long, expect) so timeouts can be tuned per environment without recompilation. |
@@ -52,14 +52,14 @@ Three small base classes keep the model consistent and thin:
 
 ```text
 BaseUIObject (IPage, configuration, Expect)
-├── BaseUIView      → full pages (navigation + readiness + GetPage<T>)
+├── BaseUIPage      → full pages (navigation + readiness + GetPage<T>)
 └── BaseUIComponent → reusable fragments (scoped to a Root locator)
 ```
 
 **Pages** own the whole screen — navigation and page-level readiness. They build locators from `Page`, expose intent-revealing actions, and **compose** components for shared fragments:
 
 ```csharp
-public class MSLoginPage(IPage page) : BaseUIView(page)
+public class MSLoginPage(IPage page) : BaseUIPage(page)
 {
     private readonly ILocator _accountInput = page.Locator("[name='loginfmt']");
     private readonly ILocator _nextButton = page.GetByRole(AriaRole.Button, new() { Name = "Next" });
@@ -99,7 +99,7 @@ public class SecondaryLoginForm(IPage page, ILocator root) : BaseUIComponent(pag
 }
 ```
 
-**Obtaining pages.** Tests never `new` a page. `UiTestBase.GetPage<T>()` binds a page to the current `Page`; inside a page, `GetPage<TPage>()` returns the next page object after an action that already navigated (`return GetPage<NextPage>();`). Both delegate to `BaseUIView.Create<TPage>(IPage)`, which uses `Activator.CreateInstance(typeof(TPage), page)`, so a page only needs the conventional `(IPage page)` constructor.
+**Obtaining pages.** Tests never `new` a page. `UiTestBase.GetPage<T>()` binds a page to the current `Page`; inside a page, `GetPage<TPage>()` returns the next page object after an action that already navigated (`return GetPage<NextPage>();`). Both delegate to `BaseUIPage.Create<TPage>(IPage)`, which uses `Activator.CreateInstance(typeof(TPage), page)`, so a page only needs the conventional `(IPage page)` constructor.
 
 **Locator and assertion conventions.**
 
@@ -109,7 +109,7 @@ public class SecondaryLoginForm(IPage page, ILocator root) : BaseUIComponent(pag
 
 ## 4. Readiness Contract
 
-Every `BaseUIView` declares a `PageReadyLocator` — a locator that becomes visible only once the page has finished loading (a unique heading or primary control). Two members consume it:
+Every `BaseUIPage` declares a `PageReadyLocator` — a locator that becomes visible only once the page has finished loading (a unique heading or primary control). Two members consume it:
 
 | Member | Waits? | Timeout | Use for |
 | --- | --- | --- | --- |
@@ -237,7 +237,7 @@ public class ExampleUiTests : UiTestBase
 **Authoring checklist for a new UI test:**
 
 1. Derive the fixture from `UiTestBase` and tag it with `[AllureSuite]` / `[AllureFeature]`.
-2. Add a page object (`: BaseUIView`) per screen; declare its `PageReadyLocator`.
+2. Add a page object (`: BaseUIPage`) per screen; declare its `PageReadyLocator`.
 3. Extract shared fragments into components (`: BaseUIComponent`) and compose them in pages.
 4. In the test: `GetPage<T>()` → navigate → `WaitUntilLoadedAsync()` → act → assert.
 5. Prefer semantic locators and web-first `Expect(...)`; avoid manual sleeps.
@@ -255,7 +255,7 @@ This is an authoring and diagnosis aid only. The CLI does not replace the test h
 
 Natural places to grow the layer without changing its shape:
 
-- **More pages/components** — add `BaseUIView` / `BaseUIComponent` subclasses in `CsharpTestAutomation.Tests/UI`; no framework change needed.
+- **More pages/components** — add `BaseUIPage` / `BaseUIComponent` subclasses in `CsharpTestAutomation.Tests/UI`; no framework change needed.
 - **Authenticated sessions** — capture a `storageState` and pass it to `InitializePlaywrightEnvironmentAsync(storageState)` to skip repeated logins.
 - **New browsers/devices** — driven by `BrowserType` / `PlaywrightDeviceName`. Device emulation copies device fields. It does not replace storage state or HTTP credentials.
 - **Per-environment timeouts** — override the `*TimeoutInMs` keys in `appsettings.{Environment}.json`.

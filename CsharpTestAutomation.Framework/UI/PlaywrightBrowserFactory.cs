@@ -245,7 +245,8 @@ public static class PlaywrightBrowserFactory
     private static async Task<IBrowser> CreateBrowserInstanceAsync(IPlaywright playwright, BrowserType browserType)
     {
         BrowserTypeLaunchOptions noChannelOptions = CreateBrowserOptions();
-        return browserType switch {
+        return browserType switch
+        {
             BrowserType.CHROMIUM => await playwright.Chromium.LaunchAsync(noChannelOptions).ConfigureAwait(false),
             BrowserType.CHROME => await playwright.Chromium.LaunchAsync(CreateBrowserOptions("chrome")).ConfigureAwait(false),
             BrowserType.MSEDGE => await playwright.Chromium.LaunchAsync(CreateBrowserOptions("msedge")).ConfigureAwait(false),
@@ -257,7 +258,8 @@ public static class PlaywrightBrowserFactory
 
     private static BrowserTypeLaunchOptions CreateBrowserOptions(string? channel = null)
     {
-        var browserOptions = new BrowserTypeLaunchOptions {
+        var browserOptions = new BrowserTypeLaunchOptions
+        {
             DownloadsPath = Directory.GetCurrentDirectory(),
             Timeout = PlaywrightTimeouts.BrowserStartTimeoutInMS,
             Headless = s_configuration.HeadlessMode,
@@ -287,7 +289,8 @@ public static class PlaywrightBrowserFactory
         {
             try
             {
-                await context.Tracing.StartAsync(new() {
+                await context.Tracing.StartAsync(new()
+                {
                     Screenshots = true,
                     Snapshots = true,
                     Sources = true
@@ -329,7 +332,8 @@ public static class PlaywrightBrowserFactory
             throw new FileNotFoundException($"Playwright storage state file was not found: '{storageState}'.", storageState);
         }
 
-        var contextOptions = new BrowserNewContextOptions {
+        var contextOptions = new BrowserNewContextOptions
+        {
             ViewportSize = deviceOptions?.ViewportSize ?? configuration.ViewportSize,
             UserAgent = deviceOptions?.UserAgent,
             DeviceScaleFactor = deviceOptions?.DeviceScaleFactor,

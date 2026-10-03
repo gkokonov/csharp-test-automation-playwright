@@ -3,7 +3,7 @@ using Microsoft.Playwright;
 
 namespace CsharpTestAutomation.Tests.UI.Pages.NetBox;
 
-public sealed class NetBoxLoginPage(IPage page) : BaseUIView(page)
+public sealed class NetBoxLoginPage(IPage page) : BaseUIPage(page)
 {
     private ILocator Username => Page.GetByLabel("Username");
 

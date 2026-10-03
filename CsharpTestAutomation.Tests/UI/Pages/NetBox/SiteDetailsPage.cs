@@ -5,7 +5,7 @@ using Microsoft.Playwright;
 
 namespace CsharpTestAutomation.Tests.UI.Pages.NetBox;
 
-public sealed class SiteDetailsPage(IPage page) : BaseUIView(page)
+public sealed class SiteDetailsPage(IPage page) : BaseUIPage(page)
 {
     private SiteDeleteConfirmationDialog DeleteConfirmation =>
         new(Page, Page.Locator("#htmx-modal"));

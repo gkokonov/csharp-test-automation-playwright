@@ -208,7 +208,7 @@ Row DTOs in `Database/NetBox/DTO/` (e.g. `SiteRowDto`), aliased columns matching
 
 ## Browser Layer
 
-New page objects in `UI/Pages/NetBox/` (folder is illustrative; match existing `UI/Pages` layout) deriving from `BaseUIView`/`BaseUIComponent`:
+New page objects in `UI/Pages/NetBox/` (folder is illustrative; match existing `UI/Pages` layout) deriving from `BaseUIPage`/`BaseUIComponent`:
 
 ```text
 NetBoxLoginPage     → username/password fields, sign-in button, PageReadyLocator on the login heading; sign-in waits for NetBox's authenticated user-menu control (the live dashboard has no heading)

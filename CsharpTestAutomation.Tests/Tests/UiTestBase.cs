@@ -19,13 +19,15 @@ public abstract class UiTestBase : TestBase
     private IPage? _page;
 
     [AllowNull]
-    protected IBrowserContext Context {
+    protected IBrowserContext Context
+    {
         get => _context ?? throw new InvalidOperationException("Browser context is not initialized.");
         private set => _context = value;
     }
 
     [AllowNull]
-    protected IPage Page {
+    protected IPage Page
+    {
         get => _page ?? throw new InvalidOperationException("Page is not initialized.");
         private set => _page = value;
     }
@@ -34,7 +36,7 @@ public abstract class UiTestBase : TestBase
     /// Creates a page object bound to the current <see cref="Page"/>. Entry point for tests:
     /// <c>var login = GetPage&lt;MSLoginPage&gt;();</c>.
     /// </summary>
-    protected T GetPage<T>() where T : BaseUIView => BaseUIView.Create<T>(Page);
+    protected T GetPage<T>() where T : BaseUIPage => BaseUIPage.Create<T>(Page);
 
     protected override async Task OnSetUpAsync() => await InitializePlaywrightEnvironmentAsync();
 
@@ -94,8 +96,7 @@ public abstract class UiTestBase : TestBase
     /// </summary>
     private static async Task CaptureScreenshotOnFailureAsync(IPage page) =>
         await AllureExtensions.CaptureScreenshotAsync(
-            page,
-            TestContext.CurrentContext.Test.MethodName ?? "Unknown test");
+            page, TestContext.CurrentContext.Test.MethodName ?? "Unknown test");
 
     /// <summary>
     /// Captures browser logs when a test fails and attaches them to the report
