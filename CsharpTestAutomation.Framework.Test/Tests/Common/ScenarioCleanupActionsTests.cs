@@ -5,7 +5,7 @@ namespace CsharpTestAutomation.Framework.Test.Tests.Common;
 public class ScenarioCleanupActionsTests
 {
     [Test]
-    public async Task CleanUpAsync_MixedSyncAndAsyncActions_RunsInReverseRegistrationOrder()
+    public async Task Verify_CleanupActionsRunInReverseOrder_When_SyncAndAsyncActionsAreRegistered()
     {
         var cleanup = new CsharpTestAutomation.Framework.Common.ScenarioCleanupActions();
         var executed = new List<string>();
@@ -20,7 +20,7 @@ public class ScenarioCleanupActionsTests
     }
 
     [Test]
-    public async Task CleanUpAsync_CalledTwice_RunsActionsOnce()
+    public async Task Verify_CleanupActionsRunOnce_When_CleanupIsCalledTwice()
     {
         var cleanup = new CsharpTestAutomation.Framework.Common.ScenarioCleanupActions();
         var count = 0;
@@ -33,7 +33,7 @@ public class ScenarioCleanupActionsTests
     }
 
     [Test]
-    public async Task AddCleanUpAction_ConcurrentAdds_KeepsEveryAction()
+    public async Task Verify_AllActionsKept_When_CleanupActionsAreAddedConcurrently()
     {
         var cleanup = new CsharpTestAutomation.Framework.Common.ScenarioCleanupActions();
         var count = 0;

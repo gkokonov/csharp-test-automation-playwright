@@ -112,11 +112,12 @@ methods.
 - For static inputs, use `[TestCase(..., TestName = "...")]` so each iteration is
   a separate, readable test case in `dotnet test` output and Azure DevOps
   (TRX-based) results.
-- Keep test names explicit and behaviour-oriented using
-  `Verify_[ExpectedBehavior]_When_[StateUnderTest]`
-  (e.g. `Verify_ArgumentNullExceptionThrown_When_IdIsNull`,
-  `Verify_DiscountApplied_When_UserIsPremium`). Avoid raw long/random
-  parameter values as visible test names.
+- Keep test names explicit and behaviour-oriented. Prefer
+  `Verify_[ExpectedBehavior]_When_[StateUnderTest]` when the state adds useful
+  context (e.g. `Verify_ArgumentNullExceptionThrown_When_IdIsNull`). Use the
+  shorter `Verify_[ExpectedBehavior]` form when it stays clear (e.g.
+  `Verify_MaxPasswordLength_Is32`, `Verify_DatabaseConnection_StaysOpen`).
+  Avoid raw long/random parameter values as visible test names.
 - For runtime-generated inputs (for example `Guid.NewGuid()`), `[TestCase]`
   cannot be used because attribute arguments must be compile-time constants. In
   these cases, use a small number of separate `[Test]` methods with stable names,
@@ -157,17 +158,26 @@ validation rule — state the reason in the test name or assertion message.
 - **Single vs Multi-Assertion**:
   - **Default (Whole Object)**: Use `Should().BeEquivalentTo(...)`. It naturally
     evaluates all properties and reports all mismatches together.
-  - **Multiple Independent Assertions**: For separate conditions (for example,
-    status code, headers, or payload fields), use
-    `Assert.Multiple(() => { ... })` or AwesomeAssertions
-    `using (new AssertionScope()) { ... }`. Both report all failures instead of
-    stopping at the first one.
-  - **Asynchronous Assertions**: For multiple Playwright or asynchronous checks,
-    use NUnit 4's `await Assert.MultipleAsync(async () => { ... })`.
-  - **Critical Preconditions**: Keep gate checks outside `Assert.Multiple` so
-    they fail fast before downstream operations. For example, assert
-    `response.StatusCode == HttpStatusCode.Created` before extracting
-    `response.Data` or querying the DB.
+  - **Multiple Independent Assertions**: Prefer AwesomeAssertions inside
+    `using (new AssertionScope()) { ... }`, including for separate conditions
+    such as status code, headers, or payload fields. This reports all failures
+    instead of stopping at the first one.
+  - **NUnit Multiple Assertions**: Use NUnit's
+    `using (Assert.EnterMultipleScope()) { ... }` for independent NUnit
+    assertions. Playwright `Expect` failures throw `PlaywrightException`, which
+    stops the scope; do not use `EnterMultipleScope` to collect multiple
+    Playwright failures. If every independent Playwright check must run, capture
+    each check's failure and report the failures after all checks complete.
+  - **Nullable Assertion Targets**: A null-conditional assertion skips the
+    assertion when its target is null. Use it only when null is an accepted
+    state and the test checks that state separately or intentionally treats the
+    assertion as optional, for example
+    `device?.StatusCode.Should().Be(HttpStatusCode.NotFound);`. If the target is
+    required, assert it is not null before checking its members.
+  - **Critical Preconditions**: Keep gate assertions outside every multiple
+    assertion scope so they fail fast before downstream operations. For example,
+    use `response.StatusCode.Should().Be(HttpStatusCode.Created);` before
+    extracting `response.Data` or querying the DB.
 
 Every success-path scenario verifies the complete returned object against the
 actual DB record. Exclude only members the endpoint does not return, that are

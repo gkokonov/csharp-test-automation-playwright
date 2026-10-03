@@ -14,7 +14,7 @@ namespace CsharpTestAutomation.Framework.Test.Tests.UI;
 public class PlaywrightContextOptionsTests
 {
     [Test]
-    public void CreateContextOptions_WithoutDevice_UsesConfiguredViewportAndCredentials()
+    public void Verify_ConfiguredViewportAndCredentialsApplied_When_DeviceIsNotSet()
     {
         var configuration = new CoreConfiguration {
             ViewportSize = new ViewportSize { Width = 800, Height = 600 },
@@ -41,7 +41,7 @@ public class PlaywrightContextOptionsTests
     }
 
     [Test]
-    public void CreateContextOptions_WithMissingStorageStateFile_ThrowsFileNotFound()
+    public void Verify_FileNotFoundExceptionThrown_When_StorageStateFileIsMissing()
     {
         Action act = () => PlaywrightBrowserFactory.CreateContextOptions(
             new CoreConfiguration(),
@@ -53,7 +53,7 @@ public class PlaywrightContextOptionsTests
     }
 
     [Test]
-    public void CreateContextOptions_WithDevice_CopiesDeviceFieldsAndKeepsSessionOptions()
+    public void Verify_DeviceFieldsCopiedAndSessionOptionsKept_When_DeviceIsSet()
     {
         var configuration = new CoreConfiguration {
             ViewportSize = new ViewportSize { Width = 800, Height = 600 },

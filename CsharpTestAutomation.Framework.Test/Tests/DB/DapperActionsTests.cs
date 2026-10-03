@@ -36,7 +36,7 @@ public class DapperActionsTests
     }
 
     [Test]
-    public void ShouldBeAbleToReadFromDatabaseQueryingSingleEntityWithGenericReturnType()
+    public void Verify_SingleEntityRead_When_ReturnTypeIsGeneric()
     {
         var expectedUser = new User {
             Id = 1,
@@ -69,7 +69,7 @@ public class DapperActionsTests
     }
 
     [Test]
-    public void ShouldBeAbleToReadFromDatabaseQueryingSingleEntityWithDictionaryReturnType()
+    public void Verify_SingleEntityRead_When_ReturnTypeIsDictionary()
     {
         var expectedDictionary = new Dictionary<string, object>()
         {
@@ -103,7 +103,7 @@ public class DapperActionsTests
     }
 
     [Test]
-    public void ShouldBeAbleToReadFromDatabaseQueryingMultipleEntitiesWithGenericReturnType()
+    public void Verify_MultipleEntitiesRead_When_ReturnTypeIsGeneric()
     {
         const int expectedUsersCount = 6;
 
@@ -118,7 +118,7 @@ public class DapperActionsTests
     }
 
     [Test]
-    public void ShouldBeAbleToReadFromDatabaseQueryingMultipleEntitiesWithDictionaryReturnType()
+    public void Verify_MultipleEntitiesRead_When_ReturnTypeIsDictionary()
     {
         const int expectedUsersCount = 6;
 
@@ -133,7 +133,7 @@ public class DapperActionsTests
     }
 
     [Test]
-    public void ShouldBeAbleToCreateEntityInDatabase()
+    public void Verify_EntityCreatedInDatabase()
     {
         var expectedUser = new User {
             Id = 7,
@@ -200,7 +200,7 @@ public class DapperActionsTests
     }
 
     [Test]
-    public void ShouldBeAbleToUpdateEntityInDatabase()
+    public void Verify_EntityUpdatedInDatabase()
     {
         var expectedUser = new User {
             Id = 7,

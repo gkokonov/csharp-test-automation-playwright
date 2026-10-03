@@ -14,7 +14,7 @@ public class ApiLogSanitizerTests
     public void SetUp() => _sanitizer = new ApiLogSanitizer(new ApiLoggingSettings { RedactSensitiveData = true });
 
     [Test]
-    public void SanitizeHeaders_AuthorizationHeader_IsRedacted()
+    public void Verify_AuthorizationHeaderRedacted_When_SanitizingHeaders()
     {
         IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
             ["Authorization"] = "Bearer abc"
@@ -26,7 +26,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeHeaders_CookieHeader_IsRedacted()
+    public void Verify_CookieHeaderRedacted_When_SanitizingHeaders()
     {
         IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
             ["Cookie"] = "session=xyz"
@@ -38,7 +38,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeHeaders_UnknownHeader_IsPassedThrough()
+    public void Verify_UnknownHeaderPassedThrough_When_SanitizingHeaders()
     {
         IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
             ["X-Custom"] = "value"
@@ -50,7 +50,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeHeaders_AdditionalConfiguredHeader_IsRedacted()
+    public void Verify_ConfiguredHeaderRedacted_When_SanitizingHeaders()
     {
         var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings {
             RedactSensitiveData = true,
@@ -66,7 +66,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeHeaders_CaseInsensitiveMatch_IsRedacted()
+    public void Verify_HeaderRedactedCaseInsensitively_When_SanitizingHeaders()
     {
         IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
             ["authorization"] = "token"
@@ -78,7 +78,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeBody_PasswordField_IsRedacted()
+    public void Verify_PasswordFieldRedacted_When_SanitizingBody()
     {
         const string body = """{"name":"Alice","password":"s3cr3t"}""";
 
@@ -90,7 +90,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeBody_NestedAccessToken_IsRedacted()
+    public void Verify_NestedAccessTokenRedacted_When_SanitizingBody()
     {
         const string body = """{"data":{"access_token":"abc"}}""";
 
@@ -101,7 +101,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeBody_NonSensitiveField_IsPassedThrough()
+    public void Verify_NonSensitiveFieldPassedThrough_When_SanitizingBody()
     {
         const string body = """{"name":"Alice"}""";
 
@@ -112,7 +112,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeBody_InvalidJson_ReturnsOriginal()
+    public void Verify_OriginalBodyReturned_When_JsonIsInvalid()
     {
         const string body = "not json";
 
@@ -122,7 +122,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeBody_NullBody_ReturnsNull()
+    public void Verify_NullReturned_When_BodyIsNull()
     {
         var sanitized = _sanitizer.SanitizeBody(null!);
 
@@ -130,7 +130,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeBody_AdditionalConfiguredField_IsRedacted()
+    public void Verify_ConfiguredFieldRedacted_When_SanitizingBody()
     {
         var settings = new ApiLoggingSettings { RedactSensitiveData = true, AdditionalRedactedFields = ["mySecret"] };
         var sanitizer = new ApiLogSanitizer(settings);
@@ -143,7 +143,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeHeaders_RedactionExplicitlyDisabled_PassesSensitiveHeaderThrough()
+    public void Verify_SensitiveHeaderPassedThrough_When_RedactionIsDisabled()
     {
         var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings { RedactSensitiveData = false });
         IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
@@ -156,7 +156,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void SanitizeBody_RedactionExplicitlyDisabled_PassesSensitiveFieldThrough()
+    public void Verify_SensitiveFieldPassedThrough_When_RedactionIsDisabled()
     {
         var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings { RedactSensitiveData = false });
         const string body = """{"name":"Alice","password":"s3cr3t"}""";
@@ -168,7 +168,7 @@ public class ApiLogSanitizerTests
     }
 
     [Test]
-    public void ApiLoggingSettings_Defaults_AvoidRetainingSensitiveDetails()
+    public void Verify_SensitiveDetailsNotRetained_When_UsingDefaultLoggingSettings()
     {
         var settings = new ApiLoggingSettings();
 

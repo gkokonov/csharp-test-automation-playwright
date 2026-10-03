@@ -30,7 +30,7 @@ public class ExampleUiTests : UiTestBase
     [AllureSeverity(SeverityLevel.critical)]
     [AllureOwner("Automation Team")]
     [AllureDescription("End-to-end UI workflow: open the login page, enter the account, handle the federated (secondary) login form, and verify the login page is dismissed after a successful sign-in.")]
-    public async Task SignIn_WithValidAccount_DismissesLoginPage()
+    public async Task Verify_LoginPageDismissed_When_AccountIsValid()
     {
         // Arrange
         MSLoginPage loginPage = GetPage<MSLoginPage>();

@@ -35,7 +35,7 @@ public class SitesApiTests : ApiTestBase
     [AllureStory("Creating a site returns the created representation")]
     [AllureSeverity(SeverityLevel.critical)]
     [AllureOwner("Automation Team")]
-    public async Task CreateSite_ShouldReturnCreatedSite()
+    public async Task Verify_CreatedSiteReturned()
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
@@ -65,7 +65,7 @@ public class SitesApiTests : ApiTestBase
     [AllureSeverity(SeverityLevel.critical)]
     [AllureOwner("Automation Team")]
     [AllureDescription("Verifies persistence at two layers: a follow-up REST GET must match the create response, and the PostgreSQL row must match the same fields.")]
-    public async Task CreateSite_ShouldPersistSiteInDatabase()
+    public async Task Verify_SitePersistedInDatabase()
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
@@ -99,7 +99,7 @@ public class SitesApiTests : ApiTestBase
     [AllureStory("A created site can be found by filtering on its slug")]
     [AllureSeverity(SeverityLevel.normal)]
     [AllureOwner("Automation Team")]
-    public async Task GetSite_ShouldReturnMatchingSiteBySlug()
+    public async Task Verify_MatchingSiteReturned_When_SiteIsFoundBySlug()
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
@@ -124,7 +124,7 @@ public class SitesApiTests : ApiTestBase
     [AllureStory("Updating a site's status and description leaves its other fields unchanged")]
     [AllureSeverity(SeverityLevel.normal)]
     [AllureOwner("Automation Team")]
-    public async Task UpdateSite_ShouldChangeStatus()
+    public async Task Verify_SiteStatusChanged_When_SiteIsUpdated()
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
@@ -162,7 +162,7 @@ public class SitesApiTests : ApiTestBase
     [AllureStory("Deleting a site removes it so a subsequent lookup returns 404")]
     [AllureSeverity(SeverityLevel.critical)]
     [AllureOwner("Automation Team")]
-    public async Task DeleteSite_ShouldRemoveSite()
+    public async Task Verify_SiteRemoved_When_SiteIsDeleted()
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();

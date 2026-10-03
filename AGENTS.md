@@ -58,7 +58,19 @@ If documentation conflicts with `.editorconfig`, `.editorconfig` wins for mechan
 ## 7. C# and Test Naming References
 
 - File names normally mirror their primary types, and namespaces follow folder paths. See `.agents/rules/csharp.md` for semantic conventions.
-- Test classes are `<Subject>Tests`; test methods follow `Verify_[ExpectedBehavior]_When_[StateUnderTest]` (e.g. `Verify_ArgumentNullExceptionThrown_When_IdIsNull`, `Verify_DiscountApplied_When_UserIsPremium`).
+- Test classes are `<Subject>Tests`; test methods use
+  `Verify_[ExpectedBehavior]_When_[StateUnderTest]` when state context helps
+  (e.g. `Verify_ArgumentNullExceptionThrown_When_IdIsNull`). Use the shorter
+  `Verify_[ExpectedBehavior]` form when it remains clear (e.g.
+  `Verify_MaxPasswordLength_Is32`, `Verify_DatabaseConnection_StaysOpen`).
+- Prefer AwesomeAssertions for value assertions, including multiple independent
+  assertions inside `using (new AssertionScope())`. Use NUnit's
+  `Assert.EnterMultipleScope()` for multiple NUnit assertions. Playwright
+  `Expect` failures throw `PlaywrightException` and stop that scope, so do not
+  use it to collect multiple Playwright failures. A null-conditional assertion
+  skips the assertion when the target is null; use it only when null is an
+  accepted state (e.g. `device?.StatusCode.Should().Be(HttpStatusCode.NotFound);`).
+  Assert required targets are not null before checking their members.
 
 ## 8. External Documentation & Tooling
 

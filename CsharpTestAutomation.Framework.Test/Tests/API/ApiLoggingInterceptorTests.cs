@@ -80,7 +80,7 @@ public class ApiLoggingInterceptorTests
     }
 
     [Test]
-    public async Task AfterRequest_ParallelCallsWithDifferentDelays_LogsElapsedTimeOfEachCall()
+    public async Task Verify_ElapsedTimeLoggedPerCall_When_RequestsRunInParallel()
     {
         using IRestClient client = _factory.Create(ServiceName);
         var runId = Guid.NewGuid().ToString("N");
@@ -100,7 +100,7 @@ public class ApiLoggingInterceptorTests
     }
 
     [Test]
-    public async Task AfterRequest_CallFromTest_LogsTestNameScopeProperty()
+    public async Task Verify_TestNameScopePropertyLogged_When_RequestComesFromTest()
     {
         using IRestClient client = _factory.Create(ServiceName);
         var resource = $"ok/{Guid.NewGuid():N}";
@@ -112,7 +112,7 @@ public class ApiLoggingInterceptorTests
     }
 
     [Test]
-    public async Task AfterRequest_MultiByteBodyOverLimit_TruncatesByUtf8Bytes()
+    public async Task Verify_BodyTruncatedByUtf8Bytes_When_MultiByteBodyExceedsLimit()
     {
         using IRestClient client = _factory.Create(ServiceName);
         var resource = $"multibyte/{Guid.NewGuid():N}";

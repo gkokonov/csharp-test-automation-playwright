@@ -24,7 +24,7 @@ public class RestClientFactoryTests
     }
 
     [Test]
-    public void Create_ValidSettings_ReturnsClientWithConfiguredBaseUrl()
+    public void Verify_ClientCreatedWithConfiguredBaseUrl_When_SettingsAreValid()
     {
         RestClientFactory factory = CreateFactory(ValidSettings());
 
@@ -34,7 +34,7 @@ public class RestClientFactoryTests
     }
 
     [Test]
-    public void Create_UnknownServiceName_ThrowsWithServiceName()
+    public void Verify_ArgumentExceptionThrown_When_ServiceNameIsUnknown()
     {
         RestClientFactory factory = CreateFactory(ValidSettings());
 
@@ -45,7 +45,7 @@ public class RestClientFactoryTests
     }
 
     [Test]
-    public void Create_EmptyBaseUrl_ThrowsWithSettingKey()
+    public void Verify_ArgumentExceptionThrown_When_BaseUrlIsEmpty()
     {
         RestClientFactory factory = CreateFactory(ValidSettings(s => s.BaseUrl = string.Empty));
 
@@ -56,7 +56,7 @@ public class RestClientFactoryTests
     }
 
     [Test]
-    public void Create_RelativeBaseUrl_ThrowsInvalidUri()
+    public void Verify_UriFormatExceptionThrown_When_BaseUrlIsRelative()
     {
         RestClientFactory factory = CreateFactory(ValidSettings(s => s.BaseUrl = "not-a-valid-uri"));
 
@@ -67,7 +67,7 @@ public class RestClientFactoryTests
     }
 
     [Test]
-    public void Create_NonPositiveTimeout_Throws()
+    public void Verify_ArgumentOutOfRangeExceptionThrown_When_TimeoutIsNotPositive()
     {
         RestClientFactory factory = CreateFactory(ValidSettings(s => s.TimeoutSeconds = 0));
 
@@ -78,7 +78,7 @@ public class RestClientFactoryTests
     }
 
     [Test]
-    public void Create_NonPositiveMaxBodySize_Throws()
+    public void Verify_ArgumentOutOfRangeExceptionThrown_When_MaxBodySizeIsNotPositive()
     {
         ApiSettings settings = ValidSettings();
         settings.Logging.MaxBodySizeBytes = 0;

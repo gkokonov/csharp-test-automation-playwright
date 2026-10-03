@@ -38,7 +38,7 @@ public class SiteManagementUiTests : NetBoxUiTestBase
     [AllureStory("Creating a site through the UI persists across UI, REST API, and PostgreSQL layers")]
     [AllureSeverity(SeverityLevel.critical)]
     [AllureOwner("Automation Team")]
-    public async Task CreateSite_ShouldPersistAcrossLayers()
+    public async Task Verify_SitePersistedAcrossLayers_When_SiteIsCreatedThroughUi()
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
@@ -95,7 +95,7 @@ public class SiteManagementUiTests : NetBoxUiTestBase
     [AllureStory("Updating a site through the UI reflects the changed status across UI, REST API, and PostgreSQL layers")]
     [AllureSeverity(SeverityLevel.normal)]
     [AllureOwner("Automation Team")]
-    public async Task UpdateSite_ShouldReflectChangedStatusAcrossLayers()
+    public async Task Verify_SiteStatusChangedAcrossLayers_When_SiteIsUpdatedThroughUi()
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
@@ -149,7 +149,7 @@ public class SiteManagementUiTests : NetBoxUiTestBase
     [AllureStory("Deleting a site through the UI removes it across UI, REST API, and PostgreSQL layers")]
     [AllureSeverity(SeverityLevel.critical)]
     [AllureOwner("Automation Team")]
-    public async Task DeleteSite_ShouldRemoveSiteAcrossLayers()
+    public async Task Verify_SiteRemovedAcrossLayers_When_SiteIsDeletedThroughUi()
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();

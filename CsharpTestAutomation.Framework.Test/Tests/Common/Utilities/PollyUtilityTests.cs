@@ -9,7 +9,7 @@ namespace CsharpTestAutomation.Framework.Test.Tests.Common.Utilities;
 public class PollyUtilityTests
 {
     [Test]
-    public async Task WaitForAction_MatchingException_RetriesAndCompletes()
+    public async Task Verify_ActionCompletes_When_MatchingExceptionIsRetried()
     {
         var attempts = 0;
 
@@ -29,7 +29,7 @@ public class PollyUtilityTests
     }
 
     [Test]
-    public async Task WaitForActionWithResult_MatchingException_CapturesFinalResult()
+    public async Task Verify_FinalResultCaptured_When_MatchingExceptionIsRetried()
     {
         var attempts = 0;
 
@@ -50,7 +50,7 @@ public class PollyUtilityTests
     }
 
     [Test]
-    public async Task WaitForResult_ResultMatchesUntilThirdAttempt_ReturnsThirdResult()
+    public async Task Verify_ThirdResultReturned_When_MatchOccursOnThirdAttempt()
     {
         var attempts = 0;
 
@@ -65,7 +65,7 @@ public class PollyUtilityTests
     }
 
     [Test]
-    public async Task WaitForResult_ResultAlwaysMatches_ThrowsRetryExceptionAfterAllRetries()
+    public async Task Verify_RetryExceptionThrown_When_ResultNeverMatches()
     {
         var attempts = 0;
 
@@ -80,7 +80,7 @@ public class PollyUtilityTests
     }
 
     [Test]
-    public async Task WaitForResult_ActionThrows_PropagatesWithoutRetry()
+    public async Task Verify_ActionExceptionPropagated_When_ActionThrows()
     {
         var attempts = 0;
 
@@ -99,7 +99,7 @@ public class PollyUtilityTests
     }
 
     [Test]
-    public void WaitForResult_ZeroRetryCount_ThrowsArgumentOutOfRange()
+    public void Verify_ArgumentOutOfRangeExceptionThrown_When_RetryCountIsZero()
     {
         Assert.That(
             () => PollyUtility.WaitForResult(_ => Task.FromResult(1), _ => true, retryCount: 0),

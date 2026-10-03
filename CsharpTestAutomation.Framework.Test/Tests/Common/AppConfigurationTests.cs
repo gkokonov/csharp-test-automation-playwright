@@ -21,7 +21,7 @@ public class AppConfigurationTests
     public void TearDown() => Directory.Delete(_basePath, recursive: true);
 
     [Test]
-    public void BuildDefaultConfiguration_NoEnvironment_LocalFileOverridesBase()
+    public void Verify_LocalFileOverridesBase_When_NoEnvironmentIsSet()
     {
         WriteSettings("appsettings.json", "base");
         WriteSettings("appsettings.local.json", "local");
@@ -32,7 +32,7 @@ public class AppConfigurationTests
     }
 
     [Test]
-    public void BuildDefaultConfiguration_WithEnvironment_EnvironmentFileOverridesBase()
+    public void Verify_EnvironmentFileOverridesBase_When_EnvironmentIsSet()
     {
         WriteSettings("appsettings.json", "base", ("BaseOnly", "kept"));
         WriteSettings("appsettings.QA.json", "qa");
@@ -44,7 +44,7 @@ public class AppConfigurationTests
     }
 
     [Test]
-    public void BuildDefaultConfiguration_WithEnvironmentAndNoBaseFile_LoadsEnvironmentFile()
+    public void Verify_EnvironmentFileLoaded_When_BaseFileIsMissing()
     {
         WriteSettings("appsettings.QA.json", "qa");
 
@@ -54,7 +54,7 @@ public class AppConfigurationTests
     }
 
     [Test]
-    public void BuildDefaultConfiguration_NoEnvironmentAndNoBaseFile_Throws()
+    public void Verify_ExceptionThrown_When_BaseFileIsMissingAndNoEnvironmentIsSet()
     {
         Assert.That(() => Build(environmentName: null), Throws.TypeOf<FileNotFoundException>());
     }
