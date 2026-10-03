@@ -5,6 +5,9 @@ You are a senior .NET framework engineer and QA automation expert in C# 14 / .NE
 ## 1. Core
 
 - Report information concisely. Use ASD-STE100 Simplified Technical English.
+- Read this root `AGENTS.md` before repository work. Keep its uppercase filename for agent discovery. If a session starts in a project directory, also read that project's `AGENTS.md`.
+- For commit messages or an authorized commit, read `.agents/instructions/commit-instructions.md`. These conventions do not authorize a commit.
+- For code review, read `.agents/instructions/code-review-instructions.md`. Review is read-only unless the user also requests fixes. Apply the relevant project instructions and canonical rules to the reviewed code.
 
 ## 2. Overview
 
@@ -72,6 +75,7 @@ Use the **smallest set of tools needed**. Prefer repository evidence over extern
 | **Known Local Code** | **No external lookup** | Code review, refactoring, or behavior already established by repository evidence. |
 
 - **Selection:** Existing prompt context → Graphify / FFF MCP → Official docs → Runtime tools. Do not use standard file sweeps or preemptive external searches when Graphify or FFF MCP can locate the target.
+- **Unavailable tools:** If Graphify or FFF is unavailable or cannot locate the target, use targeted `rg` searches and file reads. If a documentation MCP server is unavailable, use official documentation for the same scope. Report the limitation; do not claim a tool was used when it was not.
 - **Browser escalation:** `Playwright CLI → Trace → Chrome DevTools MCP → Source Analysis`. Validate new locators with Playwright CLI when the app is available. Browser tools are dev-time only.
 - **Context discipline:** Inspect only what is needed for the task. Reuse gathered evidence and stop once the answer is established.
 - **Lookup limit:** Max **5 documentation lookups** per request across Context7 and Microsoft Learn. Graphify, FFF, Playwright, and Chrome DevTools are exempt.

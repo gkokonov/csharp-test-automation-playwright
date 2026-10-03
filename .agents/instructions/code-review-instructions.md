@@ -1,4 +1,4 @@
-# Copilot Code Review Instructions
+# Code Review Instructions
 
 Act as a senior software engineer performing a production-grade code review.
 
@@ -428,4 +428,4 @@ For API automation, additionally check:
 * idempotency
 * correlation and diagnostic information
 
-Avoid tests that validate only HTTP status when meaningful response behavior should
+Avoid tests that validate only HTTP status when meaningful response behavior should also be checked.

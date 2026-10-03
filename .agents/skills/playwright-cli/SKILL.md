@@ -6,6 +6,12 @@ allowed-tools: Bash(playwright-cli:*) Bash(npx playwright:*) Bash(npx --no-insta
 
 # Browser Automation with playwright-cli
 
+## Codex on Windows
+
+Run commands through Codex's command tool with the active PowerShell shell. The `allowed-tools: Bash(...)` metadata is for hosts that recognize it; it does not configure Codex permissions or require Bash. Follow the session's sandbox and approval settings.
+
+Use `playwright-cli` from `PATH`, or `npx --no-install playwright cli` when the local package provides it. Do not run POSIX shell assignments, `jq`, or `diff` examples in PowerShell unchanged: use PowerShell variables, `ConvertFrom-Json`, and `Compare-Object`. For URLs with `&`, use the Windows examples below. Keep authentication state and browser output in the ignored locations defined by this repository.
+
 ## Quick start
 
 ```bash

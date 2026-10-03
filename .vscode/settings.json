@@ -54,7 +54,7 @@
   ],
   "github.copilot.chat.reviewSelection.instructions": [
     {
-      "file": ".agents/instructions/copilot-review-instructions.md"
+      "file": ".agents/instructions/code-review-instructions.md"
     }
   ],
   // Reduce unnecessary agent context usage.

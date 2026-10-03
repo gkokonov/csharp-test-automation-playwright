@@ -7,6 +7,12 @@ description: "Use for any question about a codebase, its architecture, file rela
 
 Turn any folder of files into a navigable knowledge graph with community detection, an honest audit trail, and three outputs: interactive HTML, GraphRAG-ready JSON, and a plain-language GRAPH_REPORT.md.
 
+## Host and shell compatibility
+
+Use the host's available command and file tools. On Codex with Windows PowerShell, read [Codex on Windows](references/codex-windows.md) before running shell snippets. It supplies native CLI commands and PowerShell equivalents for interpreter discovery, Python blocks, paths, and cleanup. Bash syntax below is for hosts with Bash; do not send it to PowerShell unchanged.
+
+Use host-native delegation only when it is available and permitted. Codex hosts may expose `spawn_agent` and agent wait/message tools; other hosts may expose `Agent` or `Task`. Do not assume any of these exists or enable delegation settings. When delegation is unavailable, process semantic chunks sequentially in the current session with the same extraction prompt and output files. Repository instructions and user authorization apply in either mode.
+
 ## Usage
 
 ```
@@ -167,9 +173,9 @@ This step has two parts: **structural extraction** (deterministic, free) and **s
 
 Print it once, then continue — do not wait for the user to supply a key. If `GEMINI_API_KEY` or `GOOGLE_API_KEY` IS set, use `graphify.llm.extract_corpus_parallel(files, backend="gemini")` for semantic extraction instead of dispatching subagents. The default Gemini model is `gemini-3-flash-preview`; set `GRAPHIFY_GEMINI_MODEL` or pass `--model` in headless CLI flows to override it.
 
-> **No other API keys are read.** When `GEMINI_API_KEY`/`GOOGLE_API_KEY` are unset, semantic extraction falls to the host agent itself — the running session is the LLM. On a host that dispatches subagents (e.g. Claude Code), dispatch them as written in Part B. On a host that runs the CLI directly in a terminal and cannot dispatch subagents, do not stall: a code-only corpus has no semantic work, so write the empty semantic file (Part B "Fast path") and continue to Part C; for a corpus with docs/papers/images, either set a Gemini key or extract those inline yourself, but in no case prompt for `ANTHROPIC_API_KEY` — that prompt is a misread of this skill.
+> **No other API keys are read.** When `GEMINI_API_KEY`/`GOOGLE_API_KEY` are unset, semantic extraction falls to the host agent itself — the running session is the LLM. Use permitted host-native delegation as described in Part B, or process semantic chunks sequentially yourself. A code-only corpus has no semantic work: write the empty semantic file (Part B "Fast path") and continue to Part C. Never prompt for `ANTHROPIC_API_KEY`.
 
-**Run Part A (AST) and Part B (semantic) in parallel. Dispatch all semantic subagents AND start AST extraction in the same message. Both can run simultaneously since they operate on different file types. Merge results in Part C as before.**
+Run Part A (AST) and Part B (semantic) in parallel when the host supports it. Otherwise run them sequentially. Both operate on different file types; wait for both before merging in Part C.
 
 Note: Parallelizing AST + semantic saves 5-15s on large corpora. AST is deterministic and fast; start it while subagents are processing docs/papers.
 
@@ -199,7 +205,7 @@ else:
 "
 ```
 
-#### Part B - Semantic extraction (parallel subagents)
+#### Part B - Semantic extraction (delegated or sequential chunks)
 
 **Fast path:** If detection found zero docs, papers, and images (code-only corpus), skip Part B entirely and go straight to Part C. AST handles code - there is nothing for semantic subagents to do. **First write an empty semantic file** so Part C's merge has its input (it reads `.graphify_semantic.json` unconditionally; without this a code-only run hits `FileNotFoundError`):
 
@@ -211,13 +217,15 @@ Path('graphify-out/.graphify_semantic.json').write_text(json.dumps({'nodes':[],'
 "
 ```
 
-**MANDATORY: You MUST use the Agent tool here. Reading files yourself one-by-one is forbidden - it is 5-10x slower. If you do not use the Agent tool you are doing this wrong.**
+Use permitted host-native delegation when available. Otherwise read and extract each chunk in the current session, write the same chunk JSON, and continue through cache and merge steps. Do not stop because an `Agent` or `Task` tool is unavailable.
 
-Before dispatching subagents, print a timing estimate:
+Before semantic extraction, print a timing estimate:
 - Load `total_words` and file counts from `graphify-out/.graphify_detect.json`
 - Estimate agents needed: `ceil(uncached_non_code_files / 22)` (chunk size is 20-25)
 - Estimate time: ~45s per agent batch (they run in parallel, so total ≈ 45s × ceil(agents/parallel_limit))
 - Print: "Semantic extraction: ~N files → X agents, estimated ~Ys"
+
+For sequential extraction, use a parallel limit of 1 and report chunks instead of agents. These are estimates, not measured durations.
 
 **Step B0 - Check extraction cache first**
 
@@ -250,24 +258,23 @@ print(f'Cache: {len(all_files)-len(uncached)} files hit, {len(uncached)} files n
 "
 ```
 
-Only dispatch subagents for files listed in `graphify-out/.graphify_uncached.txt`. If all files are cached, skip to Part C directly.
+Only extract files listed in `graphify-out/.graphify_uncached.txt`. If all files are cached, skip to Part C directly.
 
 **Step B1 - Split into chunks**
 
 Load files from `graphify-out/.graphify_uncached.txt`. Split into chunks of 20-25 files each. Each image gets its own chunk (vision needs separate context). When splitting, group files from the same directory together so related artifacts land in the same chunk and cross-file relationships are more likely to be extracted.
 
-**Step B2 - Dispatch ALL subagents in a single message**
+**Step B2 - Extract each chunk using the available host**
 
-> Uses the `Task` tool for parallel subagent dispatch.
-> Call `Task` once per chunk — ALL in the same response so they run in parallel.
+Use one write-capable agent per chunk when delegation is permitted. Keep concurrency within the host's available slots and collect completed batches before starting more. With no delegation, perform the same task yourself, one chunk at a time.
 
-Pass the extraction prompt as the task description:
+Pass the extraction prompt as the task description. On a host with a `Task` tool, the equivalent call is:
 
 ```
 Task(description="Your task is to perform the following. Follow the instructions below exactly.\n\n<agent-instructions>\n[extraction prompt, with FILE_LIST, CHUNK_NUM, TOTAL_CHUNKS, DEEP_MODE substituted]\n</agent-instructions>\n\nExecute this now. Output ONLY the structured JSON response.")
 ```
 
-Each subagent writes its result to its own `graphify-out/.graphify_chunk_NN.json`. Collect results as each `Task` completes and parse each as JSON.
+Each delegated or sequential extraction writes its result to `graphify-out/.graphify_chunk_NN.json`. Collect completed results and parse each as JSON.
 
 CHUNK_PATH must be an **absolute** path — derive it before dispatching:
 ```bash
@@ -281,15 +288,15 @@ See `references/extraction-spec.md` for the exact subagent prompt (JSON schema, 
 
 **Step B3 - Collect, cache, and merge**
 
-Wait for all subagents. For each result:
+Wait for all delegated work, or finish all sequential chunks. For each result:
 - Check that `graphify-out/.graphify_chunk_NN.json` exists on disk — this is the success signal
 - If the file exists and contains valid JSON with `nodes` and `edges`, include it and save to cache
-- If the file is missing, the subagent was likely dispatched as read-only (Explore type) — print a warning: "chunk N missing from disk — subagent may have been read-only. Re-run with general-purpose agent." Do not silently skip.
-- If a subagent failed or returned invalid JSON, print a warning and skip that chunk - do not abort
+- If the file is missing, report that the extraction did not write its result. Check the absolute output path and the worker's write permissions; do not assume a host-specific agent type.
+- If extraction failed or returned invalid JSON, print a warning and skip that chunk - do not abort
 
-If more than half the chunks failed or are missing, stop and tell the user to re-run and ensure `subagent_type="general-purpose"` is used.
+If more than half the chunks failed or are missing, stop and report the failure. Explain the observed cause and how to retry with a write-capable worker or sequential extraction.
 
-Merge all chunk files into `.graphify_semantic_new.json`. **After each Agent call completes, read the real token counts from the Agent tool result's `usage` field and write them back into the chunk JSON before merging** — the chunk JSON itself always has placeholder zeros. Then run:
+Merge all valid chunk files into `.graphify_semantic_new.json`. When the host exposes measured per-task token usage, write those counts into the chunk JSON before merging. If usage is unavailable (including sequential extraction without per-task accounting), retain the schema's zero placeholders for compatibility and explicitly label token totals as unavailable or partial in the report and final response. Do not present placeholder zeros as measured cost. Then run:
 ```bash
 $(cat graphify-out/.graphify_python) -c "
 import json, glob
@@ -711,6 +718,6 @@ When the user asks to install the post-commit auto-rebuild hook or wire graphify
 
 - Never invent an edge. If unsure, use AMBIGUOUS.
 - Never skip the corpus check warning.
-- Always show token cost in the report.
+- Show measured token cost in the report; explicitly state when usage is unavailable or partial. Never invent counts or present schema placeholders as measurements.
 - Never hide cohesion scores behind symbols - show the raw number.
 - Never run HTML viz on a graph with more than 5,000 nodes without warning the user.
