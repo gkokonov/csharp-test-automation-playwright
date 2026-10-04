@@ -21,7 +21,7 @@ public static class IpamDatabaseRepository
     public static IpAddressRowDto? GetIpAddressByAddress(string address)
     {
         const string sql = """
-            SELECT id, host(address) AS "Address", status, description
+            SELECT id, address::text AS "Address", status, description
             FROM ipam_ipaddress
             WHERE address = @Address::inet
             """;

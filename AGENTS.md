@@ -21,6 +21,8 @@ Report concisely. Use ASD-STE100 Simplified Technical English.
 ## Read by task
 
 Read only the guidance needed for the task; follow its applicable links.
+Use the [guidance reading checklist](.agents/instructions/tooling.md#guidance-reading-checklist)
+before instruction reads. Reuse guidance already available in the session.
 
 | Task | Required guidance |
 | --- | --- |

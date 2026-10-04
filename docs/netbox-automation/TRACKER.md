@@ -74,13 +74,23 @@ until this tracker and the specs in this folder are reviewed.
 
 | # | Task | Status | Notes |
 | --- | --- | --- | --- |
-| 5.1 | Prefix API CRUD tests (dynamic RFC1918 ranges) | TODO | |
-| 5.2 | IP Address API CRUD tests | TODO | |
-| 5.3 | NetBox-specific IPAM behavior assertion (status transition) | TODO | |
-| 5.4 | Parallel-safety check (no reused CIDRs) | TODO | |
-| 5.5 | `PrefixesPage`, `PrefixEditPage`, `PrefixDetailsPage` | TODO | Semantic locators only |
-| 5.6 | `CreatePrefix_ShouldPersistAcrossLayers` UI test | TODO | 5th and final planned UI test |
-| 5.7 | Green x3 consecutive runs (API + UI) | TODO | |
+| 5.1 | Prefix API CRUD tests (dynamic RFC1918 ranges) | DONE | Four `PrefixesApiTests` scenarios: create, exact CIDR filter, active-to-reserved PATCH, and delete. REST re-fetch and complete represented DB fields checked on writes. |
+| 5.2 | IP Address API CRUD tests | DONE | Four `IpAddressesApiTests` scenarios, each with an owned prerequisite Prefix and an address inside its /24. DB projection retains the address mask. |
+| 5.3 | NetBox-specific IPAM behavior assertion (status transition) | DONE | Prefix and IP Address updates verify `active` to `reserved`, the `Reserved` label, unchanged CIDR, and REST/DB persistence. |
+| 5.4 | Parallel-safety check (no reused CIDRs) | DONE | Generated /24 CIDRs are reserved under a lock for the process lifetime. Full runs use `NUnit.NumberOfTestWorkers=3`; TRX timestamps show overlapping Prefix/IP Address fixtures. Separate processes do not share this reservation. |
+| 5.5 | `PrefixesPage`, `PrefixEditPage`, `PrefixDetailsPage` | DONE | Semantic locators validated with live Playwright CLI. Status option names include help text; selection matches the status at the start of the option name. |
+| 5.6 | `CreatePrefix_ShouldPersistAcrossLayers` UI test | DONE | Fifth planned UI scenario: create, semantic detail checks, REST filter lookup, and PostgreSQL verification. Owned lookup cleanup registered before submission, then id cleanup after lookup. |
+| 5.7 | Green x3 consecutive runs (API + UI) | DONE | All 26 NetBox cases passed on three consecutive live headless runs with three NUnit workers: 9 IPAM cases and 17 existing Site/Device regressions. Results: `artifacts/netbox-phase5/netbox-final-{1,2,3}.trx`. |
+
+**Phase 5 review (2026-10-04):** One read-only reviewer subagent pass completed.
+The main agent fixed its one finding: UI Prefix lookup and fallback cleanup now
+filter by both CIDR and unique description on the server, so unrelated duplicate
+CIDRs cannot push the owned record onto a later result page. All 9 IPAM cases
+then passed on three consecutive live headless runs with three NUnit workers.
+Results: `artifacts/netbox-phase5/ipam-review-fix-{1,2,3}.trx`.
+Debug solution and Release application builds, scoped formatting/analyzer
+verification, instruction size/link checks, and `git diff --check` passed.
+The AST-only Graphify update completed; documentation extraction was not run.
 
 ## Cross-Cutting Gates (recheck at end of each phase)
 
@@ -91,7 +101,7 @@ until this tracker and the specs in this folder are reviewed.
 - [x] Allure metadata complete (suite/feature/story/severity/owner) on every new test.
 - [x] No duplicate infrastructure introduced beyond what's spec'd here.
 - [x] Owning instruction file (`.agents/rules/test-automation.md`, `docs/API_TESTING_ARCHITECTURE.md`, `docs/UI_TESTING_ARCHITECTURE.md`) updated if a new pattern is introduced.
-- [ ] Exactly 5 UI tests implemented by end of Phase 5 (3 Site, 1 Device, 1 Prefix) per the confirmed UI-coverage decision below.
+- [x] Exactly 5 UI tests implemented by end of Phase 5 (3 Site, 1 Device, 1 Prefix) per the confirmed UI-coverage decision below.
 
 **Phase 4 review (2026-10-03):** One read-only reviewer subagent pass completed.
 The main agent fixed its finding: cleanup registration is in creation order,

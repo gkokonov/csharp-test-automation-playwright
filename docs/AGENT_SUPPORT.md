@@ -39,6 +39,12 @@ applicable canonical rules. A UI scenario that uses API setup reads both layer
 rules; a page-object-only edit need not load API rules. Helpers route by what
 they do, even when a path glob cannot identify that responsibility.
 
+The [guidance reading checklist](../.agents/instructions/tooling.md#guidance-reading-checklist)
+is owned by the tooling instructions and routed from root `AGENTS.md` for all
+tasks. Keep one shared checklist; do not copy it into host adapters or personal
+skills. A size/link check verifies the documentation, not agent compliance.
+Use a fresh-session task to check that the agent follows the checklist.
+
 API and UI globs include their client/page, fixture, base-fixture, and step
 paths. Keep Copilot adapter `applyTo` patterns and Antigravity canonical `globs`
 consistent. Do not add a catch-all rule that loads both layer documents.
