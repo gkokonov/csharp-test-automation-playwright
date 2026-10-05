@@ -92,6 +92,40 @@ Debug solution and Release application builds, scoped formatting/analyzer
 verification, instruction size/link checks, and `git diff --check` passed.
 The AST-only Graphify update completed; documentation extraction was not run.
 
+**Site and teardown review fixes (2026-10-05):** Fixed review findings 2, 3,
+and 5. `SiteSteps` registers API cleanup before response assertions and UI
+lookup cleanup before submission. `TestBase` disposes and clears registered
+services after cleanup errors while preserving the cleanup failure. Site DB
+checks now include all represented persisted fields, including description;
+API update checks the follow-up GET status, and API delete checks row removal.
+The Site specification records the corrected behavior.
+
+Validation passed:
+
+- Application Debug and Release builds: zero warnings and errors.
+- Scoped formatter/analyzer verification, instruction size/link checks, the
+  changed Site specification's local links, and `git diff --check`.
+- Three consecutive live headless passes for all eight Site API/UI tests,
+  with three NUnit workers. The middle run also passed all 26 NetBox cases,
+  including Device cleanup interruption scenarios and IPAM regressions.
+  Results: `artifacts/netbox-review-fixes/site-run-1.trx`,
+  `artifacts/netbox-review-fixes/netbox-run-2.trx`, and
+  `artifacts/netbox-review-fixes/site-run-3.trx`.
+- Local failure-path probes: four concurrent teardown probes with two cycles
+  each verify cleanup ordering, client disposal, container clearing, and the
+  original error. In-process HTTP probes verify API cleanup registration on
+  an unexpected response status and owned-slug UI cleanup with idempotent 404
+  handling. Source and output: `artifacts/netbox-review-fixes/local-probe/`
+  and `artifacts/netbox-review-fixes/local-checks.txt`. These are ignored local
+  validation artifacts, not permanent framework self-tests.
+- AST-only Graphify update completed: 1,773 nodes, 3,402 edges, and 119
+  communities. Documentation extraction was not run; saved community labels
+  need a separate refresh.
+
+Resolved validation issue: a Debug rebuild attempted while the live test
+host held the assembly failed with MSB3027/MSB3021. Rebuilding after that test
+process exited passed without warnings or errors. No failed checks remain.
+
 ## Cross-Cutting Gates (recheck at end of each phase)
 
 - [x] `dotnet build .\CsharpTestAutomation.slnx` is warning-clean.

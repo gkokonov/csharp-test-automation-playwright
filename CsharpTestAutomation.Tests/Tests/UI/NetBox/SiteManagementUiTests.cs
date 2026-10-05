@@ -9,6 +9,7 @@ using CsharpTestAutomation.Tests.Api.Dtos.Sites;
 using CsharpTestAutomation.Tests.Api.Factories;
 using CsharpTestAutomation.Tests.Database.NetBox.DTO;
 using CsharpTestAutomation.Tests.Database.NetBox.Queries;
+using CsharpTestAutomation.Tests.Steps.Api.NetBox;
 using CsharpTestAutomation.Tests.UI.Pages.NetBox;
 using RestSharp;
 using static Microsoft.Playwright.Assertions;
@@ -27,6 +28,8 @@ public class SiteManagementUiTests : NetBoxUiTestBase
 {
     private SitesApiClient SitesClient => GetClient<SitesApiClient>();
 
+    private SiteSteps SiteSteps => new(SitesClient, ScenarioCleanupActions);
+
     protected override async Task OnSetUpAsync()
     {
         await base.OnSetUpAsync();
@@ -42,6 +45,7 @@ public class SiteManagementUiTests : NetBoxUiTestBase
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
+        SiteSteps.RegisterUiSiteCleanup(request.Slug);
 
         // Act
         SitesListPage listPage = GetPage<SitesListPage>();
@@ -69,7 +73,7 @@ public class SiteManagementUiTests : NetBoxUiTestBase
         apiResponse.Data!.Count.Should().Be(1);
 
         SiteDetailDto siteFromApi = apiResponse.Data.Results.Single();
-        ScenarioCleanupActions.AddCleanUpAction(() => DeleteSiteAsync(siteFromApi.Id));
+        SiteSteps.RegisterSiteCleanup(siteFromApi.Id);
 
         using (new AssertionScope())
         {
@@ -79,16 +83,7 @@ public class SiteManagementUiTests : NetBoxUiTestBase
             siteFromApi.Description.Should().Be(request.Description);
         }
 
-        SiteRowDto? row = SitesDatabaseRepository.GetBySlug(request.Slug);
-
-        using (new AssertionScope())
-        {
-            row.Should().NotBeNull();
-            row!.Id.Should().Be(siteFromApi.Id);
-            row.Name.Should().Be(request.Name);
-            row.Slug.Should().Be(request.Slug);
-            row.Status.Should().Be(request.Status);
-        }
+        AssertPersistedSite(siteFromApi);
     }
 
     [Test]
@@ -99,12 +94,11 @@ public class SiteManagementUiTests : NetBoxUiTestBase
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
-        RestResponse<SiteDetailDto> createResponse = await SitesClient.CreateSiteAsync(request);
+        RestResponse<SiteDetailDto> createResponse = await SiteSteps.CreateSiteAsync(request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         createResponse.Data.Should().NotBeNull();
 
         SiteDetailDto created = createResponse.Data!;
-        ScenarioCleanupActions.AddCleanUpAction(() => DeleteSiteAsync(created.Id));
 
         UpdateSiteDto update = new UpdateSiteDtoBuilder().Default().Build();
 
@@ -136,13 +130,7 @@ public class SiteManagementUiTests : NetBoxUiTestBase
             getResponse.Data.Slug.Should().Be(created.Slug);
         }
 
-        SiteRowDto? row = SitesDatabaseRepository.GetBySlug(created.Slug);
-
-        using (new AssertionScope())
-        {
-            row.Should().NotBeNull();
-            row!.Status.Should().Be(update.Status);
-        }
+        AssertPersistedSite(getResponse.Data!);
     }
 
     [Test]
@@ -153,12 +141,11 @@ public class SiteManagementUiTests : NetBoxUiTestBase
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
-        RestResponse<SiteDetailDto> createResponse = await SitesClient.CreateSiteAsync(request);
+        RestResponse<SiteDetailDto> createResponse = await SiteSteps.CreateSiteAsync(request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         createResponse.Data.Should().NotBeNull();
 
         SiteDetailDto created = createResponse.Data!;
-        ScenarioCleanupActions.AddCleanUpAction(() => DeleteSiteAsync(created.Id));
 
         // Act
         SiteDetailsPage detailsPage = GetPage<SiteDetailsPage>();
@@ -177,17 +164,17 @@ public class SiteManagementUiTests : NetBoxUiTestBase
         row.Should().BeNull();
     }
 
-    /// <summary>
-    /// Deletes a site, tolerating 404 so it is safe to call as a cleanup action regardless of
-    /// whether the test under test already removed the record.
-    /// </summary>
-    private async Task DeleteSiteAsync(int id)
+    private static void AssertPersistedSite(SiteDetailDto site)
     {
-        RestResponse response = await SitesClient.DeleteSiteAsync(id);
-
-        if (response.StatusCode is not (HttpStatusCode.NoContent or HttpStatusCode.NotFound))
+        SiteRowDto? row = SitesDatabaseRepository.GetBySlug(site.Slug);
+        row.Should().NotBeNull();
+        row.Should().BeEquivalentTo(new SiteRowDto
         {
-            throw new InvalidOperationException($"Failed to clean up site {id}: received {response.StatusCode}.");
-        }
+            Id = site.Id,
+            Name = site.Name,
+            Slug = site.Slug,
+            Status = site.Status.Value,
+            Description = site.Description
+        }, "all represented persisted Site fields must match; Url, Display and status labels are derived");
     }
 }

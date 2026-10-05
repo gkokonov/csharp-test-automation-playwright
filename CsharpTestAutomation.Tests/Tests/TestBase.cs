@@ -79,16 +79,23 @@ public abstract class TestBase
             {
                 await TestContainer.Get<ScenarioCleanupActions>()!.CleanUpAsync();
             }
-
-            // Dispose and clear services
-            s_log.Debug("Dispose Test Container and its services");
-            await TestContainer.DisposeServicesAsync();
-            TestContainer.Clear();
         }
         catch (Exception ex)
         {
             s_log.Error(ex, "Error during test tear down");
             throw;
+        }
+        finally
+        {
+            try
+            {
+                s_log.Debug("Dispose Test Container and its services");
+                await TestContainer.DisposeServicesAsync();
+            }
+            finally
+            {
+                TestContainer.Clear();
+            }
         }
     }
 }

@@ -9,7 +9,8 @@ public static class SitesDatabaseRepository
     public static SiteRowDto? GetBySlug(string slug)
     {
         const string sql = """
-            SELECT id, name, slug, status
+            SELECT id AS "Id", name AS "Name", slug AS "Slug",
+                status AS "Status", description AS "Description"
             FROM dcim_site
             WHERE slug = @Slug
             """;

@@ -9,6 +9,7 @@ using CsharpTestAutomation.Tests.Api.Dtos.Sites;
 using CsharpTestAutomation.Tests.Api.Factories;
 using CsharpTestAutomation.Tests.Database.NetBox.DTO;
 using CsharpTestAutomation.Tests.Database.NetBox.Queries;
+using CsharpTestAutomation.Tests.Steps.Api.NetBox;
 using RestSharp;
 
 namespace CsharpTestAutomation.Tests.Tests.Api;
@@ -23,6 +24,8 @@ namespace CsharpTestAutomation.Tests.Tests.Api;
 public class SitesApiTests : ApiTestBase
 {
     private SitesApiClient SitesClient => GetClient<SitesApiClient>();
+
+    private SiteSteps SiteSteps => new(SitesClient, ScenarioCleanupActions);
 
     protected override async Task OnSetUpAsync()
     {
@@ -41,14 +44,13 @@ public class SitesApiTests : ApiTestBase
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
 
         // Act
-        RestResponse<SiteDetailDto> response = await SitesClient.CreateSiteAsync(request);
+        RestResponse<SiteDetailDto> response = await SiteSteps.CreateSiteAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         response.Data.Should().NotBeNull();
 
         SiteDetailDto created = response.Data!;
-        ScenarioCleanupActions.AddCleanUpAction(() => DeleteSiteAsync(created.Id));
 
         using (new AssertionScope())
         {
@@ -58,6 +60,8 @@ public class SitesApiTests : ApiTestBase
             created.Status.Value.Should().Be(request.Status);
             created.Description.Should().Be(request.Description);
         }
+
+        AssertPersistedSite(created);
     }
 
     [Test]
@@ -69,12 +73,11 @@ public class SitesApiTests : ApiTestBase
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
-        RestResponse<SiteDetailDto> createResponse = await SitesClient.CreateSiteAsync(request);
+        RestResponse<SiteDetailDto> createResponse = await SiteSteps.CreateSiteAsync(request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         createResponse.Data.Should().NotBeNull();
 
         SiteDetailDto created = createResponse.Data!;
-        ScenarioCleanupActions.AddCleanUpAction(() => DeleteSiteAsync(created.Id));
 
         // Act
         RestResponse<SiteDetailDto> getResponse = await SitesClient.GetSiteAsync(created.Id);
@@ -83,16 +86,7 @@ public class SitesApiTests : ApiTestBase
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         getResponse.Data.Should().BeEquivalentTo(created);
 
-        SiteRowDto? row = SitesDatabaseRepository.GetBySlug(created.Slug);
-
-        using (new AssertionScope())
-        {
-            row.Should().NotBeNull();
-            row!.Id.Should().Be(created.Id);
-            row.Name.Should().Be(created.Name);
-            row.Slug.Should().Be(created.Slug);
-            row.Status.Should().Be(created.Status.Value);
-        }
+        AssertPersistedSite(created);
     }
 
     [Test]
@@ -103,12 +97,11 @@ public class SitesApiTests : ApiTestBase
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
-        RestResponse<SiteDetailDto> createResponse = await SitesClient.CreateSiteAsync(request);
+        RestResponse<SiteDetailDto> createResponse = await SiteSteps.CreateSiteAsync(request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         createResponse.Data.Should().NotBeNull();
 
         SiteDetailDto created = createResponse.Data!;
-        ScenarioCleanupActions.AddCleanUpAction(() => DeleteSiteAsync(created.Id));
 
         // Act
         RestResponse<PagedResultDto<SiteDetailDto>> response = await SitesClient.FindSitesBySlugAsync(request.Slug);
@@ -128,12 +121,11 @@ public class SitesApiTests : ApiTestBase
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
-        RestResponse<SiteDetailDto> createResponse = await SitesClient.CreateSiteAsync(request);
+        RestResponse<SiteDetailDto> createResponse = await SiteSteps.CreateSiteAsync(request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         createResponse.Data.Should().NotBeNull();
 
         SiteDetailDto created = createResponse.Data!;
-        ScenarioCleanupActions.AddCleanUpAction(() => DeleteSiteAsync(created.Id));
 
         UpdateSiteDto update = new UpdateSiteDtoBuilder().Default().Build();
 
@@ -155,7 +147,9 @@ public class SitesApiTests : ApiTestBase
         }
 
         RestResponse<SiteDetailDto> getResponse = await SitesClient.GetSiteAsync(created.Id);
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         getResponse.Data.Should().BeEquivalentTo(updated);
+        AssertPersistedSite(updated);
     }
 
     [Test]
@@ -166,13 +160,11 @@ public class SitesApiTests : ApiTestBase
     {
         // Arrange
         CreateSiteDto request = new CreateSiteDtoBuilder().Default().Build();
-        RestResponse<SiteDetailDto> createResponse = await SitesClient.CreateSiteAsync(request);
+        RestResponse<SiteDetailDto> createResponse = await SiteSteps.CreateSiteAsync(request);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         createResponse.Data.Should().NotBeNull();
 
         SiteDetailDto created = createResponse.Data!;
-        // Registered even though this test performs its own delete, so an early failure still cleans up.
-        ScenarioCleanupActions.AddCleanUpAction(() => DeleteSiteAsync(created.Id));
 
         // Act
         RestResponse deleteResponse = await SitesClient.DeleteSiteAsync(created.Id);
@@ -182,19 +174,20 @@ public class SitesApiTests : ApiTestBase
 
         RestResponse<SiteDetailDto> getResponse = await SitesClient.GetSiteAsync(created.Id);
         getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        SitesDatabaseRepository.GetBySlug(created.Slug).Should().BeNull();
     }
 
-    /// <summary>
-    /// Deletes a site, tolerating 404 so it is safe to call as a cleanup action regardless of
-    /// whether the test under test already removed the record.
-    /// </summary>
-    private async Task DeleteSiteAsync(int id)
+    private static void AssertPersistedSite(SiteDetailDto site)
     {
-        RestResponse response = await SitesClient.DeleteSiteAsync(id);
-
-        if (response.StatusCode is not (HttpStatusCode.NoContent or HttpStatusCode.NotFound))
+        SiteRowDto? row = SitesDatabaseRepository.GetBySlug(site.Slug);
+        row.Should().NotBeNull();
+        row.Should().BeEquivalentTo(new SiteRowDto
         {
-            throw new InvalidOperationException($"Failed to clean up site {id}: received {response.StatusCode}.");
-        }
+            Id = site.Id,
+            Name = site.Name,
+            Slug = site.Slug,
+            Status = site.Status.Value,
+            Description = site.Description
+        }, "all represented persisted Site fields must match; Url, Display and status labels are derived");
     }
 }

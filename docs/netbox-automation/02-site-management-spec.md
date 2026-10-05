@@ -19,7 +19,12 @@ from the inherited `RestClientFactory`/`NetBoxAuthenticator` in an overridden
 | `UpdateSite_ShouldChangeStatus` | Create, PATCH `status` (and `name`, `description` where applicable) | `200 OK`; GET reflects updated fields; unrelated fields unchanged |
 | `DeleteSite_ShouldRemoveSite` | Create, DELETE, then GET by id | DELETE returns `204`; subsequent GET returns `404` |
 
-Cleanup: register the delete call right after create in every test (idempotent — swallow `404` on cleanup).
+`SiteSteps` borrows the fixture's client and cleanup stack. It registers cleanup
+as soon as a positive response id is available, before the fixture validates
+the response. Cleanup accepts `204` and `404`; other failures remain visible.
+API create and update success paths compare the represented persisted fields
+with PostgreSQL. Delete verifies that the row is absent. Check the follow-up
+GET status before comparing its payload.
 
 ## UI Tests (`Tests/UI/NetBox/SiteManagementUiTests.cs`)
 
@@ -50,7 +55,7 @@ And a Site created via the API (SitesApiClient.CreateSiteAsync — setup only, n
 When the user edits the Site's status and description through the UI (SiteDetailsPage → SiteEditPage.UpdateAsync)
 Then the updated values are displayed successfully on SiteDetailsPage
 And the REST API reflects the updated status/description (GET /dcim/sites/{id}/)
-And PostgreSQL reflects the updated status (SitesDatabaseRepository)
+And PostgreSQL reflects the updated status and description (SitesDatabaseRepository)
 ```
 
 ### `DeleteSite_ShouldRemoveSiteAcrossLayers`
@@ -65,8 +70,8 @@ And PostgreSQL no longer has a row for that slug
 ```
 
 - Fields: `Name`, `Slug`, `Status`, `Description`.
-- Cross-layer assertions: UI visibility (`Expect(...).ToBeVisibleAsync()`), API returns exactly one match (or 404 post-delete), DB row matches `Name`/`Slug`/`Status` only (per "do not assert every internal database column").
-- `CreateSite_ShouldPersistAcrossLayers` cleans up via the `SitesApiClient` (API delete), registered once the Site's id is known (fetch id via the slug-filtered GET immediately after UI creation, since the UI flow does not directly expose the created id). `UpdateSite_...` also registers API cleanup at setup time (it did not delete the Site itself). `DeleteSite_...` needs no cleanup — the test's own action removes the record; only assert, don't re-delete.
+- Cross-layer assertions: UI visibility (`Expect(...).ToBeVisibleAsync()`), API returns exactly one match (or 404 post-delete), and DB row matches `Id`, `Name`, `Slug`, `Status`, and `Description`. URL, display text, and status labels are derived values.
+- `CreateSite_ShouldPersistAcrossLayers` registers lookup-based cleanup by its unique slug before UI submission. It also registers id-based cleanup once the API lookup identifies the created Site. Update and delete scenarios register id-based cleanup during API setup, before response assertions, so early failures still remove their owned records. Cleanup tolerates `404` after a scenario deletes its Site.
 
 ## Definition of Done (Site feature)
 
