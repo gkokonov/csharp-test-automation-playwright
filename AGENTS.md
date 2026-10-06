@@ -66,14 +66,14 @@ dotnet test .\CsharpTestAutomation.Tests\CsharpTestAutomation.Tests.csproj
 dotnet test --filter "FullyQualifiedName~<FixtureName>"
 ```
 
-## Navigation and Graphify
+## Navigation and Codebase Memory MCP
 
 - Prefer prompt/repository evidence and static analysis. Use FFF for file discovery;
   if it cannot locate the target or is unavailable, use targeted `rg` and file reads.
-- For codebase questions, use the [Graphify skill](.agents/skills/graphify/SKILL.md)
-  and first run `graphify query "<question>"` when `graphify-out/graph.json` exists.
-  Dirty graph files do not justify skipping it; explicit opt-out or graph repair does.
-- For `/graphify`, follow that skill before other work. Use `path`/`explain` for
-  focused relationships; prefer the wiki index for broad navigation when present.
-- Read `GRAPH_REPORT.md` only for broad architecture review or insufficient query results.
-- After code changes, run `graphify update .` (AST-only). It does not refresh documentation.
+- For codebase questions, use Codebase Memory MCP. Select this checkout with
+  `list_projects`; query its index before broad source reads. See the
+  [tooling instructions](.agents/instructions/tooling.md#codebase-memory-mcp).
+- Use `search_graph` for symbols, `trace_path` for relationships, and
+  `get_architecture` for broad navigation. Read the graph schema before Cypher queries.
+- After code changes, check index freshness and changed-path coverage. Refresh
+  with `index_repository` if needed; a connected watcher can update the index.

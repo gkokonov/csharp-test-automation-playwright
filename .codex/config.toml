@@ -23,3 +23,11 @@ command = "powershell.exe"
 args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", "& (Join-Path $env:LOCALAPPDATA 'fff-mcp/bin/fff-mcp.exe'); exit $LASTEXITCODE"]
 env_vars = ["LOCALAPPDATA"]
 required = false
+
+[mcp_servers.codebase-memory-mcp]
+command = "C:/Users/georg/AppData/Local/Programs/codebase-memory-mcp/codebase-memory-mcp.exe"
+args = []
+cwd = "C:/GK/Sources/csharp-test-automation-playwright"
+env_vars = ["LOCALAPPDATA", "USERPROFILE"]
+startup_timeout_sec = 60
+required = false

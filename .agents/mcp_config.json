@@ -14,6 +14,11 @@
     },
     "fff": {
       "command": "C:/Users/georg/AppData/Local/fff-mcp/bin/fff-mcp.exe"
+    },
+    "codebase-memory-mcp": {
+      "command": "C:/Users/georg/AppData/Local/Programs/codebase-memory-mcp/codebase-memory-mcp.exe",
+      "args": [],
+      "cwd": "C:/GK/Sources/csharp-test-automation-playwright"
     }
   }
 }

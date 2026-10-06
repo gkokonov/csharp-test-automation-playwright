@@ -304,4 +304,5 @@ CsharpTestAutomation.Tests/appsettings.local.json
 **/playwright/.auth/
 /auth.json
 storage-state-*.json
-graphify-out/
+# Optional Codebase Memory index exports
+.codebase-memory/

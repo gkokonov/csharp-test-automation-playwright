@@ -90,7 +90,8 @@ then passed on three consecutive live headless runs with three NUnit workers.
 Results: `artifacts/netbox-phase5/ipam-review-fix-{1,2,3}.trx`.
 Debug solution and Release application builds, scoped formatting/analyzer
 verification, instruction size/link checks, and `git diff --check` passed.
-The AST-only Graphify update completed; documentation extraction was not run.
+The previous code index's AST-only update completed; documentation extraction
+was not run. Codebase Memory MCP replaced that index on 2026-10-06.
 
 **Site and teardown review fixes (2026-10-05):** Fixed review findings 2, 3,
 and 5. `SiteSteps` registers API cleanup before response assertions and UI
@@ -118,7 +119,7 @@ Validation passed:
   handling. Source and output: `artifacts/netbox-review-fixes/local-probe/`
   and `artifacts/netbox-review-fixes/local-checks.txt`. These are ignored local
   validation artifacts, not permanent framework self-tests.
-- AST-only Graphify update completed: 1,773 nodes, 3,402 edges, and 119
+- Historical AST-only code index update completed: 1,773 nodes, 3,402 edges, and 119
   communities. Documentation extraction was not run; saved community labels
   need a separate refresh.
 

@@ -53,7 +53,7 @@ When moving a rule, update its incoming links and read trigger in the same
 change. Keep shared ownership/cleanup policy in the test rule; device-specific
 identifiers, prerequisites, and delete outcomes belong in the
 [Device specification](netbox-automation/03-device-management-spec.md).
-Maintain the short root Graphify route; generated installer blocks must also
+Maintain the short root Codebase Memory MCP route; generated installer blocks must also
 pass the root size check.
 
 ## Host Limits and Activation
@@ -85,7 +85,8 @@ filename. Check for `AGENTS.override.md` if the expected instructions are absent
 Use the existing repository skills directly from `.agents/skills/`. Do not
 copy them to a personal skill directory. A same-named personal skill can also
 appear in the selector; select the repository path when checking this harness.
-Graphify includes a [Codex/PowerShell reference](../.agents/skills/graphify/references/codex-windows.md).
+The [tooling instructions](../.agents/instructions/tooling.md#codebase-memory-mcp)
+include Codebase Memory MCP query guidance and a Windows CLI fallback.
 The software-design skill retains its existing `agents/openai.yaml` metadata.
 
 MCP prerequisites are:
@@ -96,8 +97,9 @@ MCP prerequisites are:
 | Microsoft Learn | Network access | HTTP; retains `maxTokenBudget=5000` |
 | Chrome DevTools | Node.js/npm with `npx` on `PATH`; Chrome available; npm access on first launch | `cmd.exe /d /c` launches the headless MCP command; Windows path variables are forwarded |
 | FFF | `fff-mcp.exe` installed under `LOCALAPPDATA/fff-mcp/bin` | PowerShell resolves the path from the forwarded `LOCALAPPDATA` variable |
+| Codebase Memory | Native Windows executable under `LOCALAPPDATA/Programs/codebase-memory-mcp` | Optional stdio entry with this checkout as its working directory |
 
-Graphify also needs its installed Python environment. Browser tasks need the
+Codebase Memory MCP uses its native Windows executable. Browser tasks need the
 installed Playwright CLI or the local `npx --no-install playwright cli` command.
 These tools are for agent development work; they do not change test dependencies.
 
@@ -107,7 +109,7 @@ child processes receive the new value. Never store key values in the repository.
 
 ### Configuration boundaries and fallbacks
 
-`.codex/config.toml` defines the four optional MCP servers for local Windows
+`.codex/config.toml` defines five optional MCP servers for local Windows
 Codex clients. It does not choose a model or change sandbox, permission, or
 approval settings. A server connection failure must not prevent the session
 from starting. Report missing tools or credentials explicitly.
@@ -130,7 +132,7 @@ existing Antigravity setup. Their transports and schemas can differ; Codex
 uses the TOML adapter. When changing a shared server endpoint or launch flags,
 check the affected adapters for consistency.
 
-If FFF or Graphify is unavailable, use targeted `rg` searches and file reads.
+If FFF or Codebase Memory MCP is unavailable, use targeted `rg` searches and file reads.
 If a documentation MCP server is unavailable, use official documentation in
 the same tool scope and retain the repository lookup limit. Do not claim a
 connection or tool call succeeded without checking it.
@@ -151,6 +153,7 @@ codex mcp get context7
 codex mcp get microsoft-learn
 codex mcp get chrome-devtools
 codex mcp get fff
+codex mcp get codebase-memory-mcp
 ```
 
 These commands inspect configuration; they do not prove a server connected.
@@ -161,7 +164,7 @@ Chrome pages, and find `AGENTS.md` with FFF. Report connection failures separate
 
 Use the discovery prompt below at the root and in all three project
 directories. Confirm the response uses actual loaded/read files, identifies
-all three repository skills, and applies the correct canonical rules. Also
+the repository skills, and applies the correct canonical rules. Also
 check a root-started task that targets a project; it must explicitly read the
 project instructions. Instruction files alone do not prove activation.
 
@@ -170,6 +173,41 @@ change without a work item. Expect `docs(automation): ...`, at most 72
 characters, no invented work item, and no commit. Request a review without
 fixes, then compare `git diff` before and after; the review must not modify
 files. Configuration and instruction-only changes do not need a .NET build.
+
+## Codebase Memory MCP on Windows
+
+Use Codebase Memory MCP for code navigation and FFF for file discovery. CBM
+provides symbol search, schema queries, and call tracing through the shared
+[tooling instructions](../.agents/instructions/tooling.md#codebase-memory-mcp).
+Existing `.gitignore` rules apply; no `.cbmignore` is required.
+
+### Setup validation: 2026-10-06
+
+| Check | Evidence and result |
+| --- | --- |
+| Installation | Official Windows installer verified the release SHA-256 checksum and installed version 0.11.0. |
+| Runtime settings | `config list` confirmed the four applied indexing/watcher values. `watch_non_git=false` failed with unknown config key; omitted for this release. |
+| Codex configuration | `codex mcp get codebase-memory-mcp` accepted the stdio entry, executable, checkout, environment variables, and 60-second startup timeout. |
+| Explicit index | `cli index_repository` completed: 4,409 nodes, 8,399 edges, zero partial/unusable parses. Local `appsettings.local.json` was excluded by `.gitignore`. |
+| CLI queries | `list_projects`, `get_graph_schema`, and `search_graph` succeeded. Search found `CoreConfiguration` at `CsharpTestAutomation.Framework/Common/CoreConfiguration.cs`, lines 14–50. |
+| Direct MCP protocol | Local stdio initialization, `tools/list`, and `list_projects` passed; server identified version 0.11.0 and exposed 17 tools. This was a separate process, not a Codex/Copilot/Antigravity activation check. |
+| Static checks | TOML and both JSON adapters parsed; executable and checkout paths verified. Root `AGENTS.md`: 79 lines, 4,593 bytes. Checked 75 local Markdown links; `git diff --check` passed. |
+| Fresh host activation | Codex, VS Code Copilot, and Antigravity restarts and tool calls remain pending. Local CLI checks do not prove host activation. |
+| Watcher refresh | Enabled in runtime settings; refresh after a saved C# change remains pending in a connected client. |
+
+### Navigation migration: 2026-10-06
+
+Codebase Memory MCP is now the repository code navigation tool. Root
+`AGENTS.md` and the tooling instructions own its query, coverage, refresh, and
+CLI fallback guidance. No CBM skill is required. The retired navigation skill
+and its references were removed; optional `.codebase-memory/` exports are ignored.
+
+In this Codex session, direct MCP calls to `list_projects`, `get_graph_schema`,
+and `search_graph` succeeded. Search found `CoreConfiguration` in the expected
+framework source file. Copilot/Antigravity activation and watcher refresh after
+a saved C# change remain untested. Repository reference search found no remaining
+retired tool names or CBM skill links. Root `AGENTS.md` remains 79 lines; the
+maintenance check passed 75 local links and `git diff --check`.
 
 ## Discovery Check
 
@@ -207,7 +245,7 @@ in an existing session does not prove activation in a fresh session.
 
 | Date | Host and version | Check and evidence | Result |
 | --- | --- | --- | --- |
-| 2026-10-04 | Codex workspace session; version not exposed | Root `AGENTS.md` was supplied in the session; read `docs/AGENT_SUPPORT.md` and `.agents/skills/graphify/SKILL.md`. The Graphify skill was the only repository skill read/loaded for this check. Called Context7 `resolve_library_id` for NUnit, Microsoft Learn `microsoft_docs_search` for `dotnet build`, Chrome DevTools `list_pages`, and FFF `find_files` for `AGENTS`. | All four MCP calls succeeded. Chrome listed `about:blank`; FFF found `AGENTS.md`. Fresh client restart/session check not tested; this session cannot restart the client. No files were edited during the discovery calls. |
+| 2026-10-04 | Codex workspace session; version not exposed | Root `AGENTS.md` was supplied in the session; read `docs/AGENT_SUPPORT.md` and the retired code navigation skill. That skill was the only repository skill read/loaded for this historical check. Called Context7 `resolve_library_id` for NUnit, Microsoft Learn `microsoft_docs_search` for `dotnet build`, Chrome DevTools `list_pages`, and FFF `find_files` for `AGENTS`. | All four MCP calls succeeded. Chrome listed `about:blank`; FFF found `AGENTS.md`. Fresh client restart/session check not tested; this session cannot restart the client. No files were edited during the discovery calls. |
 | 2026-10-04 | Codex workspace session | Inspected the configured npm cache behavior in this guide. | `--prefer-offline` can use cached metadata; a cache miss still requires npm network access. Keep the current sandbox settings. Cache setup and a fresh-session check remain the next steps. |
 | 2026-10-03 | Codex IDE session; CLI 0.160.0 | Root guidance and repository skill paths were supplied in this session; scoped guidance was read during review. | Partial; fresh-session scenario matrix not tested. |
 | 2026-10-03 | Codex CLI 0.160.0 | TOML parsed with Python `tomllib`; `codex mcp list` and `codex mcp get` accepted all four server entries. | Passed; CLI reported sandbox access warnings for its temporary alias directory. |

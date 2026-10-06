@@ -27,6 +27,12 @@
     "fff": {
       "type": "stdio",
       "command": "${env:LOCALAPPDATA}/fff-mcp/bin/fff-mcp.exe"
+    },
+    "codebase-memory-mcp": {
+      "type": "stdio",
+      "command": "${env:LOCALAPPDATA}/Programs/codebase-memory-mcp/codebase-memory-mcp.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}"
     }
   }
 }

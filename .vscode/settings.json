@@ -58,8 +58,8 @@
     }
   ],
   // Reduce unnecessary agent context usage.
-  "chat.tools.compressOutput.enabled": true,
-  "chat.tools.terminal.outputCompaction": true,
+  // "chat.tools.compressOutput.enabled": true,
+  // "chat.tools.terminal.outputCompaction": true,
   // ========== TERMINAL AUTO-APPROVE ==========
   // Keep this list narrow. Terminal auto-approval is a convenience,
   // not a security boundary.
