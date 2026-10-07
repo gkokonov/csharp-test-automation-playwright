@@ -2,6 +2,12 @@
 
 Cross-language principles live in [Test Automation Design](test-automation.md); production-code design for TypeScript lives in [typescript.md](typescript.md). This guide covers Playwright Test.
 
+## Contents
+
+- [Design choices](#design-choices)
+- [Fixture example](#illustrative-example-module-scoped-state-and-hidden-assertions-to-fixtures)
+- [Review checks](#review-checks)
+
 ## Design choices
 
 - Playwright Test's fixtures are its composition mechanism. `test.extend<Fixtures>({ ... })` adds per-concern setup that a spec requests by destructuring; there is no reason to build a base test class.
@@ -9,7 +15,7 @@ Cross-language principles live in [Test Automation Design](test-automation.md); 
 - Declare `{ scope: "worker" }` only for expensive immutable setup. Worker-scoped mutable state is shared across every test that worker runs.
 - Prefer `getByRole`, `getByLabel`, and `getByTestId` over CSS or XPath. Web-first assertions such as `await expect(locator).toHaveText(...)` retry until the timeout, so `page.waitForTimeout` is nearly always a design smell.
 - Returning a `Locator` from a page object for `expect()` keeps the selector encapsulated, because a locator is a lazy query re-resolved on each use. Returning an `ElementHandle` pins one DOM node and goes stale.
-- Use the `request` fixture or an `APIRequestContext` inside a typed client. A spec asserting on `(await response.json()).data.attributes.id` is coupled to the wire format; the client should return a typed object.
+- Use the `request` fixture or an `APIRequestContext` inside a client that owns request/auth plumbing. Return typed objects for domain scenarios; expose status, headers, and JSON values when they are the contract under test. Follow the repository's established client return type.
 - `test.step` improves failure diagnosis for long flows without extracting the narrative into helpers—it is the DAMP-friendly way to add structure.
 - Avoid `test.describe.serial` unless the order is genuinely required; it removes isolation and retries the whole block on one failure.
 - Build test data with factory functions taking a partial override, so each spec states only the fields it depends on.
@@ -102,6 +108,6 @@ test("shows a confirmation after creating an order", async ({ orders }) => {
 - Does a spec contain CSS/XPath strings, `page.waitForTimeout`, or a manual retry loop?
 - Are assertions hidden inside helpers, leaving the spec with no visible expectation?
 - Does a helper take boolean or enum flags that select behaviour per caller?
-- Does a spec assert on raw JSON from `response.json()` rather than a typed client result?
+- Does a spec repeat request/auth plumbing or depend on wire-format details outside the contract it is meant to verify?
 - Is `test.describe.serial` used where isolation was simply inconvenient?
 - Are page objects returning `ElementHandle` (stale-prone) where a `Locator` (lazy) belongs?

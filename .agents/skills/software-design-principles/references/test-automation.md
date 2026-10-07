@@ -59,13 +59,15 @@ test / spec  →  task or flow objects (optional)  →  page / screen / componen
 
 **Definition and intent:** A page or component object owns the knowledge of how to locate and operate one meaningful piece of UI, and exposes that as intentions in the user's language.
 
-**Signals of a problem:** Methods named after widgets (`GetUsernameInput`) rather than intentions (`LogIn`); element handles or driver types returned to the test; locators appearing in specs; a single object covering an entire application; assertions embedded so tests cannot state their own expectations.
+**Signals of a problem:** Methods expose DOM structure without a useful user operation; stale element handles or mutable driver internals leak to the test; selector strings appear in specs; a single object covers an entire application; hidden assertions prevent tests from stating their own expectations.
 
 **Ask:** Does this object expose *what the user does* or *what the DOM contains*? Does the test need to know any selector? Does the object map to a real UI composition boundary?
 
 **Useful moves:** Expose intention methods that return either a value or the next page/component object. Encapsulate every locator. Model reusable widgets (grids, dialogs, nav bars) as component objects composed into pages, mirroring the real UI composition. Expose state as queries (`IsErrorVisible()`, `VisibleRowCount()`) so tests own the assertion.
 
 **Do not overapply:** Not every DOM fragment deserves a class. Do not create a page object per URL when several URLs are one screen, and do not wrap a capable framework API in a homegrown pass-through layer that adds no vocabulary.
+
+Returning a Playwright `Locator` for a retrying assertion can preserve selector encapsulation. Follow the repository's page-object contract; a lazy locator is different from a pinned element handle.
 
 **Interactions:** Locator encapsulation is the Law of Demeter applied to UI: tests tell the page what outcome they want instead of navigating its element graph.
 
@@ -119,11 +121,13 @@ test / spec  →  task or flow objects (optional)  →  page / screen / componen
 
 **Definition and intent:** DIP applied to the system under test. Wrap each external system behind a narrow, consumer-shaped client so tests express requests and expectations in domain terms.
 
-**Signals:** HTTP verbs, headers, status codes, and JSON paths appearing directly in specs; a client that mirrors a provider SDK one-to-one instead of what tests need; UI tests silently depending on a third-party sandbox; database cleanup logic inlined in tests.
+**Signals:** Specs repeat request construction or authentication; transport details obscure a scenario whose outcome is domain behavior; a client mirrors a provider SDK one-to-one instead of what tests need; UI tests silently depend on a third-party sandbox; database cleanup logic is inlined in tests.
 
-**Useful moves:** Give the API client domain operations (`CreateOrder(order)`) that return typed results, keeping serialization, auth, and retry policy inside. Shape the client around test needs rather than the transport library. State explicitly which dependencies are real and which are stubbed, and why.
+**Useful moves:** Give the API client operations shaped around test needs, keeping request construction, serialization, auth, and retry policy inside. Return typed domain results when the scenario concerns domain behavior. Expose status, headers, and payload information when they are the response contract under test. State explicitly which dependencies are real and which are stubbed, and why.
 
 **Do not overapply:** A single API call used by one test does not need a client class. Do not stub the thing you are trying to test—an integration test that stubs the integration proves nothing.
+
+An HTTP contract test should assert its required status, headers, and wire format through the established client contract. Those expectations belong in the spec; hiding them behind a domain-only result loses coverage.
 
 ## Assertions
 
@@ -156,7 +160,7 @@ test / spec  →  task or flow objects (optional)  →  page / screen / componen
 | Fragile test | One UI change breaks many specs; selectors in specs | Encapsulate locators; use stable test-oriented attributes |
 | Assertion roulette | Many unlabelled assertions; failure does not say what broke | Label assertions or use soft assertions with context |
 | Erratic test | Passes alone, fails in suite or in parallel | Find the shared mutable state; scope it to the test |
-| Leaky transport | Headers, status codes, JSON paths in specs | Move transport into a consumer-shaped client |
+| Leaky transport | Repeated request/auth plumbing or irrelevant transport details in domain scenarios | Keep plumbing in the client; expose metadata needed for contract assertions |
 | Retry as a fix | Green suite with retry counts and no diagnosis | Classify the root cause; keep retries only as tracked triage |
 | Conditional test logic | `if`/`try` branches in tests | Split into separate tests with explicit expectations |
 
@@ -165,7 +169,7 @@ test / spec  →  task or flow objects (optional)  →  page / screen / componen
 - Does the failing test tell the reader what was expected without opening another file?
 - Is anything shared that is *narrative* rather than *knowledge*, or duplicated that is *knowledge* rather than *narrative*?
 - Do any dependencies point upward—page objects reaching into specs, fixtures, or data files?
-- Do specs contain locators, sleeps, headers, status codes, or JSON paths?
+- Do specs repeat selector strings, sleeps, request construction, or auth? Are status, header, and JSON assertions part of the requirement under test?
 - Could this suite run in a random order and in parallel? What shared mutable state says otherwise?
 - Is shared setup composed as fixtures with visible scope, or inherited from an accumulating base class?
 - Does each test create the data it depends on, and is that data unique where it touches shared state?

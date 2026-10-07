@@ -1,3 +1,4 @@
+# Discovery adapter for negative-trigger in ../cases.json and ../rubric.md.
 id: negative-trigger
 name: Do not trigger for a compiler version command
 description: Check that unrelated command lookup does not select the design skill.

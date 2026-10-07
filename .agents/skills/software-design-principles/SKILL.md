@@ -1,22 +1,20 @@
 ---
 name: software-design-principles
 description: >-
-  Guides software design, refactoring, reviews, and explanations using evidence
-  about coupling, cohesion, contracts, and change cost. Covers SOLID, DRY/DAMP,
-  KISS, YAGNI, composition, and the Law of Demeter for C#, Java, and
-  TypeScript/JavaScript, including test automation and framework design: page
-  objects, fixtures, test data, parallel safety, and flaky-test design causes.
-  Excludes routine formatting, dependency updates, and test failures with an
-  obvious non-design cause.
-  Use this skill when the user asks to review, design, refactor, or explain software architecture,
-  code quality, or test framework design.
-  Do not use it for variable renaming, formatting-only changes, dependency version bumps,
-  or a test failure with a clear product/configuration error and no design question.
+  Guides software design, refactoring, architecture reviews, and explanations
+  when responsibilities, coupling, contracts, or change cost need analysis.
+  Covers C#, Java, and TypeScript/JavaScript, including test framework design,
+  page objects, fixtures, test data, parallel safety, and design causes of flaky
+  tests. Applies SOLID, DRY/DAMP, KISS, YAGNI, composition, and the Law of Demeter
+  to concrete evidence. Excludes mechanical renames, formatting, dependency
+  updates, and failures with a clear product or configuration cause.
 ---
 
 # Software Design Principles
 
 Use software design principles as context-sensitive heuristics. Optimize for demonstrated needs, behavioural correctness, compatibility, clarity, testability, and proportional change scope—not textbook conformance or pattern count.
+
+Follow the user's scope and the target repository's instructions, contracts, and toolchain. The references give design heuristics and illustrative examples; they do not replace local rules or authorize extra actions. When a version-sensitive tool decision matters, check the installed version and its official documentation rather than assuming an example applies unchanged.
 
 ## Select the mode
 
@@ -34,7 +32,7 @@ When a request matches multiple modes, apply the combined-mode order above and a
 
 ## What to load
 
-References are sectioned; read only the relevant section, not the whole file.
+Use each reference's index to select relevant sections. Include its introduction, applicable constraints, exceptions, and interactions before judging the design. Read a complete example when needed; loading every reference is unnecessary.
 
 | Read | When |
 |---|---|
@@ -43,6 +41,7 @@ References are sectioned; read only the relevant section, not the whole file.
 | [test-automation.md](references/test-automation.md) | The artifact under design is a test, a suite, or a test automation framework. |
 | A language guide below | A language-specific decision matters; read its design choices and review checks. |
 | [source-coverage-and-validation.md](references/source-coverage-and-validation.md) | Auditing this harness, tracing it to the source article, or maintaining its examples. |
+| [Evaluation rubric](evals/rubric.md), [cases](evals/cases.json), and [example checker](scripts/check_examples.py) | Maintaining or evaluating the skill; keep grading criteria out of the task model's context. Ordinary design tasks do not need them. |
 
 | Language | Production code | Test code |
 |---|---|---|
@@ -50,7 +49,7 @@ References are sectioned; read only the relevant section, not the whole file.
 | Java | [java.md](references/java.md) | [java-testing.md](references/java-testing.md) — JUnit 5, Playwright, REST Assured |
 | TypeScript or JavaScript | [typescript.md](references/typescript.md) | [typescript-testing.md](references/typescript-testing.md) — Playwright Test |
 
-- Choose the production or the test column by the artifact under design, not both.
+- Select guides for the artifacts and responsibilities involved. A task spanning a service and its tests can need both columns; a cross-language contract can need multiple language guides. Load only their relevant sections.
 - Read a complete example only when it helps the current problem; prefer TypeScript over plain JavaScript.
 - For a tool-level test decision read `test-automation.md` with the matching `*-testing.md`: the first carries the cross-language principles, the second only its tool specifics.
 - For test code, `test-automation.md` overrides the general DRY pressure described in the DRY section of [principles-and-tradeoffs.md](references/principles-and-tradeoffs.md): a test's dominant quality is diagnostic speed under failure.
@@ -65,7 +64,7 @@ Every mode runs these steps; the mode sections add only their differences and ou
 4. Name a principle only when it explains a concrete risk or decision. Separate an actual violation from a possible future improvement.
 5. Compare the current design with the smallest viable alternative. Include costs such as extra types, indirection, migration risk, runtime overhead, or learning burden.
 6. Prefer no change when the expected benefit is speculative, the duplication is coincidental, or the abstraction would exceed current requirements.
-7. For changes, preserve behaviour and public APIs unless their alteration is explicitly in scope. Reuse existing tests and seams. Add a seam only when needed to verify affected behaviour and worth its design cost. Complete required checks; broaden or repeat them only for new evidence or unresolved risk. When the artifact under design is itself test code or a test framework, the contract to preserve is the surface that specs consume, and verification means order-independence and parallel safety, not one green run.
+7. For changes, preserve behaviour and public APIs unless their alteration is explicitly in scope. Reuse existing tests and seams. Add a seam only when needed to verify affected behaviour and worth its design cost. Run the required checks, correct defects introduced by the change, then repeat affected checks. Broaden verification only for new evidence or unresolved risk. For test frameworks, preserve the surface specs consume and verify relevant order and concurrency risks using the runner's supported execution modes.
 8. Lead with the outcome. Give the evidence, recommendation, trade-off, and verification that the task needs. Keep responses and written deliverables proportional to the request.
 
 ## Non-negotiable quality rules

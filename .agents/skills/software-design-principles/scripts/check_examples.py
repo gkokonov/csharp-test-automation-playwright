@@ -16,10 +16,12 @@ be reordered, added, or removed without silently losing coverage. An unmarked
 block, an unknown token, an unknown contract, a duplicate id, or a missing
 REQUIRED_IDS entry all fail the run.
 
-Uses installed Python 3 plus the toolchain for whichever languages are checked;
-downloads nothing. Use --only to restrict languages, --work-dir for a
-Windows-mounted scratch directory when calling Windows tools from WSL, and
---node/--tsc-js/--dotnet/--javac/--java for tools outside PATH.
+Uses installed Python 3 plus the toolchain for whichever languages are checked.
+It installs no toolchains or third-party packages; SDK restore can still need
+targeting packs or package-source access. Use --only to restrict languages and
+--node/--tsc-js/--dotnet/--javac/--java-bin for tools outside PATH. Node/TypeScript
+calls to Windows executables from WSL need --work-dir on a Windows-mounted drive;
+use native toolchains and paths for C# and Java.
 """
 import argparse
 import hashlib

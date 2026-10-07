@@ -1,3 +1,5 @@
+# Keyword smoke related to parallel-unsafe-page-object in ../rubric.md.
+# Runner restrictions need the separate playwright-nunit-parallelism fixture.
 id: test-framework-guidance
 name: Review parallel safety in a test framework
 description: Check guidance for test automation concerns and shared mutable state.
@@ -16,7 +18,7 @@ expected:
 
 graders:
   - type: text
-    name: recommends_isolated_pages
+    name: keyword_smoke_isolated_pages
     config:
       regex_match:
         - "(?i)(per-test|isolated)"

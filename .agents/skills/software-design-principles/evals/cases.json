@@ -78,5 +78,35 @@
     "files": {
       "checkout.spec.ts": "import { expect, test } from \"@playwright/test\";\n\ntest(\"shows the order total\", async ({ page }) => {\n  await page.goto(\"/cart\");\n  await page.getByRole(\"button\", { name: \"Checkout\" }).click();\n  await page.waitForTimeout(3000);\n  expect(await page.getByTestId(\"total\").textContent()).toBe(\"$42.00\");\n});\n"
     }
+  },
+  {
+    "id": "playwright-nunit-parallelism",
+    "prompt": "Review whether this NUnit UI fixture can safely run its test methods concurrently. Explain any runner restrictions and the smallest supported correction. Do not edit files or run the browser.",
+    "files": {
+      "OrderTests.cs": "using System.Threading.Tasks;\nusing Microsoft.Playwright.NUnit;\nusing NUnit.Framework;\n\n[Parallelizable(ParallelScope.All)]\n[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]\npublic sealed class OrderTests : PageTest\n{\n    [Test]\n    public async Task ShowsOrders()\n    {\n        await Page.GotoAsync(\"/orders\");\n        await Expect(Page.GetByRole(Microsoft.Playwright.AriaRole.Heading)).ToHaveTextAsync(\"Orders\");\n    }\n}\n"
+    }
+  },
+  {
+    "id": "mixed-artifact-design",
+    "prompt": "Plan a local design change so the notifier can accept a fake delivery provider and the tests show their own expectations. Assess both the service and the tests. Preserve the zero-argument constructor and notify(message) call. Do not edit files.",
+    "files": {
+      "notifier.ts": "export class Notifier {\n  notify(message: string): void { console.log(message); }\n}\n",
+      "notifier.spec.ts": "import { expect, test } from \"@playwright/test\";\nimport { Notifier } from \"./notifier\";\n\nfunction verifyNotification(message: string, expected: string): void {\n  const sent: string[] = [];\n  const original = console.log;\n  console.log = (value: string) => sent.push(value);\n  try { new Notifier().notify(message); } finally { console.log = original; }\n  expect(sent).toEqual([expected]);\n}\n\ntest(\"delivers welcome\", () => verifyNotification(\"Welcome\", \"Welcome\"));\n"
+    }
+  },
+  {
+    "id": "transport-contract",
+    "prompt": "Review this API contract test. Its requirement is HTTP 429, Retry-After: 60, and the JSON error code RATE_LIMITED. The client already owns authentication and request construction. Do not edit files or call the service.",
+    "files": {
+      "rate-limit.spec.ts": "import { expect, test } from \"@playwright/test\";\nimport { OrdersApi } from \"./orders-api\";\n\ntest(\"reports the rate limit contract\", async ({ request }) => {\n  const response = await new OrdersApi(request).requestBeyondLimit();\n  expect(response.status()).toBe(429);\n  expect(response.headers()[\"retry-after\"]).toBe(\"60\");\n  expect((await response.json()).error.code).toBe(\"RATE_LIMITED\");\n});\n",
+      "orders-api.ts": "import { type APIRequestContext, type APIResponse } from \"@playwright/test\";\n\nexport class OrdersApi {\n  constructor(private readonly request: APIRequestContext) {}\n  requestBeyondLimit(): Promise<APIResponse> {\n    return this.request.post(\"/orders/rate-limit-probe\");\n  }\n}\n"
+    }
+  },
+  {
+    "id": "mechanical-rename",
+    "prompt": "Plan only a local variable rename from value to count in this method. Keep behavior and formatting. Give a one-sentence answer and do not edit files.",
+    "files": {
+      "total.ts": "export function total(items: readonly number[]): number {\n  let value = 0;\n  for (const item of items) value += item;\n  return value;\n}\n"
+    }
   }
 ]

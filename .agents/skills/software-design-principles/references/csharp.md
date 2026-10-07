@@ -4,6 +4,12 @@ Use modern C# idioms, but follow the target repository's language version, nulla
 
 This guide covers production code. For tests, suites, and test frameworks read [csharp-testing.md](csharp-testing.md) instead.
 
+## Contents
+
+- [Design choices](#design-choices)
+- [Registration example](#complete-example-separating-policy-persistence-and-notification)
+- [Review checks](#review-checks)
+
 ## Design choices
 
 - Use a `record` or `readonly record struct` for value-like data when value equality and immutability match the domain. Do not convert identity-bearing, mutable entities merely for terseness.

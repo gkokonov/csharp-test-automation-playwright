@@ -63,6 +63,25 @@ pass the root size check.
 - Agent Skills use the shared `SKILL.md` format. Keep each skill focused and describe both its purpose and when it should activate.
 - Copilot's `.github/instructions/*.instructions.md` files are available for additional path-specific activation. Use them only for behavior that cannot be expressed or discovered through `AGENTS.md`.
 
+## Shared software design skill
+
+The [software design skill](../.agents/skills/software-design-principles/SKILL.md)
+uses shared Markdown instructions and relative references. Codex and Copilot
+document `.agents/skills/` discovery. Its `agents/openai.yaml` is optional Codex
+metadata; it is not the owner of the design rules.
+
+Claude Code documents `.claude/skills/` and supported symlinked skill folders.
+This is a distribution option, not a configured or validated Claude adapter in
+this checkout. Keep one canonical skill folder. See the skill's
+[authoring and portability reference](../.agents/skills/software-design-principles/references/source-coverage-and-validation.md#authoring-and-portability)
+for host documentation, checker prerequisites, and evaluation scope.
+
+Validate discovery and resource reads in each host independently. The sixteen
+canonical behavior cases use a semantic rubric; the six Waza tasks are a smoke
+subset. Record unavailable models, exhausted quotas, and blocked file reads
+separately from findings about the skill. Supplied-context evaluations can
+check advice, but do not prove automatic discovery or reference loading.
+
 ## Codex on Windows
 
 ### Prerequisites and activation
@@ -245,6 +264,7 @@ in an existing session does not prove activation in a fresh session.
 
 | Date | Host and version | Check and evidence | Result |
 | --- | --- | --- | --- |
+| 2026-10-07 | Codex CLI 0.161.0; Waza 0.38.7 with embedded Copilot CLI 1.0.64 | Shared design skill: frontmatter, local links/anchors, evaluation files, and marked production examples checked. Four baseline and eight candidate Codex responses were reviewed with skill context supplied in the prompt. See the [skill validation record](../.agents/skills/software-design-principles/references/source-coverage-and-validation.md#validation--7-october-2026). | Static and example checks passed. Supplied-context responses contained the intended advice; matched baseline responses were also correct. Codex local-read attempts were blocked; Copilot runs hit monthly quota. Fresh host discovery remains unverified. Waza readiness failed its separate 500-token cap. |
 | 2026-10-04 | Codex workspace session; version not exposed | Root `AGENTS.md` was supplied in the session; read `docs/AGENT_SUPPORT.md` and the retired code navigation skill. That skill was the only repository skill read/loaded for this historical check. Called Context7 `resolve_library_id` for NUnit, Microsoft Learn `microsoft_docs_search` for `dotnet build`, Chrome DevTools `list_pages`, and FFF `find_files` for `AGENTS`. | All four MCP calls succeeded. Chrome listed `about:blank`; FFF found `AGENTS.md`. Fresh client restart/session check not tested; this session cannot restart the client. No files were edited during the discovery calls. |
 | 2026-10-04 | Codex workspace session | Inspected the configured npm cache behavior in this guide. | `--prefer-offline` can use cached metadata; a cache miss still requires npm network access. Keep the current sandbox settings. Cache setup and a fresh-session check remain the next steps. |
 | 2026-10-03 | Codex IDE session; CLI 0.160.0 | Root guidance and repository skill paths were supplied in this session; scoped guidance was read during review. | Partial; fresh-session scenario matrix not tested. |

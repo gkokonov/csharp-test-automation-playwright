@@ -2,6 +2,14 @@
 
 Cross-language principles live in [Test Automation Design](test-automation.md); production-code design for C# lives in [csharp.md](csharp.md). This guide assumes **NUnit**: the .NET-specific guidance comes first, then the NUnit mechanics that genuinely alter a design, then a mapping table for xUnit and MSTest.
 
+## Contents
+
+- [Design choices](#design-choices)
+- [NUnit lifecycle and runner limits](#nunit-specifics-that-change-the-design)
+- [Other .NET runners](#mapping-to-other-net-runners)
+- [Fixture example](#illustrative-example-shared-fixture-state-to-per-test-composition)
+- [Review checks](#review-checks)
+
 ## Design choices
 
 - Unlike xUnit, NUnit has no fixture-injection mechanism, so composition is plain object construction: build collaborators—browser session, API client, data builder—in per-test setup and hold them in fields. No container is required, and a base class is not the alternative.
@@ -13,12 +21,14 @@ Cross-language principles live in [Test Automation Design](test-automation.md); 
 
 ## NUnit specifics that change the design
 
-**Fixture lifecycle is the one that catches people.** By default NUnit uses `LifeCycle.SingleInstance`: one instance of the test class serves *every* test in it, so instance fields are shared between tests. This is the opposite of xUnit and MSTest, which construct a new instance per test.
+By default NUnit uses `LifeCycle.SingleInstance`: one instance of the test class serves every test in it, so instance fields can be shared between tests. The [NUnit lifecycle documentation](https://docs.nunit.org/articles/nunit/writing-tests/attributes/fixturelifecycle.html) defines the instance and one-time setup rules below. Check the runner integration as well as NUnit before choosing a parallel scope.
 
-- The exposure depends on the parallel scope you choose. With `ParallelScope.Fixtures`, fixtures run concurrently while tests inside one fixture run sequentially, so instance fields are safe. With `ParallelScope.All` or `Children` on a class, test methods in that class run concurrently against the *same* instance and shared fields become a data race.
+- With fixture parallelism and sequential methods inside each fixture, instance fields do not race between those methods, but leaked state can still cause order dependencies. In a plain NUnit fixture, `ParallelScope.All` or `Children` can run methods against the same instance and create races.
 - For a suite that parallelises test methods, apply `[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]`—at assembly level as a default, overridden per class where needed. The constructor then runs before each test and `IDisposable` fixtures are disposed after each test.
-- Under `InstancePerTestCase`, `[OneTimeSetUp]` and `[OneTimeTearDown]` **must be static**, precisely so they cannot read fields that reset per test. Treat a compiler complaint here as the design telling you that setup was fixture-wide, not per test.
+- Under `InstancePerTestCase`, `[OneTimeSetUp]` and `[OneTimeTearDown]` must be static so they cannot read fields reset per test. NUnit enforces this runner constraint; it is not a C# compiler check.
 - Anything built in `[OneTimeSetUp]` is shared by every concurrently running test in that fixture. It must be immutable or explicitly synchronized.
+
+**Playwright NUnit integration:** The provided `PageTest`/`ContextTest` base classes support `ParallelScope.Self`, with fixtures running in parallel and methods within a fixture sequentially. `InstancePerTestCase` does not make `ParallelScope.All` supported by these base classes. Use the [Playwright .NET runner documentation](https://playwright.dev/dotnet/docs/test-runners) for the installed integration version. Method concurrency with manually composed browser lifetimes is a different design that needs its own verification.
 
 **Inheritance behaves worse than people assume, which is itself an argument for composition.**
 
@@ -30,10 +40,10 @@ Cross-language principles live in [Test Automation Design](test-automation.md); 
 
 - `[Parallelizable]` defaults to `ParallelScope.Self`. `Self` is the only value valid on a test method and has no effect on an assembly; use `Children` or `Fixtures` at assembly level. `[LevelOfParallelism(n)]` is assembly-only.
 - `[Order]` makes tests order-dependent by construction. Reach for it only when a suite genuinely models a sequence, and treat it as a reported cost.
-- `[Retry(n)]` is subject to the flaky-test rule in `SKILL.md`. It also interacts badly with reporting: `TestContext.CurrentContext.Result.Outcome` has a long-standing issue retaining a previous `Failed` state across retries, so teardown-based screenshots and logging can misreport a passing attempt.
-- Prefer the constraint model, `Assert.That(actual, Is.EqualTo(expected))`. NUnit 4 moved the classic asserts to `NUnit.Framework.Legacy.ClassicAssert`, and 4.5 made them available under `NUnit.Framework` again—so both exist, but the constraint model is the one receiving features. `Assert.That` message overloads taking a format specifier and `params` were removed; use an interpolated string.
-- `Assert.Multiple` and `Assert.MultipleAsync` report every failure in the block with its own context. This is the direct remedy for assertion roulette when several assertions describe one outcome.
-- `[Timeout]` is obsolete in NUnit 4. Use `[CancelAfter]`, which supplies a cancellation token for cooperative cancellation.
+- `[Retry(n)]` is subject to the flaky-test rule in `SKILL.md`. Verify how the installed runner reports individual attempts before using teardown state to label retry artifacts.
+- Use the repository's assertion library and the NUnit API available in its version. In explanations, `Assert.That(actual, Is.EqualTo(expected))` makes the expectation explicit. Check migration guidance before changing assertion namespaces or overloads.
+- Use supported multiple-assertion scopes when several assertions describe one outcome. NUnit assertion aggregation does not automatically collect Playwright assertion exceptions; follow the repository's guidance on scope boundaries.
+- For time limits, verify the runner's cancellation API and pass the supplied cancellation token into cooperating operations. An attribute alone does not cancel arbitrary work.
 - Prefer `[TestCase]` and `[TestCaseSource]` with `TestCaseData(...).SetName(...)` over a loop inside one test: each case is reported and named individually, so a failure identifies the input.
 - For failure artifacts, check `TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed` in `[TearDown]` and attach with `TestContext.AddTestAttachment(path, description)`. Call it from `[TearDown]` or the test body—inside `[OneTimeSetUp]`/`[OneTimeTearDown]` the context refers to the fixture, not a test. `TestContext.CurrentContext.Test.Name` and `.WorkDirectory` give per-test artifact names and a place to put them.
 - `[Ignore]` requires a reason in NUnit 4, so every skip carries its justification. Use `[Category]` for selection rather than commenting tests out.
@@ -134,7 +144,7 @@ public sealed class OrdersApi
             .AddJsonBody(customer));
 }
 
-[Parallelizable(ParallelScope.All)]
+[Parallelizable(ParallelScope.Self)]
 [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
 public sealed class OrderTests : PageTest
 {
@@ -171,11 +181,12 @@ public sealed class OrderTests : PageTest
 }
 ```
 
-**Why it is justified:** `PageTest` supplies one `IPage` per test and `[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]` gives each test its own fixture instance, so `_orders` is not shared while `ParallelScope.All` runs methods concurrently. The selector knowledge sits in one page object while the expected text stays in the spec—the DAMP trade made deliberately. Auto-retrying `Expect` replaces the fixed sleep. Auth travels per request instead of mutating shared client defaults. `OrdersApi` keeps RestSharp out of the spec without mirroring the SDK. `PageTest` is the one inherited layer, and it only wires framework lifecycle.
+**Why it is justified:** `PageTest` supplies one page/context per test. `ParallelScope.Self` uses the supported fixture parallelism, and `InstancePerTestCase` prevents instance fields from retaining another test's state. The selector knowledge sits in one page object while the expected text stays in the spec. Auto-retrying `Expect` replaces the fixed sleep. Auth travels per request instead of mutating shared client defaults. `OrdersApi` keeps RestSharp out of the spec without mirroring the SDK. The inherited layer only wires framework lifecycle. This illustrative block requires the surrounding types, imports, packages, and base URL configuration; it is not an executed proof of parallel safety.
 
 ## Review checks
 
 - Does the fixture rely on instance fields while parallelising test methods, without `[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]`?
+- Does a `PageTest`/`ContextTest` fixture use unsupported method concurrency such as `ParallelScope.All`, even with `InstancePerTestCase`?
 - Is any `IPage`, `IBrowserContext`, browser, or page object held in a `static` field, or built in `[OneTimeSetUp]` and then mutated by tests?
 - Does a base-class `[OneTimeSetUp]` assume it runs once overall when it runs once per derived fixture?
 - Does the setup path depend on the order of several `[SetUp]` methods on one class, which NUnit does not guarantee?

@@ -1,3 +1,4 @@
+# Smoke adapter for the one-variant scenario in ../rubric.md.
 id: design-restraint
 name: Avoid abstraction for hypothetical variation
 description: Check that the skill favors evidence over speculative extensibility.
@@ -13,7 +14,7 @@ expected:
 
 graders:
   - type: text
-    name: cites_present_requirements
+    name: keyword_smoke_present_requirements
     config:
       regex_match:
         - "(?i)(speculative|hypothetical|current requirements)"

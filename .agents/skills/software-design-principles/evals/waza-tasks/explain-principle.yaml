@@ -1,3 +1,4 @@
+# Smoke adapter for short-explanation in ../cases.json and ../rubric.md.
 id: explain-principle
 name: Explain a design principle briefly
 description: Check that explanation requests receive a direct, scoped answer.
@@ -10,7 +11,7 @@ expected:
 
 graders:
   - type: text
-    name: explains_single_responsibility
+    name: keyword_smoke_single_responsibility
     config:
       regex_match:
         - "(?i)(reason to change|responsibility)"

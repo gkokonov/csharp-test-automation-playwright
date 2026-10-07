@@ -1,3 +1,5 @@
+# Keyword smoke related to notification-refactor; it does not execute that fixture.
+# Caller compatibility and delivery behavior require ../rubric.md grading.
 id: refactor-contract
 name: Preserve callers during provider refactoring
 description: Check that a refactoring preserves the existing public contract.
@@ -16,7 +18,7 @@ expected:
 
 graders:
   - type: text
-    name: preserves_default_construction
+    name: keyword_smoke_default_construction
     config:
       regex_match:
         - "(?i)(constructor|default providers)"

@@ -1,5 +1,5 @@
 name: software-design-principles-eval
-description: Behavioral smoke checks for skill selection and core design guidance.
+description: Discovery and keyword smoke checks; grade semantic outcomes separately with evals/rubric.md.
 skill: software-design-principles
 version: "1.0"
 
@@ -8,12 +8,14 @@ config:
   timeout_seconds: 300
   parallel: false
   executor: copilot-sdk
-  model: claude-sonnet-4.6
+  # Use the host default for smoke runs; pin --model for comparable evaluations.
+  model: auto
 
 metrics:
   - name: task_completion
     weight: 0.5
     threshold: 0.8
+    description: Smoke checks only; this score does not establish semantic correctness.
   - name: trigger_accuracy
     weight: 0.5
     threshold: 0.8

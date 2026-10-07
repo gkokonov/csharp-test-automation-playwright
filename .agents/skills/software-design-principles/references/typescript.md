@@ -4,6 +4,13 @@ Prefer TypeScript for examples unless plain JavaScript is requested. Follow the 
 
 This guide covers production code. For tests, suites, and test frameworks read [typescript-testing.md](typescript-testing.md) instead.
 
+## Contents
+
+- [Design choices](#design-choices)
+- [Notification example](#complete-example-notification-composition-with-a-narrow-policy-contract)
+- [Fluent chains](#fluent-chains-and-the-law-of-demeter)
+- [Review checks](#review-checks)
+
 ## Design choices
 
 - TypeScript is structurally typed: an object satisfies an interface by shape, not declaration. This makes small capability interfaces and function injection natural, but accidental compatibility can hide semantic contract differences.

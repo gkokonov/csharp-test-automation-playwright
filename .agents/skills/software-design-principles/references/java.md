@@ -4,6 +4,12 @@ Follow the repository's supported Java version, module/build system, nullness co
 
 This guide covers production code. For tests, suites, and test frameworks read [java-testing.md](java-testing.md) instead.
 
+## Contents
+
+- [Design choices](#design-choices)
+- [Capability example](#complete-example-model-capabilities-instead-of-a-false-bird-hierarchy)
+- [Review checks](#review-checks)
+
 ## Design choices
 
 - Use an `interface` for a real role or capability. Interface default methods should preserve the contract for every implementation; do not use them to force optional behaviour.

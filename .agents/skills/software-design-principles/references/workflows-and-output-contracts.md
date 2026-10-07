@@ -38,7 +38,7 @@ The workflow in `SKILL.md` runs in every mode and is not repeated here. Each sec
 2. Capture current behaviour with existing tests, or a focused characterization test when feasible.
 3. The contract to preserve includes persistence formats, exceptions, ordering, and side effects, not only public API signatures.
 4. Implement using repository conventions. Avoid opportunistic cleanup outside the affected boundary.
-5. Report exactly what ran.
+5. Follow the correction loop in `SKILL.md`. If a required check cannot run, report the blocker and its effect on confidence; use the permitted checks that remain available. An unavailable check is not a pass.
 
 ### Output
 
@@ -75,6 +75,18 @@ Confidence: high, medium, or low with the key assumption.
 
 Order findings by impact. Merge symptoms with the same root cause. If there are no material findings, say that directly and mention any validation limitation.
 
+### Example: evidence supports a finding
+
+Input: `balances.ts:8` returns the internal `Map` as a `ReadonlyMap` while promising a snapshot.
+
+Output: “The snapshot exposes live internal state. A JavaScript caller can mutate the returned map, and later deposits also change an earlier snapshot. Return a copy behind the required read-only contract. This adds a copy cost; no runtime checks were run.”
+
+### Example: no design change is justified
+
+Input: Two teams independently require identifiers of at least eight characters; both validators use `s.length >= 8`.
+
+Output: “Keep the validators separate. Their policies have independent owners and can change for different reasons. Equal syntax does not establish shared knowledge; extracting one validator would couple those policies.”
+
 ## Explain/interview mode
 
 ### Procedure and output
@@ -92,7 +104,7 @@ For interview answers, prefer this narrative: **problem → principle → design
 
 Use the relevant **Interactions** and **Do not overapply** sections in [Principles and Trade-offs](principles-and-tradeoffs.md#principle-index). They are the maintained source for conflicts between principles.
 
-- **Local conventions versus textbook form:** preserve a working local convention unless evidence shows a material problem; explain migration cost when recommending divergence.
+- **Local requirements versus heuristics:** follow explicit repository requirements and the requested scope. Evidence of a material problem can justify proposing a change to the owning convention; explain the migration cost and change that convention only when authorized.
 
 ## Verification scale
 
@@ -100,6 +112,6 @@ Use the relevant **Interactions** and **Do not overapply** sections in [Principl
 - **Local refactor:** focused unit/contract tests plus build/type-check of affected module.
 - **Public contract change:** caller search, compatibility tests, migration notes, and broader suite.
 - **Architecture change:** dependency direction checks, integration tests, operational concerns, and staged rollout where relevant.
-- **Test or test-framework change:** run the affected specs, then confirm order-independence and parallel safety rather than a single green run. For a change to the surface specs consume—fixtures, base classes, page objects, builders, configuration keys—count callers across the suite, run a representative cross-section, and supply the migration.
+- **Test or test-framework change:** run the affected specs and check the order and concurrency risks of the changed scope. Use parallel execution supported by the runner; one green run does not establish isolation. For a change to the surface specs consume—fixtures, base classes, page objects, builders, configuration keys—count callers across the suite, run a representative cross-section, and supply the migration.
 
 Never convert an unrun check into a success claim. State “not run” and the reason.

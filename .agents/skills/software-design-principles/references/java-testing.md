@@ -2,13 +2,19 @@
 
 Cross-language principles live in [Test Automation Design](test-automation.md); production-code design for Java lives in [java.md](java.md). This guide covers JUnit 5, Playwright for Java, and REST Assured.
 
+## Contents
+
+- [Design choices](#design-choices)
+- [Fixture example](#illustrative-example-shared-static-state-to-per-test-composition)
+- [Review checks](#review-checks)
+
 ## Design choices
 
 - JUnit 5 favours composition over a base class: `@RegisterExtension` and custom `Extension` implementations, parameter resolution, and `@TestInstance` lifecycle give per-concern setup without inheritance. Reach for an extension before another `AbstractBaseTest` layer.
 - `@BeforeEach` is per test; `@BeforeAll` is per class and static. Under `junit.jupiter.execution.parallel.enabled`, `@BeforeAll` state is shared across concurrent tests and must be immutable or explicitly synchronized. `@ResourceLock` declares contention instead of hiding it.
 - Playwright: build `Page` per test from a `BrowserContext` per test. A `static Page` or `static Playwright` shared across tests defeats parallel execution and leaks state between specs.
 - Prefer `getByRole`, `getByLabel`, and `getByTestId` to CSS or XPath strings. Playwright's `Locator` auto-waits on observable state, so `page.waitForTimeout` is nearly always a design smell. Exposing a `Locator` for `assertThat(locator)` still encapsulates the selector, because a locator is a lazy re-resolving query; an `ElementHandle` pins one node and goes stale.
-- REST Assured reads fluently but its `given().when().then()` chain belongs inside a client, not in specs. A spec full of `body("data.id", equalTo(3))` couples every test to the wire format. Put `RequestSpecification` reuse, auth, and deserialization in the client and return typed objects via `.as(Order.class)`.
+- Keep REST Assured request construction, auth, and shared `RequestSpecification` plumbing in the client. Return typed objects via `.as(Order.class)` for domain scenarios; expose response metadata and wire-format values when the HTTP contract is under test. Follow the repository's client contract rather than forbidding transport assertions.
 - Prefer `record` for test data plus a builder with defaults; override only the fields under test.
 - Use AssertJ `assertThat` with `as(...)` descriptions, or `assertAll` for several assertions describing one outcome, so a failure names the concern.
 
@@ -125,7 +131,7 @@ class OrderTest {
 
 - Is `Page`, `Browser`, or `Playwright` held in a `static` or `@BeforeAll` field that tests mutate?
 - Does a spec contain CSS/XPath strings, `Thread.sleep`, or `page.waitForTimeout`?
-- Do `given().when().then()` chains or JSON-path assertions appear in specs rather than in a client?
+- Do specs repeat REST Assured request/auth plumbing? Are response metadata and JSON-path assertions required by the contract under test?
 - Does an `AbstractBaseTest` own more than framework lifecycle, and would a `@RegisterExtension` extension replace it?
 - Is `@BeforeAll` state immutable, or does parallel execution share mutable setup without `@ResourceLock`?
 - Do assertions carry `as(...)` descriptions, or would a failure be anonymous?
