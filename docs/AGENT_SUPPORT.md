@@ -27,6 +27,8 @@ not a second hard limit. Do not hide prose in long lines to meet the line cap.
 | Semantic C# rules | `.agents/rules/csharp.md`; C# edits and reviews in all projects. |
 | Framework policy | `.agents/rules/framework.md`; framework project work. |
 | Shared application rules | `.agents/rules/test-automation.md`; application C# work, applied by responsibility. |
+| NUnit application scope | `CsharpTestAutomation.Tests/AGENTS.md`; NUnit fixture bases, lifecycle, and metadata. |
+| BDD application scope | `CsharpTestAutomation.Bdd.Tests/AGENTS.md` and `.agents/rules/bdd-testing.md`; Reqnroll features, bindings, hooks, typed state, and lifecycle. |
 | API policy | `.agents/rules/api-testing.md`; API clients, DTOs, builders, fixtures, `ApiTestBase`, API steps, and API helpers. |
 | UI policy | `.agents/rules/ui-testing.md`; page objects, components, fixtures, `UiTestBase`, UI steps, and UI helpers. |
 | Framework self-tests | `CsharpTestAutomation.Framework.Test/AGENTS.md`; local NUnit, WireMock, and SQLite behavior. |
@@ -38,6 +40,13 @@ Keep root-started tasks explicit: read each affected project's entry point and
 applicable canonical rules. A UI scenario that uses API setup reads both layer
 rules; a page-object-only edit need not load API rules. Helpers route by what
 they do, even when a path glob cannot identify that responsibility.
+
+Choose the application project from the requested approach. If BDD versus plain
+NUnit is unspecified and affects implementation, ask which is required. Do not
+generate both. Shared API/UI rules retain assertion, readiness, data ownership,
+and cleanup contracts; their fixture-base requirements are scoped to NUnit.
+BDD hook equivalents are owned by the canonical BDD rule. All hosts use the
+same project entry points; Copilot adapters remain path-specific pointers.
 
 The [guidance reading checklist](../.agents/instructions/tooling.md#guidance-reading-checklist)
 is owned by the tooling instructions and routed from root `AGENTS.md` for all
@@ -232,9 +241,9 @@ maintenance check passed 75 local links and `git diff --check`.
 
 For each supported host and surface, start a fresh session at the repository root and ask:
 
-> List the repository instruction files and skills you loaded. State the role of `CsharpTestAutomation.Framework` and `CsharpTestAutomation.Tests`, then give the build command and the focused test command for a framework change.
+> List the repository instruction files and skills you loaded or actually read. State the role of the framework, NUnit application, and BDD application projects, then give the build and focused test commands for a framework change.
 
-Confirm the answer reflects the root instructions and the relevant scoped rule. For a task inside either project, confirm the nearest `AGENTS.md` and its canonical rule are used. A file being present is not proof that a host loaded it.
+Confirm the answer reflects the root instructions and the relevant scoped rule. For a task inside each project, confirm the nearest `AGENTS.md` and its canonical rules are used. A file being present is not proof that a host loaded it.
 
 Run these read-only scenarios from a fresh root-started session in each supported
 host. Also check the project scenarios from their project working directories.
@@ -246,6 +255,10 @@ Ask the agent to list files it actually loaded/read and the checks it would use.
 | Plan a change to an application API fixture | Application entry point, C#, shared test and API rules; API architecture when layer design changes. | UI rules unless UI behavior is involved. |
 | Plan a page-object locator change | Application entry point, C#, shared test and UI rules; tooling/Playwright skill if live locator checks are available. | API rules unless API setup/verification is involved. |
 | Plan a cross-layer UI/API scenario | Application entry point, C#, shared test, API and UI rules; relevant feature specification. | Unrelated feature specifications. |
+| Plan a BDD Site API scenario | BDD entry point, C#, shared test, BDD and API rules; explicit BDD project and stable-ID filter. | UI rules and NUnit fixture bases. |
+| Plan a BDD Site UI/API scenario | BDD entry point, C#, shared test, BDD, API and UI rules; hooks and typed scenario state. | NUnit fixture bases and Allure.NUnit activation. |
+| Plan from inside the BDD project | Root and BDD entry point; relevant canonical rules loaded through links. | The NUnit application entry point unless comparison is requested. |
+| Add an application scenario without specifying an approach | Root project-choice route; ask BDD or NUnit before dependent implementation. | Implicit generation of both approaches. |
 | Explain a framework self-test change | Self-test entry point and C# rules; deterministic local checks and plain `await`. | Application test rules and external services. |
 | Review without fixes | Review workflow plus the reviewed scope's entry point and canonical rules; no file changes. | Commit workflow. |
 | Draft a documentation commit message without a work item | Commit workflow; `docs(automation): ...`, at most 72 characters, no invented work item, no commit. | Application API/UI rules and .NET build. |
@@ -264,24 +277,22 @@ in an existing session does not prove activation in a fresh session.
 
 | Date | Host and version | Check and evidence | Result |
 | --- | --- | --- | --- |
-| 2026-10-07 | Codex CLI 0.161.0; Waza 0.38.7 with embedded Copilot CLI 1.0.64 | Shared design skill: frontmatter, local links/anchors, evaluation files, and marked production examples checked. Four baseline and eight candidate Codex responses were reviewed with skill context supplied in the prompt. See the [skill validation record](../.agents/skills/software-design-principles/references/source-coverage-and-validation.md#validation--7-october-2026). | Static and example checks passed. Supplied-context responses contained the intended advice; matched baseline responses were also correct. Codex local-read attempts were blocked; Copilot runs hit monthly quota. Fresh host discovery remains unverified. Waza readiness failed its separate 500-token cap. |
-| 2026-10-04 | Codex workspace session; version not exposed | Root `AGENTS.md` was supplied in the session; read `docs/AGENT_SUPPORT.md` and the retired code navigation skill. That skill was the only repository skill read/loaded for this historical check. Called Context7 `resolve_library_id` for NUnit, Microsoft Learn `microsoft_docs_search` for `dotnet build`, Chrome DevTools `list_pages`, and FFF `find_files` for `AGENTS`. | All four MCP calls succeeded. Chrome listed `about:blank`; FFF found `AGENTS.md`. Fresh client restart/session check not tested; this session cannot restart the client. No files were edited during the discovery calls. |
-| 2026-10-04 | Codex workspace session | Inspected the configured npm cache behavior in this guide. | `--prefer-offline` can use cached metadata; a cache miss still requires npm network access. Keep the current sandbox settings. Cache setup and a fresh-session check remain the next steps. |
-| 2026-10-03 | Codex IDE session; CLI 0.160.0 | Root guidance and repository skill paths were supplied in this session; scoped guidance was read during review. | Partial; fresh-session scenario matrix not tested. |
-| 2026-10-03 | Codex CLI 0.160.0 | TOML parsed with Python `tomllib`; `codex mcp list` and `codex mcp get` accepted all four server entries. | Passed; CLI reported sandbox access warnings for its temporary alias directory. |
-| 2026-10-03 | Codex IDE session | FFF found `AGENTS.md`; Context7 resolved NUnit; Microsoft Learn found `dotnet build`; Chrome listed pages. | Passed in the existing session; does not validate changed launch settings. |
-| 2026-10-03 | FFF 0.11.0 | Updated PowerShell launcher completed MCP initialization and listed three tools. | Passed. |
-| 2026-10-03 | Chrome DevTools; local cache 1.10.1 | Separate npm startup timed out after 60 seconds; offline resolution reported `ENOTCACHED`, and the cache-preferred version check reported `EACCES` fetching npm metadata. | Blocked by sandbox network/cache access; repeat the configured startup check with npm access. |
-| 2026-10-03 | GitHub Copilot | Fresh-session scenario matrix. | Not tested; no Copilot session available. |
-| 2026-10-03 | Google Antigravity | Fresh-session scenario matrix. | Not tested; no Antigravity session available. |
+| 2026-10-09 | Codex CLI 0.161.0 | Three fresh read-only ephemeral sessions: BDD UI/API from the root, NUnit API from its project directory, and BDD API from its project directory. Responses distinguish supplied instructions from read files, select the correct scope/adapter/commands, retain eight product cases, and ask BDD versus NUnit for an ambiguous root request. JSON responses, event logs, and `audit.json` are under `artifacts/bdd-validation/phase-5/`. | All three probes and semantic response checks passed. RTK read-command failures were recovered with source reads. No builds/tests or file edits by the probes. Desktop/IDE activation is not tested. |
+| 2026-10-09 | GitHub Copilot and Google Antigravity | Fresh-session BDD/NUnit discovery matrix. No callable CLI was found on PATH, and no interactive session was available. | Not tested. Static adapter/glob validation does not prove host activation. |
+| 2026-10-09 | Repository static checks | Extracted and executed the maintenance block below after Phase 5 edits. Root is 84 lines/4961 bytes; 128 local links across 30 files; heading fragments; 18 representative routes; four canonical/adapter glob pairs; whitespace checks. | Passed. Separate read-only GPT-6 Luna review at high effort found no material issues. These checks do not validate untested host surfaces. |
 
 ## Instruction maintenance check
+
+The Phase 5 discovery records above precede the BDD step consolidation. The
+maintenance routes below use the current `Steps/` paths. Fresh host activation
+after that follow-up must be distinguished from the earlier discovery evidence.
 
 Run this PowerShell block from the repository root. It performs read-only checks
 on the root/project entry points, canonical rules, workflow instructions,
 Copilot adapters, and linked support/architecture documents. It validates local
-Markdown file targets relative to their source files; URL targets are skipped.
-Fragment existence and conditional routing require the discovery checks above.
+Markdown file targets and heading fragments relative to their source files; URL
+targets are skipped. It checks canonical/adapter glob equality and representative
+path routing. Host activation still requires the fresh-session checks above.
 
 ```powershell
 $instructionRoot = (Resolve-Path -LiteralPath '.').Path
@@ -300,6 +311,7 @@ $instructionFiles = @(
     Get-Item -LiteralPath 'AGENTS.md',
         'CsharpTestAutomation.Framework/AGENTS.md',
         'CsharpTestAutomation.Tests/AGENTS.md',
+        'CsharpTestAutomation.Bdd.Tests/AGENTS.md',
         'CsharpTestAutomation.Framework.Test/AGENTS.md',
         'README.md', 'docs/AGENT_SUPPORT.md',
         'docs/API_TESTING_ARCHITECTURE.md', 'docs/UI_TESTING_ARCHITECTURE.md',
@@ -309,18 +321,41 @@ $instructionFiles = @(
 )
 $instructionMissing = [System.Collections.Generic.List[string]]::new()
 $instructionLinksChecked = 0
+function Get-InstructionAnchors([string] $path) {
+    $anchors = [System.Collections.Generic.HashSet[string]]::new()
+    $duplicates = @{}
+    $fenced = $false
+    foreach ($line in [System.IO.File]::ReadAllLines($path)) {
+        if ($line -match '^\s*(```|~~~)') { $fenced = -not $fenced; continue }
+        if ($fenced -or $line -notmatch '^#{1,6}\s+(.+?)\s*#*\s*$') { continue }
+        $slug = [regex]::Replace($Matches[1].ToLowerInvariant(), '[^\p{L}\p{N}_\- ]', '').Replace(' ', '-')
+        $anchor = $slug
+        if ($duplicates.ContainsKey($slug)) { $duplicates[$slug]++; $anchor = "$slug-$($duplicates[$slug])" }
+        else { $duplicates[$slug] = 0 }
+        [void]$anchors.Add($anchor)
+    }
+    return ,$anchors
+}
 foreach ($instructionFile in $instructionFiles) {
     $instructionText = Get-Content -Encoding UTF8 -Raw -LiteralPath $instructionFile.FullName
     foreach ($instructionMatch in [regex]::Matches($instructionText, '\[[^\]\r\n]+\]\(([^)\r\n]+)\)')) {
         $instructionTarget = $instructionMatch.Groups[1].Value.Trim().Trim([char[]]'<>')
-        if ($instructionTarget -match '^(?:[a-zA-Z][a-zA-Z0-9+.-]*:|#)') { continue }
-        $instructionTarget = ($instructionTarget -split '#', 2)[0]
-        if (-not $instructionTarget) { continue }
-        $instructionTarget = [Uri]::UnescapeDataString($instructionTarget)
-        $instructionResolved = Join-Path $instructionFile.DirectoryName $instructionTarget
+        if ($instructionTarget -match '^[a-zA-Z][a-zA-Z0-9+.-]*:') { continue }
+        $instructionParts = $instructionTarget -split '#', 2
+        $instructionFileTarget = [Uri]::UnescapeDataString($instructionParts[0])
+        $instructionResolved = if ($instructionFileTarget) {
+            Join-Path $instructionFile.DirectoryName $instructionFileTarget
+        } else { $instructionFile.FullName }
         $instructionLinksChecked++
         if (-not (Test-Path -LiteralPath $instructionResolved -PathType Leaf)) {
             $instructionMissing.Add("$($instructionFile.FullName) -> $instructionTarget")
+            continue
+        }
+        if ($instructionParts.Count -eq 2 -and $instructionParts[1]) {
+            $instructionAnchors = Get-InstructionAnchors $instructionResolved
+            if (-not $instructionAnchors.Contains([Uri]::UnescapeDataString($instructionParts[1]))) {
+                $instructionMissing.Add("$($instructionFile.FullName) -> $instructionTarget (fragment)")
+            }
         }
     }
 }
@@ -328,6 +363,62 @@ if ($instructionMissing.Count -gt 0) {
     throw ("Broken local links:`n" + ($instructionMissing -join "`n"))
 }
 Write-Output "Checked $instructionLinksChecked local links in $($instructionFiles.Count) files."
+
+$instructionGlobs = @{}
+foreach ($instructionPair in @(
+    @('test-automation', 'application-tests'), @('api-testing', 'api-testing'),
+    @('ui-testing', 'ui-testing'), @('bdd-testing', 'bdd-testing')
+)) {
+    $instructionRule = Get-Content -Raw -LiteralPath ".agents/rules/$($instructionPair[0]).md"
+    $instructionAdapter = Get-Content -Raw -LiteralPath ".github/instructions/$($instructionPair[1]).instructions.md"
+    $instructionPatterns = @([regex]::Match($instructionRule, '(?m)^globs: "([^"]+)"').Groups[1].Value.Split(',').Trim())
+    $instructionApply = @([regex]::Match($instructionRule, '(?m)^applyTo: "([^"]+)"').Groups[1].Value.Split(',').Trim())
+    $instructionCopilot = @([regex]::Match($instructionAdapter, '(?m)^applyTo: "([^"]+)"').Groups[1].Value.Split(',').Trim())
+    if (-not $instructionPatterns[0] -or
+        (Compare-Object $instructionPatterns $instructionApply) -or
+        (Compare-Object $instructionPatterns $instructionCopilot)) {
+        throw "Canonical/adapter glob mismatch: $($instructionPair[0])"
+    }
+    $instructionGlobs[$instructionPair[0]] = $instructionPatterns
+}
+function Test-InstructionGlob([string] $path, [string[]] $patterns) {
+    foreach ($pattern in $patterns) {
+        $regex = '^' + [regex]::Escape($pattern).Replace('\*\*/', '(?:.*/)?').Replace('\*', '[^/]*') + '$'
+        if ([regex]::IsMatch($path, $regex)) { return $true }
+    }
+    return $false
+}
+# Columns: path, shared application rules, API rules, UI rules, BDD rules.
+$instructionCases = @(
+    @('CsharpTestAutomation.Tests/API/Clients/SitesApiClient.cs', $true, $true, $false, $false),
+    @('CsharpTestAutomation.Tests/Tests/ApiTestBase.cs', $true, $true, $false, $false),
+    @('CsharpTestAutomation.Tests/Tests/API/SitesApiTests.cs', $true, $true, $false, $false),
+    @('CsharpTestAutomation.Tests/UI/Pages/NetBox/SitesListPage.cs', $true, $false, $true, $false),
+    @('CsharpTestAutomation.Tests/Tests/UiTestBase.cs', $true, $false, $true, $false),
+    @('CsharpTestAutomation.Tests/Tests/UI/NetBox/SiteManagementUiTests.cs', $true, $false, $true, $false),
+    @('CsharpTestAutomation.Bdd.Tests/API/Clients/SitesApiClient.cs', $true, $true, $false, $true),
+    @('CsharpTestAutomation.Bdd.Tests/Steps/API/NetBox/SiteApiSteps.cs', $true, $true, $false, $true),
+    @('CsharpTestAutomation.Bdd.Tests/UI/Pages/NetBox/SitesListPage.cs', $true, $false, $true, $true),
+    @('CsharpTestAutomation.Bdd.Tests/Steps/UI/NetBox/SiteUiSteps.cs', $true, $false, $true, $true),
+    @('CsharpTestAutomation.Bdd.Tests/Features/SiteApi.feature', $false, $true, $false, $true),
+    @('CsharpTestAutomation.Bdd.Tests/Features/SiteUi.feature', $false, $false, $true, $true),
+    @('CsharpTestAutomation.Bdd.Tests/Hooks/ScenarioHooks.cs', $true, $false, $false, $true),
+    @('CsharpTestAutomation.Bdd.Tests/Context/SiteScenarioState.cs', $true, $false, $false, $true),
+    @('CsharpTestAutomation.Bdd.Tests/AssemblyInfo.cs', $true, $false, $false, $true),
+    @('CsharpTestAutomation.Bdd.Tests/reqnroll.json', $false, $false, $false, $true),
+    @('CsharpTestAutomation.Framework/API/Clients/RestClientFactory.cs', $false, $false, $false, $false),
+    @('CsharpTestAutomation.Framework.Test/AssemblyInfo.cs', $false, $false, $false, $false)
+)
+foreach ($instructionCase in $instructionCases) {
+    $instructionIndex = 1
+    foreach ($instructionRuleName in @('test-automation', 'api-testing', 'ui-testing', 'bdd-testing')) {
+        if ((Test-InstructionGlob $instructionCase[0] $instructionGlobs[$instructionRuleName]) -ne $instructionCase[$instructionIndex]) {
+            throw "Unexpected routing: $($instructionCase[0]) -> $instructionRuleName"
+        }
+        $instructionIndex++
+    }
+}
+Write-Output "Checked $($instructionCases.Count) path routes and four canonical/adapter glob pairs."
 git diff --check
 if ($LASTEXITCODE -ne 0) { throw 'git diff --check failed.' }
 ```

@@ -1,7 +1,10 @@
-# Application Test Scope
+# NUnit Application Test Scope
 
 Before edits or reviews, read the root [AGENTS.md](../AGENTS.md), shared
 [C# rules](../.agents/rules/csharp.md), and [test rules](../.agents/rules/test-automation.md).
+
+This project owns plain NUnit application tests. BDD features and bindings belong
+to the separate [BDD project](../CsharpTestAutomation.Bdd.Tests/AGENTS.md).
 
 | Work | Additional required rules |
 | --- | --- |

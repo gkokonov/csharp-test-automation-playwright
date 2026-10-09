@@ -10,6 +10,7 @@ Report concisely. Use ASD-STE100 Simplified Technical English.
 | --- | --- |
 | `CsharpTestAutomation.Framework` | Reusable, packable test infrastructure; configure through `CoreConfiguration`. |
 | `CsharpTestAutomation.Tests` | Application clients, DTOs, builders, page objects, steps, data, settings, and tests. |
+| `CsharpTestAutomation.Bdd.Tests` | Independent Reqnroll scenarios and application layers; references only the framework. |
 | `CsharpTestAutomation.Framework.Test` | Deterministic framework unit and local integration tests. |
 
 - Keep application endpoints, domain entities, environment names, URLs, connection
@@ -28,7 +29,8 @@ before instruction reads. Reuse guidance already available in the session.
 | --- | --- |
 | C# edits or reviews | [C# rules](.agents/rules/csharp.md) and the relevant project `AGENTS.md`. |
 | Framework work | [Framework scope](CsharpTestAutomation.Framework/AGENTS.md). |
-| Application work | [Application scope](CsharpTestAutomation.Tests/AGENTS.md); it routes API, UI, and supporting helpers. |
+| NUnit application work | [NUnit scope](CsharpTestAutomation.Tests/AGENTS.md); routes API, UI, and supporting helpers. |
+| BDD application work | [BDD scope](CsharpTestAutomation.Bdd.Tests/AGENTS.md); routes features, steps, hooks, and application layers. |
 | Framework self-tests | [Self-test scope](CsharpTestAutomation.Framework.Test/AGENTS.md). |
 | Code review | [Review instructions](.agents/instructions/code-review-instructions.md); read-only unless fixes are requested. |
 | Commit message or authorized commit | [Commit instructions](.agents/instructions/commit-instructions.md); these do not authorize a commit. |
@@ -38,6 +40,9 @@ before instruction reads. Reuse guidance already available in the session.
 Use API/UI architecture references linked by the relevant scope for changes to
 those layers. Cross-layer tasks read both sets of rules. Load application feature
 specifications only for the feature under work.
+
+Select the target project from the request. If BDD versus NUnit is unspecified
+and changes the implementation, ask which is required; do not generate both.
 
 ## Quality and validation
 

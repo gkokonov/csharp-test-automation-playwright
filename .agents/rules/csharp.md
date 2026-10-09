@@ -28,7 +28,7 @@ analyzer-backed style come from the repository `.editorconfig`.
 - `ScenarioCleanupActions.CleanUp()` may bridge to async only for synchronous callers.
 - NUnit synchronous assertion helpers are the documented exception: `.GetAwaiter().GetResult()` may be used only inside those helpers when NUnit requires a synchronous API. Add a short comment that references this NUnit constraint.
 - Require `.ConfigureAwait(false)` only in the framework library; use plain
-  `await` in both test projects. Follow the applicable project rules.
+  `await` in test projects. Follow the applicable project rules.
 
 ## Comments and Documentation
 

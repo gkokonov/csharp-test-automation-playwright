@@ -7,4 +7,5 @@
   <Project Path="CsharpTestAutomation.Framework.Test/CsharpTestAutomation.Framework.Test.csproj" Id="5ff67243-4e45-4b10-97d1-3dd2c9330367" />
   <Project Path="CsharpTestAutomation.Framework/CsharpTestAutomation.Framework.csproj" />
   <Project Path="CsharpTestAutomation.Tests/CsharpTestAutomation.Tests.csproj" />
+  <Project Path="CsharpTestAutomation.Bdd.Tests/CsharpTestAutomation.Bdd.Tests.csproj" />
 </Solution>

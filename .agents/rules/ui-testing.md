@@ -1,7 +1,7 @@
 ---
-applyTo: "CsharpTestAutomation.Tests/UI/**/*.cs,CsharpTestAutomation.Tests/Tests/UI/**/*.cs,CsharpTestAutomation.Tests/Tests/UiTestBase.cs,CsharpTestAutomation.Tests/Steps/UI/**/*.cs"
+applyTo: "CsharpTestAutomation.Tests/UI/**/*.cs,CsharpTestAutomation.Tests/Tests/UI/**/*.cs,CsharpTestAutomation.Tests/Tests/UiTestBase.cs,CsharpTestAutomation.Tests/Steps/UI/**/*.cs,CsharpTestAutomation.Bdd.Tests/UI/**/*.cs,CsharpTestAutomation.Bdd.Tests/Steps/UI/**/*.cs,CsharpTestAutomation.Bdd.Tests/Features/*Ui.feature"
 trigger: glob
-globs: "CsharpTestAutomation.Tests/UI/**/*.cs, CsharpTestAutomation.Tests/Tests/UI/**/*.cs, CsharpTestAutomation.Tests/Tests/UiTestBase.cs, CsharpTestAutomation.Tests/Steps/UI/**/*.cs"
+globs: "CsharpTestAutomation.Tests/UI/**/*.cs, CsharpTestAutomation.Tests/Tests/UI/**/*.cs, CsharpTestAutomation.Tests/Tests/UiTestBase.cs, CsharpTestAutomation.Tests/Steps/UI/**/*.cs, CsharpTestAutomation.Bdd.Tests/UI/**/*.cs, CsharpTestAutomation.Bdd.Tests/Steps/UI/**/*.cs, CsharpTestAutomation.Bdd.Tests/Features/*Ui.feature"
 description: "Application page objects, components, UI fixtures, UI steps, locators, readiness, and Playwright assertions."
 ---
 
@@ -14,11 +14,12 @@ If a UI scenario uses API setup or verification, also read [API rules](api-testi
 
 ## Page objects, steps, and fixtures
 
-- Page objects and components live in `UI/`; fixtures live in `Tests/UI/`.
-  Repeated workflows above page objects belong in `Steps/UI/<App>/`.
-- Page objects own locators, individual actions, and readiness; tests own assertions.
+- Page objects and components live in `UI/`; NUnit fixtures live in `Tests/UI/`.
+  BDD UI step definitions live in `Steps/UI/` and follow [BDD rules](bdd-testing.md).
+  In NUnit, repeated workflows above page objects belong in `Steps/UI/<App>/`.
+- Page objects own locators, individual actions, and readiness; fixtures/Then bindings own assertions.
   Shared fragments use components and composition.
-- Use `UiTestBase`; its inherited `[Category("UI")]` provides pipeline filtering.
+- In `CsharpTestAutomation.Tests`, use `UiTestBase`; its inherited `[Category("UI")]` provides pipeline filtering.
   Do not repeat inherited `[TestFixture]`, `[AllureNUnit]`, or the category.
 - After navigation, call `WaitUntilLoadedAsync()` using `LongTimeoutInMS`, then
   perform actions and assertions. Authentication waits for semantic signed-in readiness.

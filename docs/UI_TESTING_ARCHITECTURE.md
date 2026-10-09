@@ -17,17 +17,25 @@ Reference for the UI testing layer that wraps [Playwright for .NET](https://play
 flowchart LR
     Test[NUnit Test] --> UTB[UiTestBase]
     UTB -->|GetPage&lt;T&gt;| Page[Page Object]
+    Binding[BDD UI Binding] -->|Create / transition| Page
     Page -->|composes| Comp[UI Component]
     Page --> IP[IPage / ILocator]
     Comp --> IP
     IP -->|HTTP| App[(Application Under Test)]
     UTB -.owns lifecycle.- PBF[PlaywrightBrowserFactory]
+    Hooks[BDD ScenarioHooks / ScenarioLifecycle] -.owns lifecycle.- PBF
     PBF --> Browser[Browser / Context / Page]
     UTB -. on failure .-> Allure[Allure: screenshot + browser logs]
+    Hooks -. on failure .-> Allure
     PBF -. if enabled .-> Trace[Trace .zip / Video]
 ```
 
 `Test → UiTestBase.GetPage<T>() → Page Object → IPage → Browser`, with `PlaywrightBrowserFactory` owning the per-test browser/context/page (keyed by test id) and `UiTestBase` capturing a screenshot and browser logs on failure. `DisposeAllAsync` is process-wide and must not run while another fixture still needs Playwright. Tests obtain a page via `GetPage<MSLoginPage>()`, call intent-revealing actions, enforce readiness with `WaitUntilLoadedAsync()`, and assert with `Expect(...)` / AwesomeAssertions.
+
+Page objects and components are independent application copies in the NUnit and
+BDD projects. Both use the framework browser factory and shared UI rules. NUnit
+fixtures obtain pages through `UiTestBase.GetPage<T>()`; BDD bindings create a
+page with `BaseUIPage.Create<T>(IPage)` and use page-owned transitions thereafter.
 
 ## 2. Component Table
 
@@ -120,12 +128,16 @@ Every `BaseUIPage` declares a `PageReadyLocator` — a locator that becomes visi
 
 ## 5. Lifecycle, Logging, and Allure
 
+NUnit fixture lifecycle below applies to `CsharpTestAutomation.Tests`. Reqnroll
+uses the BDD scenario lifecycle described afterward; bindings do not derive from
+`UiTestBase` or activate Allure.NUnit.
+
 `PlaywrightBrowserFactory` owns the browser/context/page **per test** (keyed by test id, safe for parallel execution). `UiTestBase` wires it into the NUnit lifecycle:
 
 - **Setup** (`OnSetUpAsync` → `InitializePlaywrightEnvironmentAsync`): initialize Playwright, create a context (optionally from a `storageState`), and open a page.
 - **Teardown** (`OnTearDownAsync`): on failure, attach a **screenshot** and, when `CaptureBrowserLogs` is `true`, **browser logs** to Allure; then dispose the context (auto-saving a trace if `TraceEnabled`) and the browser.
 
-### NetBox authenticated UI state
+### NUnit NetBox authenticated UI state
 
 NetBox UI authentication is independent of API token provisioning. `NetBoxUiSetupFixture`
 uses `NetBoxLoginPage` once in `OneTimeSetUp`, captures browser storage state under
@@ -155,6 +167,40 @@ Optional artifacts are produced by the factory based on configuration:
 - **Screenshots / browser logs**: captured by `UiTestBase` on failure and attached via `AllureExtensions`.
 
 Allure suite/feature/story metadata is applied with attributes on the fixture and test (see the example below); `TestBase` is annotated `[AllureNUnit]` so Allure participates in the NUnit lifecycle. For the full set of required attributes across API and UI tests, see the [test-automation rules](../.agents/rules/test-automation.md).
+
+### BDD scenario lifecycle and authentication
+
+In `CsharpTestAutomation.Bdd.Tests`, `CommonHooks` registers one typed state and
+cleanup/lifecycle owner before bindings resolve. `ScenarioHooks` sets metadata
+and API dependencies, then creates browser resources only for `@UI` scenarios.
+Each scenario gets a fresh browser, context, and page. Acquired resources are
+registered for release immediately and injected into BoDi with `dispose:false`.
+
+`BddRunResources` lazily captures authenticated storage state under an asynchronous
+lock in a real scenario test context. It publishes only successful initialization;
+on failure it releases partial resources and removes the incomplete file so the
+next attempt can retry. The bootstrap browser closes before scenario resources
+are created. Each run owns a unique storage file; it is ignored by Git and never
+logged or attached. API-only scenarios do not initialize the UI snapshot.
+
+Teardown independently attempts screenshot and optional browser-log capture on
+failure, executes LIFO data cleanup while API clients remain usable, then releases
+context, browser, and client. The primary scenario failure is preserved; secondary
+errors are reported without preventing later releases. Cleanup/release failure
+after a passing body fails NUnit and Allure before Allure.Reqnroll emits the result.
+Trace/video behavior remains owned by the factory. `AfterTestRun` removes the owned
+snapshot, releases run services, and calls process-wide `DisposeAllAsync` after
+all scenarios finish. Feature fixtures use two workers and sequential scenarios.
+
+BDD UI definitions live in `Steps/UI/<App>/` as `SiteUiSteps`. They include
+scenario actions, assertions, and pre-submission cleanup registration. API setup
+and persistence steps live in `SiteApiSteps`; neither uses an extra workflow
+helper layer. The NUnit `Steps` layer described above remains unchanged.
+
+The factory currently suppresses some browser-close errors; these cannot become
+scenario failures unless the factory exposes them. See [BDD rules](../.agents/rules/bdd-testing.md)
+for metadata and
+assertion contracts.
 
 ## 6. Configuration Reference
 

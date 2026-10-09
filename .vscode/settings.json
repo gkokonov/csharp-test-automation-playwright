@@ -24,7 +24,8 @@
     "*.cs": "${basename}.Test.cs, ${basename}Tests.cs",
     "*.csproj": "*.csproj.user",
     "appsettings.json": "appsettings.*.json",
-    "NLog.config": "NLog.config.*.xml"
+    "NLog.config": "NLog.config.*.xml",
+    "*.feature": "${capture}.feature.cs"
   },
   // ========== SEARCH & EXCLUSIONS ==========
   "search.exclude": {
@@ -57,6 +58,13 @@
       "file": ".agents/instructions/code-review-instructions.md"
     }
   ],
+  // ========== CUCUMBER AUTOCOMPLETE ==========
+  "cucumberautocomplete.steps": [
+    "**/Steps/**/*.cs"
+  ],
+  "cucumberautocomplete.syncfeatures": "**/Features/**/*.feature",
+  "cucumberautocomplete.strictGherkinCompletion": false,
+  // ========== AGENT CONTEXT USAGE ==========
   // Reduce unnecessary agent context usage.
   // "chat.tools.compressOutput.enabled": true,
   // "chat.tools.terminal.outputCompaction": true,

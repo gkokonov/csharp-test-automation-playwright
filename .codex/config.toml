@@ -5,7 +5,7 @@
 [mcp_servers.context7]
 url = "https://mcp.context7.com/mcp"
 bearer_token_env_var = "CONTEXT7_API_KEY"
-required = false
+required = true
 
 [mcp_servers.microsoft-learn]
 url = "https://learn.microsoft.com/api/mcp?maxTokenBudget=5000"
@@ -22,7 +22,7 @@ required = false
 command = "powershell.exe"
 args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", "& (Join-Path $env:LOCALAPPDATA 'fff-mcp/bin/fff-mcp.exe'); exit $LASTEXITCODE"]
 env_vars = ["LOCALAPPDATA"]
-required = false
+required = true
 
 [mcp_servers.codebase-memory-mcp]
 command = "C:/Users/georg/AppData/Local/Programs/codebase-memory-mcp/codebase-memory-mcp.exe"
@@ -30,4 +30,4 @@ args = []
 cwd = "C:/GK/Sources/csharp-test-automation-playwright"
 env_vars = ["LOCALAPPDATA", "USERPROFILE"]
 startup_timeout_sec = 60
-required = false
+required = true

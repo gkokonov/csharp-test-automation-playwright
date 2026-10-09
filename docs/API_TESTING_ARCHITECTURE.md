@@ -13,6 +13,7 @@ Reference for the API testing layer in `CsharpTestAutomation.Framework` (namespa
 ```mermaid
 flowchart LR
     Test[NUnit Test] --> TC[Typed ApiClient]
+    Binding[BDD Binding] --> TC
     TC --> RC[IRestClient]
     RC -->|HTTP| Server[(Service Under Test)]
     RC -->|RestResponse&lt;T&gt;| TC
@@ -40,7 +41,36 @@ The **suggested** typed-client pattern injects the `IRestClientFactory`, creates
 | `ApiLoggingInterceptor` | RestSharp interceptor: the sole place that sanitizes, truncates, and **pretty-prints** (JSON / XML / URL-encoded form) bodies before logging to NLog and attaching request/response to Allure. |
 | `ApiAssertions` | A deliberately **minimal** set of chainable, NUnit-compatible assertion extensions over RestSharp's native `RestResponse` / `RestResponse<T>`: `ShouldHaveCompletedTransport` (transport-level success) and token-aware `ShouldHaveJsonPathValue`. For status codes, headers, content type, and deserialized payloads, assert directly on the `RestResponse` with **AwesomeAssertions** / **AwesomeAssertions.Json**. |
 
-### Test-Data Preconditions
+### Application execution and lifetime
+
+Application code is independent in `CsharpTestAutomation.Tests` and
+`CsharpTestAutomation.Bdd.Tests`; both reference the reusable framework.
+Clients, builders, response contracts, SQL aliases, assertion boundaries,
+data ownership, and LIFO cleanup follow the shared rules in both projects.
+Do not reference one application test assembly from the other.
+
+| Approach | Setup and state | Teardown and reporting |
+| --- | --- | --- |
+| NUnit | `ApiTestBase` builds the factory/authenticator; `OnSetUpAsync` registers scenario clients through `RegisterClient`. Fixture state is per test. | `TestBase` runs the inherited cleanup stack before disposing the test container. Allure.NUnit uses fixture/test attributes. |
+| BDD | `CommonHooks` registers typed state and one cleanup/lifecycle owner. `ScenarioHooks` sets metadata, creates a scenario client, registers its release, and injects borrowed instances with `dispose:false`. | `ScenarioLifecycle` attempts failure evidence, then LIFO data cleanup, then reverse resource release. Hooks preserve the primary error and fail a passing body when cleanup/release fails. Allure.Reqnroll emits the scenario result after hooks. |
+
+BDD run services own configuration, controlled API token initialization, and the
+asynchronous PostgreSQL pool. Clients remain scenario-owned; API-only execution
+does not initialize browser authentication. Bindings keep native RestSharp
+responses in typed state and assert status before extracting payloads or querying
+persistence. `Then` bindings own behavior assertions.
+
+BDD step definitions use `Steps/API/<App>/` and the `Steps` suffix. `SiteApiSteps`
+contains prerequisite creation, API actions, persistence assertions, and owned-ID
+cleanup. `SiteUiSteps` contains UI actions and pre-submission lookup cleanup;
+it shares the small ID-deletion operation from the API step file. There is no
+separate workflow-helper layer in BDD. The NUnit workflow layer below remains
+independent of Reqnroll.
+
+See [BDD rules](../.agents/rules/bdd-testing.md) and the
+[BDD project scope](../CsharpTestAutomation.Bdd.Tests/AGENTS.md) for the eight product cases.
+
+### NUnit Test-Data Preconditions
 
 API tests that depend on environment data use `ApiTestBase.RequireDbData` to mark an unavailable candidate as inconclusive. This keeps the test body focused on the API behavior and gives Allure a consistent broken/inconclusive result when an environment cannot provide the required fixture.
 
@@ -79,7 +109,7 @@ for fixture registration, missing seed data, request builders, and API assertion
 > and analyzer-clean — `dotnet_style_namespace_match_folder` compares case-insensitively. Do not
 > "correct" either form.
 
-## 4. Adding a New API Test
+## 4. Adding a New NUnit API Test
 
 Every API test fixture derives from `ApiTestBase` (never a plain `[TestFixture]`). This is the
 single reason `ApiTestBase` exists: it supplies the shared `RestClientFactory`, `NetBoxAuthenticator`,
