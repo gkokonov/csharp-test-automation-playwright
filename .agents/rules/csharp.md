@@ -21,6 +21,45 @@ analyzer-backed style come from the repository `.editorconfig`.
 - Use LINQ and lambdas when they improve readability. Use straightforward imperative code when it is clearer.
 - Prefer existing repository patterns over a new abstraction unless the change has a concrete need.
 
+## Variable Declarations and Object Initialization
+
+Use the type-style settings in [`.editorconfig`](../../.editorconfig). Apply
+these limits when writing or reviewing C# code, including code examples:
+
+- Use `var` only when the right-hand side states the type through `new`, an
+  explicit cast, or an `as` expression. LINQ queries that return anonymous
+  types are also allowed to use `var`.
+- Always use language keywords for built-in types, such as `int`, `string`,
+  `bool`, and `double`. This rule also applies when a cast or `new` states a
+  built-in type on the right-hand side.
+- Use explicit types for method returns, awaited method returns, interfaces,
+  and factory results. A method name does not make its return type apparent.
+  The anonymous-type LINQ exception above is the only exception for method
+  returns.
+- Use an explicit element type in each `foreach` loop. For anonymous-type
+  results, use LINQ operations or project to a named type before the loop.
+- Prefer target-typed `new()` for class properties and declarations with a
+  clear explicit type on the left. `var user = new User();` remains allowed.
+
+```csharp
+var user = new User();
+var account = (Account)session["User"];
+var query = items.Where(x => x.Active).Select(x => new { x.Id, x.Name });
+int count = 5;
+string name = "Alice";
+bool isValid = false;
+double price = 19.99;
+CustomerRepository repository = factory.GetRepository();
+List<Order> orders = orderProcessor.FetchPendingOrders();
+foreach (Customer customer in customers) { customer.Validate(); }
+Customer customerToAdd = new();
+List<string> tags = new();
+```
+
+The IDE type-style suggestions do not enforce every limit above. Check method
+returns and loop declarations during review; do not treat a clean build as proof
+that all declarations follow these rules.
+
 ## Async
 
 - All I/O must be asynchronous, including Playwright, HTTP, database, file, and network operations.
