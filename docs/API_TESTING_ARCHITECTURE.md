@@ -68,7 +68,7 @@ separate workflow-helper layer in BDD. The NUnit workflow layer below remains
 independent of Reqnroll.
 
 See [BDD rules](../.agents/rules/bdd-testing.md) and the
-[BDD project scope](../CsharpTestAutomation.Bdd.Tests/AGENTS.md) for the eight product cases.
+[BDD project scope](../CsharpTestAutomation.Bdd.Tests/AGENTS.md) for Site and Device cases.
 
 ### NUnit Test-Data Preconditions
 
@@ -377,6 +377,6 @@ Newest first. Bump the version and add a row whenever this document changes so f
 
 | Version | Date | Summary |
 | --- | --- | --- |
+| 1.11 | 2026-10-10 | BDD scope includes independent Site and Device coverage. |
 | 1.10 | 2026-09-27 | Document NetBox token authentication and clarify API logging configuration. |
 | 1.9 | 2026-09-27 | Replace application-specific examples with generic resource templates. |
-| 1.8 | 2026-09-27 | Bootstrap waits for the MSAL token. The factory owns the browser context. |

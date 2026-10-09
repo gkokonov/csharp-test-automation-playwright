@@ -1,7 +1,5 @@
-using CsharpTestAutomation.Bdd.Tests.Api.Dtos.Common;
 using CsharpTestAutomation.Bdd.Tests.Api.Dtos.Sites;
 using CsharpTestAutomation.Bdd.Tests.UI.Pages.NetBox;
-using RestSharp;
 
 namespace CsharpTestAutomation.Bdd.Tests.Context;
 
@@ -16,11 +14,7 @@ public sealed class SiteScenarioState
 
     public SiteDetailDto PersistedSite { get; set; } = null!;
 
-    public RestResponse<SiteDetailDto> DetailResponse { get; set; } = null!;
-
-    public RestResponse<PagedResultDto<SiteDetailDto>> SearchResponse { get; set; } = null!;
-
-    public RestResponse DeleteResponse { get; set; } = null!;
+    public ApiResponseState<SiteDetailDto> Api { get; } = new();
 
     public SiteDetailsPage DetailsPage { get; set; } = null!;
 

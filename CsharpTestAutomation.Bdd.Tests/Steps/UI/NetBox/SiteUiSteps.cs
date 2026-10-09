@@ -15,17 +15,9 @@ using static Microsoft.Playwright.Assertions;
 namespace CsharpTestAutomation.Bdd.Tests.Steps.UI.NetBox;
 
 [Binding]
-[Scope(Tag = "UI")]
+[Scope(Tag = "Site")]
 public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioCleanupActions cleanup, SiteScenarioState state)
 {
-    [Given("an authenticated administrator")]
-    public async Task VerifyAuthenticationAsync()
-    {
-        var list = BaseUIPage.Create<SitesListPage>(page);
-        await list.NavigateAsync();
-        await BaseUIPage.Create<NetBoxLoginPage>(page).WaitUntilSignedInAsync();
-    }
-
     [When("the Site is created in the web application")]
     public async Task CreateAsync()
     {

@@ -17,21 +17,22 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
     ScenarioLifecycle lifecycle,
     IReqnrollOutputHelper output)
 {
-    [BeforeScenario("Site", Order = 10)]
+    [BeforeScenario("NetBox", Order = 10)]
     public void SetMetadata()
     {
         string[] tags = scenario.ScenarioInfo.CombinedTags;
-        (string story, SeverityLevel severity) = SiteScenarioMetadata.Get(tags);
+        bool isDevice = tags.Contains("Device");
+        (string story, SeverityLevel severity) = isDevice ? DeviceScenarioMetadata.Get(tags) : SiteScenarioMetadata.Get(tags);
         AllureLifecycle.Instance.UpdateTestCase(result => result.labels.RemoveAll(label => label.name == "feature"));
         AllureApi.AddSuite(tags.Contains("UI") ? "UI" : "API");
         AllureApi.AddEpic("NetBox");
-        AllureApi.AddFeature("Site Management");
+        AllureApi.AddFeature(isDevice ? "Device Management" : "Site Management");
         AllureApi.AddStory(story);
         AllureApi.SetSeverity(severity);
-        AllureApi.SetOwner(SiteScenarioMetadata.Owner);
+        AllureApi.SetOwner(isDevice ? DeviceScenarioMetadata.Owner : SiteScenarioMetadata.Owner);
     }
 
-    [BeforeScenario("Site", Order = 20)]
+    [BeforeScenario("NetBox", Order = 20)]
     public async Task RegisterSiteDependenciesAsync()
     {
         BddRunResources resources = BddRunResources.Current;
@@ -44,7 +45,33 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
             return Task.CompletedTask;
         });
         container.RegisterInstanceAs(client, dispose: false);
-        container.RegisterInstanceAs(await resources.GetSitesRepositoryAsync(), dispose: false);
+        if (scenario.ScenarioInfo.CombinedTags.Contains("Site"))
+        {
+            container.RegisterInstanceAs(await resources.GetSitesRepositoryAsync(), dispose: false);
+        }
+    }
+
+    [BeforeScenario("Device", Order = 25)]
+    public async Task RegisterDeviceDependenciesAsync()
+    {
+        BddRunResources resources = BddRunResources.Current;
+        var factory = new RestClientFactory(resources.Configuration.Api);
+        var authenticator = new NetBoxTokenAuthenticator(resources.TokenSession);
+        RegisterClient(new ManufacturersApiClient(factory, authenticator), "Manufacturer API client");
+        RegisterClient(new DeviceTypesApiClient(factory, authenticator), "Device type API client");
+        RegisterClient(new DeviceRolesApiClient(factory, authenticator), "Device role API client");
+        RegisterClient(new DevicesApiClient(factory, authenticator), "Device API client");
+        container.RegisterInstanceAs(await resources.GetDevicesRepositoryAsync(), dispose: false);
+    }
+
+    private void RegisterClient<T>(T client, string name) where T : class, IDisposable
+    {
+        lifecycle.AddRelease(name, () =>
+        {
+            client.Dispose();
+            return Task.CompletedTask;
+        });
+        container.RegisterInstanceAs(client, dispose: false);
     }
 
     [BeforeScenario("UI", Order = 30)]

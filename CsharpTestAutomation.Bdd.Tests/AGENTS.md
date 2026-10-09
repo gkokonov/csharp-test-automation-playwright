@@ -9,6 +9,7 @@ and [BDD rules](../.agents/rules/bdd-testing.md).
 | Clients, DTOs, builders, or API step definitions | [API rules](../.agents/rules/api-testing.md). |
 | Pages, components, or UI step definitions | [UI rules](../.agents/rules/ui-testing.md). |
 | Hooks, lifecycle, authentication, or supporting helpers | Load API/UI rules by responsibility; load both for cross-layer work. |
+| NetBox Device features, bindings, or data | [Device specification](../docs/netbox-automation/03-device-management-spec.md). |
 
 Layer design changes also read the architecture reference linked by the API/UI
 rule. Application layers remain in this project; do not reference the NUnit
@@ -23,6 +24,7 @@ Run from the repository root:
 ```pwsh
 dotnet build .\CsharpTestAutomation.Bdd.Tests\CsharpTestAutomation.Bdd.Tests.csproj
 dotnet test .\CsharpTestAutomation.Bdd.Tests\CsharpTestAutomation.Bdd.Tests.csproj --filter "TestCategory=SiteApi01"
+dotnet test .\CsharpTestAutomation.Bdd.Tests\CsharpTestAutomation.Bdd.Tests.csproj --filter "TestCategory=Device"
 ```
 
 Run live scenarios only when services and credentials are configured. Changed

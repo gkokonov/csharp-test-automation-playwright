@@ -14,6 +14,7 @@ public sealed class CommonHooks(IObjectContainer container)
     {
         var cleanup = new ScenarioCleanupActions();
         container.RegisterInstanceAs(new SiteScenarioState(), dispose: false);
+        container.RegisterInstanceAs(new DeviceScenarioState(), dispose: false);
         container.RegisterInstanceAs(cleanup, dispose: false);
         container.RegisterInstanceAs(new ScenarioLifecycle(cleanup), dispose: false);
     }

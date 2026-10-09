@@ -18,6 +18,9 @@ base classes and Allure.NUnit attributes apply to the NUnit application project.
   Keep each operation under test in `When` and behavior assertions in `Then`.
 - Constructor-inject scenario dependencies. Use typed state in `Context/`;
   do not use string-key `ScenarioContext`/`FeatureContext` dictionaries.
+- Feature states compose `ApiResponseState<TDetail>` for detail, search, and
+  deletion responses. Each feature state owns a fresh instance. Keep requests,
+  prerequisites, expected records, and page objects in the feature state.
 - Reqnroll step definitions live in `Steps/API/<App>/` or `Steps/UI/<App>/`
   with class names ending in `Steps`. Keep setup, actions, assertions, and cleanup
   registration in these step classes; do not add a separate workflow Steps layer.
@@ -31,15 +34,20 @@ base classes and Allure.NUnit attributes apply to the NUnit application project.
 - Product Site scenarios use `@NetBox @Site`, one of `@API`/`@UI`, and exactly
   one stable ID: `@SiteApi01` through `@SiteApi05` or `@SiteUi01` through `@SiteUi03`.
   Retain existing response, UI, persistence, and cleanup assertions.
+- Product Device scenarios use `@NetBox @Device`, one of `@API`/`@UI`, and exactly
+  one stable ID: `@DeviceApi01` through `@DeviceApi08` or `@DeviceUi01`. Preserve
+  both update cases and both cleanup-interruption cases as separate scenarios.
 - `SiteScenarioMetadata` owns story, severity, and owner by stable ID. Hooks add
   suite API/UI, epic NetBox, and one canonical Site Management feature. Use
   Allure.Reqnroll only; do not activate Allure.NUnit or add retry plugins.
+- `DeviceScenarioMetadata` owns Device story, severity, and owner by stable ID.
+  Hooks use the canonical Device Management feature for these scenarios.
 
 ## Hooks and resource ownership
 
 - `CommonHooks` registers the single cleanup stack, typed state, and lifecycle
-  before any dependent binding resolves. Site hooks set metadata before setup,
-  create API dependencies, then create UI dependencies only for UI scenarios.
+  before any dependent binding resolves. NetBox hooks set metadata before setup,
+  create feature API dependencies, then create UI dependencies only for UI scenarios.
 - Register each release immediately after acquisition. Scenario-owned resources
   injected into BoDi use `dispose:false`; `ScenarioLifecycle` is their one
   explicit release owner. Run services remain owned by `BddRunResources`.
@@ -68,4 +76,4 @@ base classes and Allure.NUnit attributes apply to the NUnit application project.
   rebuild removes obsolete generated sources; keep them ignored by Git.
 - Use the [BDD scope commands](../../CsharpTestAutomation.Bdd.Tests/AGENTS.md)
   and report required validation results.
-  Use project selection plus `TestCategory=Site`, `API`, `UI`, or a stable ID.
+  Use project selection plus `TestCategory=Site`, `Device`, `API`, `UI`, or a stable ID.

@@ -34,7 +34,13 @@ public sealed class BddRunResources
 
     public NetBoxSession TokenSession { get; }
 
-    public async Task<SitesDatabaseRepository> GetSitesRepositoryAsync()
+    public async Task<SitesDatabaseRepository> GetSitesRepositoryAsync() =>
+        new(await GetConnectionsAsync(), Configuration.DbQueryTimeoutSeconds);
+
+    public async Task<DevicesDatabaseRepository> GetDevicesRepositoryAsync() =>
+        new(await GetConnectionsAsync(), Configuration.DbQueryTimeoutSeconds);
+
+    private async Task<PostgreSqlConnectionPool> GetConnectionsAsync()
     {
         await _databaseLock.WaitAsync();
         try
@@ -63,7 +69,7 @@ public sealed class BddRunResources
                 }
             }
 
-            return new(_connections, Configuration.DbQueryTimeoutSeconds);
+            return _connections;
         }
         finally
         {

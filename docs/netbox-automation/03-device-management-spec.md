@@ -65,6 +65,35 @@ then deletes the Device before all prerequisites even if UI assertions fail.
 No other Device UI scenarios (update/delete) are
 planned this increment — add only if time permits.
 
+## BDD parity
+
+The independent `CsharpTestAutomation.Bdd.Tests` project clones the NUnit
+Device coverage into `Features/DeviceApi.feature` and `Features/DeviceUi.feature`.
+It references only the framework and owns its clients, DTOs, builders, pages,
+typed scenario state, and asynchronous database query.
+
+| Stable ID | Source behavior |
+| --- | --- |
+| `DeviceApi01` | Create response and complete represented persistence contract. |
+| `DeviceApi02` | Exact-name search, complete returned Device, and persistence. |
+| `DeviceApi03` | Change status/description while omitting the Site field. |
+| `DeviceApi04` | Change status/description and move to a second owned Site. |
+| `DeviceApi05` | Delete, service absence, and database absence. |
+| `DeviceApi06` | Include two matching Devices, exclude the other Site's Device, and verify all three persisted records. |
+| `DeviceApi07` | Interrupted scenario cleanup before Device creation. |
+| `DeviceApi08` | Interrupted scenario cleanup after Device creation. |
+| `DeviceUi01` | Create through the web application; verify displayed, service, and database fields. |
+
+`DeviceApiSteps` contains prerequisite setup, service actions, assertions, and
+cleanup registration. `DeviceUiSteps` owns UI creation and pre-submission
+lookup cleanup restricted to the unique Device name and owned Site.
+`NetBoxUiSteps` verifies administrator authentication for both Site and Device
+features. Hooks register scenario clients for explicit lifecycle release after
+data cleanup and apply `DeviceScenarioMetadata` under Device Management.
+
+Run the BDD project with `--filter "TestCategory=Device"`, or select one stable
+ID. Keep the eight API cases and one UI case as separate reported scenarios.
+
 ## Definition of Done (Device feature)
 
 - All prerequisite and Device API tests, and the Device UI test, pass 3 consecutive headless runs.
