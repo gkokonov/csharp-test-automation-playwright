@@ -21,11 +21,11 @@ public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioClean
     [When("the Site is created in the web application")]
     public async Task CreateAsync()
     {
-        RegisterUiSiteCleanup(state.Request.Slug);
+        RegisterUiSiteCleanup(state.CreateRequest.Slug);
         var list = BaseUIPage.Create<SitesListPage>(page);
         await list.NavigateAsync();
         SiteEditPage edit = await list.AddSiteAsync();
-        state.DetailsPage = await edit.CreateSiteAsync(state.Request);
+        state.DetailsPage = await edit.CreateSiteAsync(state.CreateRequest);
         if (Environment.GetEnvironmentVariable("BDD_VALIDATE_UI_SUBMISSION_FAILURE") == "1")
         {
             throw new AssertionException("Injected failure after UI submission and before API identification.");
@@ -36,16 +36,16 @@ public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioClean
     public async Task UpdateAsync()
     {
         var details = BaseUIPage.Create<SiteDetailsPage>(page);
-        await details.NavigateAsync(state.Created.Id);
+        await details.NavigateAsync(state.CreatedSite.Id);
         SiteEditPage edit = await details.EditAsync();
-        state.DetailsPage = await edit.UpdateAsync(state.Update.Status, state.Update.Description);
+        state.DetailsPage = await edit.UpdateAsync(state.UpdateRequest.Status, state.UpdateRequest.Description);
     }
 
     [When("the Site is deleted in the web application")]
     public async Task DeleteAsync()
     {
         var details = BaseUIPage.Create<SiteDetailsPage>(page);
-        await details.NavigateAsync(state.Created.Id);
+        await details.NavigateAsync(state.CreatedSite.Id);
         state.ListPage = await details.DeleteAsync();
     }
 
@@ -58,15 +58,15 @@ public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioClean
         string description = await state.DetailsPage.GetDescriptionAsync();
         using (new AssertionScope())
         {
-            name.Should().Be(state.Request.Name);
-            slug.Should().Be(state.Request.Slug);
-            status.Should().BeEquivalentTo(state.Request.Status);
-            description.Should().Be(state.Request.Description);
+            name.Should().Be(state.CreateRequest.Name);
+            slug.Should().Be(state.CreateRequest.Slug);
+            status.Should().BeEquivalentTo(state.CreateRequest.Status);
+            description.Should().Be(state.CreateRequest.Description);
         }
 
-        var response = await client.FindSitesBySlugAsync(state.Request.Slug);
+        var response = await client.FindSitesBySlugAsync(state.CreateRequest.Slug);
         // Register a usable ID before any response assertions; the slug fallback already exists.
-        foreach (SiteDetailDto owned in response.Data?.Results.Where(x => x.Slug == state.Request.Slug && x.Id > 0) ?? [])
+        foreach (SiteDetailDto owned in response.Data?.Results.Where(x => x.Slug == state.CreateRequest.Slug && x.Id > 0) ?? [])
         {
             int id = owned.Id;
             cleanup.AddCleanUpAction(() => SiteApiSteps.DeleteOwnedSiteAsync(client, id));
@@ -78,10 +78,10 @@ public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioClean
         SiteDetailDto site = response.Data.Results.Should().ContainSingle().Which;
         using (new AssertionScope())
         {
-            site.Name.Should().Be(state.Request.Name);
-            site.Slug.Should().Be(state.Request.Slug);
-            site.Status.Value.Should().Be(state.Request.Status);
-            site.Description.Should().Be(state.Request.Description);
+            site.Name.Should().Be(state.CreateRequest.Name);
+            site.Slug.Should().Be(state.CreateRequest.Slug);
+            site.Status.Value.Should().Be(state.CreateRequest.Status);
+            site.Description.Should().Be(state.CreateRequest.Description);
         }
 
         state.PersistedSite = site;
@@ -94,20 +94,20 @@ public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioClean
         string description = await state.DetailsPage.GetDescriptionAsync();
         using (new AssertionScope())
         {
-            status.Should().BeEquivalentTo(state.Update.Status);
-            description.Should().Be(state.Update.Description);
+            status.Should().BeEquivalentTo(state.UpdateRequest.Status);
+            description.Should().Be(state.UpdateRequest.Description);
         }
 
-        var response = await client.GetSiteAsync(state.Created.Id);
+        var response = await client.GetSiteAsync(state.CreatedSite.Id);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Data.Should().NotBeNull();
         SiteDetailDto site = response.Data!;
         using (new AssertionScope())
         {
-            site.Status.Value.Should().Be(state.Update.Status);
-            site.Description.Should().Be(state.Update.Description);
-            site.Name.Should().Be(state.Created.Name);
-            site.Slug.Should().Be(state.Created.Slug);
+            site.Status.Value.Should().Be(state.UpdateRequest.Status);
+            site.Description.Should().Be(state.UpdateRequest.Description);
+            site.Name.Should().Be(state.CreatedSite.Name);
+            site.Slug.Should().Be(state.CreatedSite.Slug);
         }
 
         state.PersistedSite = site;
@@ -116,9 +116,9 @@ public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioClean
     [Then("the Site is absent from the application and service")]
     public async Task VerifyDeletionAsync()
     {
-        await Expect(state.ListPage.GetSiteRow(state.Created.Name)).Not.ToBeVisibleAsync();
-        (await state.ListPage.ContainsSiteAsync(state.Created.Name)).Should().BeFalse();
-        var response = await client.GetSiteAsync(state.Created.Id);
+        await Expect(state.ListPage.GetSiteRow(state.CreatedSite.Name)).Not.ToBeVisibleAsync();
+        (await state.ListPage.ContainsSiteAsync(state.CreatedSite.Name)).Should().BeFalse();
+        var response = await client.GetSiteAsync(state.CreatedSite.Id);
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 

@@ -9,13 +9,13 @@ namespace CsharpTestAutomation.Bdd.Tests.Context;
 public sealed class DeviceScenarioState
 {
     public DevicePrerequisites Prerequisites { get; set; } = null!;
-    public CreateDeviceDto Request { get; set; } = null!;
-    public UpdateDeviceDto Update { get; set; } = null!;
+    public CreateDeviceDto CreateRequest { get; set; } = null!;
+    public UpdateDeviceDto UpdateRequest { get; set; } = null!;
     public SiteDetailDto? OtherSite { get; set; }
     public SiteDetailDto ExpectedSite { get; set; } = null!;
-    public DeviceDetailDto? Created { get; set; }
+    public DeviceDetailDto? CreatedDevice { get; set; }
     public DeviceDetailDto PersistedDevice { get; set; } = null!;
     public List<DeviceDetailDto> OwnedDevices { get; } = [];
-    public ApiResponseState<DeviceDetailDto> Api { get; } = new();
+    public ApiResponseState<DeviceDetailDto> ApiResponses { get; } = new();
     public DeviceDetailsPage DetailsPage { get; set; } = null!;
 }

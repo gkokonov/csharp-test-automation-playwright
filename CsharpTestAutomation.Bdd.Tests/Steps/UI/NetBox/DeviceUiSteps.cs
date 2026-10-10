@@ -22,7 +22,7 @@ public sealed class DeviceUiSteps(IPage page, DevicesApiClient client, ScenarioC
     [When("the Device is created in the web application")]
     public async Task CreateAsync()
     {
-        CreateDeviceDto request = state.Request;
+        CreateDeviceDto request = state.CreateRequest;
         RegisterUiDeviceCleanup(request.Name, request.Site);
         DevicesListPage list = BaseUIPage.Create<DevicesListPage>(page);
         await list.NavigateAsync();
@@ -35,7 +35,7 @@ public sealed class DeviceUiSteps(IPage page, DevicesApiClient client, ScenarioC
     [Then("the requested Device details are displayed and retrievable")]
     public async Task VerifyCreationAsync()
     {
-        CreateDeviceDto request = state.Request;
+        CreateDeviceDto request = state.CreateRequest;
         DevicePrerequisites prerequisites = state.Prerequisites;
         await Expect(state.DetailsPage.NameHeading(request.Name)).ToBeVisibleAsync();
         await Expect(state.DetailsPage.SiteLink(prerequisites.Site.Name)).ToBeVisibleAsync();

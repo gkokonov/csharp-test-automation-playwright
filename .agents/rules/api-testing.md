@@ -24,6 +24,37 @@ Helpers follow these rules when their responsibility involves API behavior.
 - Clients own their endpoint requests and return native RestSharp responses;
   do not add a framework request/execution/response abstraction.
 
+### DTO naming conventions
+
+API DTOs in both the NUnit and BDD application projects follow these patterns. See
+[API architecture](../../docs/API_TESTING_ARCHITECTURE.md) for full rationale.
+
+| Pattern | Usage |
+| --- | --- |
+| `{Resource}DetailDto` | Detailed resource response; reuse for list items and create/update responses when the response contract is the same. |
+| `{Resource}ResponseDto` | Standard resource response with no separate list/detail contract, such as `ManufacturerResponseDto`. |
+| `{Resource}ListItemDto` | Collection item only when its contract differs from the detail response. |
+| `Create{Resource}Dto` | POST request body. |
+| `Update{Resource}Dto` | PUT/PATCH request body. |
+| `Brief{Resource}Dto` | NetBox brief resource representation, usually embedded; includes identifying fields defined by that resource's API contract. |
+
+**Do not use bare `{Resource}Dto`** as a response shape for top-level resources.
+Use `{Resource}DetailDto` or `{Resource}ResponseDto` according to the contract.
+Keep existing compliant names; do not rename a `DetailDto` only because a list
+endpoint returns the same shape. Do not create separate list/detail DTOs for
+identical contracts.
+
+`Brief` follows NetBox terminology, not a C# requirement. It describes a reduced
+resource contract, not every nested object. Fields can include `Id`, `Url`,
+`Display`, `Name`/`Model`, and `Slug`; verify them per resource. Keep brief and
+standard response types separate when they represent distinct API contracts,
+even if the fields currently modeled by the tests match. Other nested values,
+such as `StatusFieldDto`, retain names that describe their purpose.
+
+Use the same names and naming policy for corresponding contracts in NUnit and
+BDD. Keep the application layers independent; do not share DTOs through the
+framework or reference the NUnit application assembly from BDD.
+
 ## NUnit fixtures and lifetime
 
 In `CsharpTestAutomation.Tests`, every API fixture derives from `ApiTestBase`,

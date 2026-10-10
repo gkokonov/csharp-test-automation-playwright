@@ -18,9 +18,10 @@ base classes and Allure.NUnit attributes apply to the NUnit application project.
   Keep each operation under test in `When` and behavior assertions in `Then`.
 - Constructor-inject scenario dependencies. Use typed state in `Context/`;
   do not use string-key `ScenarioContext`/`FeatureContext` dictionaries.
-- Feature states compose `ApiResponseState<TDetail>` for detail, search, and
-  deletion responses. Each feature state owns a fresh instance. Keep requests,
-  prerequisites, expected records, and page objects in the feature state.
+- Feature states compose `ApiResponseState<TDetail>` through an `ApiResponses`
+  property for single, search, and deletion responses. Each feature state owns
+  a fresh instance. Keep requests, prerequisites, expected records, and page
+  objects in the feature state.
 - Reqnroll step definitions live in `Steps/API/<App>/` or `Steps/UI/<App>/`
   with class names ending in `Steps`. Keep setup, actions, assertions, and cleanup
   registration in these step classes; do not add a separate workflow Steps layer.

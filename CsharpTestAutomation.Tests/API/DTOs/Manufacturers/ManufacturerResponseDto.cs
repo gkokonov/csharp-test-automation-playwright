@@ -1,11 +1,11 @@
 using System.Text.Json.Serialization;
 
-namespace CsharpTestAutomation.Bdd.Tests.Api.Dtos.Manufacturers;
+namespace CsharpTestAutomation.Tests.Api.Dtos.Manufacturers;
 
 /// <summary>
 /// GET/POST /api/dcim/manufacturers/ response shape (list, detail, and create share one schema).
 /// </summary>
-public sealed record ManufacturerDto
+public sealed record ManufacturerResponseDto
 {
     [JsonPropertyName("id")]
     public int Id { get; set; }
@@ -22,3 +22,4 @@ public sealed record ManufacturerDto
     [JsonPropertyName("slug")]
     public string Slug { get; set; } = string.Empty;
 }
+

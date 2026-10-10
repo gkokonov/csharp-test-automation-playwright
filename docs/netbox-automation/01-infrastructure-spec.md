@@ -23,7 +23,7 @@ NetBox example if that improves clarity — track that as a follow-up note in
 because they are good, reusable conventions independent of the prior application:
 
 - Factory-owned, disposable typed API client shape (`IRestClientFactory` injected, owns `IRestClient`, `IDisposable`).
-- DTO folder-per-resource layout and the `{Resource}ListItemDto`/`{Resource}DetailDto`/`Create{Resource}Dto` naming table.
+- DTO folder-per-resource layout and the contract-based naming policy in the [API rules](../../.agents/rules/api-testing.md#dto-naming-conventions) and [API architecture](../API_TESTING_ARCHITECTURE.md#5-dto-conventions).
 - `BaseBuilder<T>`-backed DTO builder pattern.
 - `RequireDbData<T>` usage for seeded/read-only environment data.
 - `Database/<App>/Queries` + `Database/<App>/DTO` folder split with SQL-alias-to-C#-member convention.
@@ -167,19 +167,19 @@ Each client is `sealed`, takes `IRestClientFactory` + optional `IAuthenticator`,
 
 **Blocking dependency**: confirm actual field casing against the running SUT's `/api/schema/` before writing any DTO (see Open Item 2 below) — do not start task 1.9 in the tracker until this is confirmed, since guessing wrong means reworking every `[JsonPropertyName]` afterward.
 
-Follow the naming table in `docs/API_TESTING_ARCHITECTURE.md` §5:
+Follow the [API naming policy](../../.agents/rules/api-testing.md#dto-naming-conventions) in both application projects. The current DTO map is below; IPAM is implemented in the NUnit project only.
 
 ```text
 API/DTOs/
-  Sites/       SiteListItemDto, SiteDetailDto, CreateSiteDto, UpdateSiteDto
-  Devices/     DeviceListItemDto, DeviceDetailDto, CreateDeviceDto, UpdateDeviceDto
-  DeviceTypes/ DeviceTypeDto, CreateDeviceTypeDto
-  Manufacturers/ ManufacturerDto, CreateManufacturerDto
-  DeviceRoles/ DeviceRoleDto, CreateDeviceRoleDto
-  Ipam/        PrefixDto, CreatePrefixDto, UpdatePrefixDto, IpAddressDto, CreateIpAddressDto, UpdateIpAddressDto
+  Sites/         SiteDetailDto, BriefSiteDto, CreateSiteDto, UpdateSiteDto
+  Devices/       DeviceDetailDto, CreateDeviceDto, UpdateDeviceDto
+  DeviceTypes/   DeviceTypeResponseDto, BriefDeviceTypeDto, CreateDeviceTypeDto
+  Manufacturers/ ManufacturerResponseDto, BriefManufacturerDto, CreateManufacturerDto
+  DeviceRoles/   DeviceRoleResponseDto, BriefDeviceRoleDto, CreateDeviceRoleDto
+  Ipam/          PrefixDetailDto, CreatePrefixDto, UpdatePrefixDto, IpAddressDetailDto, CreateIpAddressDto, UpdateIpAddressDto
 ```
 
-NetBox's write endpoints generally accept/return the same shape (no separate list-item schema per resource) — decide per-resource whether `SiteListItemDto` is actually distinct from `SiteDetailDto`; do not create a duplicate DTO for schemas verified to be identical. Confirm actual NetBox response shape against the running SUT's OpenAPI schema (`/api/schema/`) during implementation, not from memory.
+The current clients reuse each resource's standard response DTO for the list, detail, and create/update responses they support. Do not add a separate `ListItemDto` when the contracts are identical. Write requests retain separate `Create{Resource}Dto` and `Update{Resource}Dto` types; their fields can differ from response fields. Keep `Brief{Resource}Dto` for NetBox's reduced related-resource representations. Confirm field names and shapes against the target NetBox OpenAPI schema (`/api/schema/`) when changing a contract.
 
 ### DTO Builders (`API/Factories/`)
 

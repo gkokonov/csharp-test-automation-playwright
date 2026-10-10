@@ -27,30 +27,30 @@ public sealed class DeviceSteps(
     public async Task<DevicePrerequisites> CreatePrerequisitesAsync()
     {
         CreateManufacturerDto manufacturerRequest = new CreateManufacturerDtoBuilder().Default().Build();
-        RestResponse<ManufacturerDto> manufacturerResponse = await manufacturers.CreateManufacturerAsync(manufacturerRequest);
+        RestResponse<ManufacturerResponseDto> manufacturerResponse = await manufacturers.CreateManufacturerAsync(manufacturerRequest);
         if (manufacturerResponse.Data is { Id: > 0 } manufacturerData)
         {
             cleanup.AddCleanUpAction(() => DeleteAsync(() => manufacturers.DeleteManufacturerAsync(manufacturerData.Id), "manufacturer", manufacturerData.Id));
         }
 
-        ManufacturerDto manufacturer = RequireCreated(manufacturerResponse, "manufacturer");
+        ManufacturerResponseDto manufacturer = RequireCreated(manufacturerResponse, "manufacturer");
         CreateDeviceTypeDto deviceTypeRequest = new CreateDeviceTypeDtoBuilder().Default()
             .With(x => x.Manufacturer = manufacturer.Id).Build();
-        RestResponse<DeviceTypeDto> deviceTypeResponse = await deviceTypes.CreateDeviceTypeAsync(deviceTypeRequest);
+        RestResponse<DeviceTypeResponseDto> deviceTypeResponse = await deviceTypes.CreateDeviceTypeAsync(deviceTypeRequest);
         if (deviceTypeResponse.Data is { Id: > 0 } deviceTypeData)
         {
             cleanup.AddCleanUpAction(() => DeleteAsync(() => deviceTypes.DeleteDeviceTypeAsync(deviceTypeData.Id), "device type", deviceTypeData.Id));
         }
 
-        DeviceTypeDto deviceType = RequireCreated(deviceTypeResponse, "device type");
+        DeviceTypeResponseDto deviceType = RequireCreated(deviceTypeResponse, "device type");
         CreateDeviceRoleDto roleRequest = new CreateDeviceRoleDtoBuilder().Default().Build();
-        RestResponse<DeviceRoleDto> roleResponse = await roles.CreateDeviceRoleAsync(roleRequest);
+        RestResponse<DeviceRoleResponseDto> roleResponse = await roles.CreateDeviceRoleAsync(roleRequest);
         if (roleResponse.Data is { Id: > 0 } roleData)
         {
             cleanup.AddCleanUpAction(() => DeleteAsync(() => roles.DeleteDeviceRoleAsync(roleData.Id), "device role", roleData.Id));
         }
 
-        DeviceRoleDto role = RequireCreated(roleResponse, "device role");
+        DeviceRoleResponseDto role = RequireCreated(roleResponse, "device role");
         SiteDetailDto site = await CreateSiteAsync();
         return new DevicePrerequisites(manufacturer, deviceType, role, site);
     }

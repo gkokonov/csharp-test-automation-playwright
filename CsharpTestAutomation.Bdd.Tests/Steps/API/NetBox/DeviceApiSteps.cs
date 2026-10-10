@@ -27,34 +27,34 @@ public sealed class DeviceApiSteps(ManufacturersApiClient manufacturers, DeviceT
     public async Task PrepareDeviceAsync()
     {
         CreateManufacturerDto manufacturerRequest = new CreateManufacturerDtoBuilder().Default().Build();
-        RestResponse<ManufacturerDto> manufacturerResponse = await manufacturers.CreateManufacturerAsync(manufacturerRequest);
+        RestResponse<ManufacturerResponseDto> manufacturerResponse = await manufacturers.CreateManufacturerAsync(manufacturerRequest);
         if (manufacturerResponse.Data is { Id: > 0 } manufacturerData)
         {
             cleanup.AddCleanUpAction(() => DeleteOwnedAsync(() => manufacturers.DeleteManufacturerAsync(manufacturerData.Id), "manufacturer", manufacturerData.Id));
         }
 
-        ManufacturerDto manufacturer = RequireCreated(manufacturerResponse, "manufacturer");
+        ManufacturerResponseDto manufacturer = RequireCreated(manufacturerResponse, "manufacturer");
         CreateDeviceTypeDto typeRequest = new CreateDeviceTypeDtoBuilder().Default()
             .With(x => x.Manufacturer = manufacturer.Id).Build();
-        RestResponse<DeviceTypeDto> typeResponse = await deviceTypes.CreateDeviceTypeAsync(typeRequest);
+        RestResponse<DeviceTypeResponseDto> typeResponse = await deviceTypes.CreateDeviceTypeAsync(typeRequest);
         if (typeResponse.Data is { Id: > 0 } typeData)
         {
             cleanup.AddCleanUpAction(() => DeleteOwnedAsync(() => deviceTypes.DeleteDeviceTypeAsync(typeData.Id), "device type", typeData.Id));
         }
 
-        DeviceTypeDto deviceType = RequireCreated(typeResponse, "device type");
+        DeviceTypeResponseDto deviceType = RequireCreated(typeResponse, "device type");
         CreateDeviceRoleDto roleRequest = new CreateDeviceRoleDtoBuilder().Default().Build();
-        RestResponse<DeviceRoleDto> roleResponse = await roles.CreateDeviceRoleAsync(roleRequest);
+        RestResponse<DeviceRoleResponseDto> roleResponse = await roles.CreateDeviceRoleAsync(roleRequest);
         if (roleResponse.Data is { Id: > 0 } roleData)
         {
             cleanup.AddCleanUpAction(() => DeleteOwnedAsync(() => roles.DeleteDeviceRoleAsync(roleData.Id), "device role", roleData.Id));
         }
 
-        DeviceRoleDto role = RequireCreated(roleResponse, "device role");
+        DeviceRoleResponseDto role = RequireCreated(roleResponse, "device role");
         SiteDetailDto site = await CreateOwnedSiteAsync();
         state.Prerequisites = new(manufacturer, deviceType, role, site);
         state.ExpectedSite = site;
-        state.Request = BuildDevice();
+        state.CreateRequest = BuildDevice();
     }
 
     [Given("an owned active Device")]
@@ -66,19 +66,19 @@ public sealed class DeviceApiSteps(ManufacturersApiClient manufacturers, DeviceT
 
     [Given("an owned active Device at the original Site")]
     public async Task CreatePrerequisiteDeviceAsync() =>
-        state.Created = RequireDevice(await CreateOwnedDeviceAsync(state.Request), HttpStatusCode.Created);
+        state.CreatedDevice = RequireDevice(await CreateOwnedDeviceAsync(state.CreateRequest), HttpStatusCode.Created);
 
     [Given("another owned Device Site")]
     public async Task PrepareOtherSiteAsync() => state.OtherSite = await CreateOwnedSiteAsync();
 
     [Given("valid Device status and description changes")]
-    public void PrepareUpdate() => state.Update = new UpdateDeviceDtoBuilder().Default().Build();
+    public void PrepareUpdate() => state.UpdateRequest = new UpdateDeviceDtoBuilder().Default().Build();
 
     [Given("valid Device changes that move it to the other Site")]
     public void PrepareMove()
     {
         state.ExpectedSite = state.OtherSite!;
-        state.Update = new UpdateDeviceDtoBuilder().Default().With(x => x.Site = state.ExpectedSite.Id).Build();
+        state.UpdateRequest = new UpdateDeviceDtoBuilder().Default().With(x => x.Site = state.ExpectedSite.Id).Build();
     }
 
     [Given("two owned Devices at one Site and another Device at a different Site")]
@@ -93,19 +93,19 @@ public sealed class DeviceApiSteps(ManufacturersApiClient manufacturers, DeviceT
     }
 
     [When("the Device is created through the service")]
-    public async Task CreateAsync() => state.Api.DetailResponse = await CreateOwnedDeviceAsync(state.Request);
+    public async Task CreateAsync() => state.ApiResponses.SingleResponse = await CreateOwnedDeviceAsync(state.CreateRequest);
 
     [When("the Device is found by its exact name")]
-    public async Task FindAsync() => state.Api.SearchResponse = await devices.FindDevicesByNameAsync(state.Request.Name);
+    public async Task FindAsync() => state.ApiResponses.SearchResponse = await devices.FindDevicesByNameAsync(state.CreateRequest.Name);
 
     [When("the Device changes are submitted through the service")]
-    public async Task UpdateAsync() => state.Api.DetailResponse = await devices.UpdateDeviceAsync(state.Created!.Id, state.Update);
+    public async Task UpdateAsync() => state.ApiResponses.SingleResponse = await devices.UpdateDeviceAsync(state.CreatedDevice!.Id, state.UpdateRequest);
 
     [When("the Device is deleted through the service")]
-    public async Task DeleteAsync() => state.Api.DeleteResponse = await devices.DeleteDeviceAsync(state.Created!.Id);
+    public async Task DeleteAsync() => state.ApiResponses.DeleteResponse = await devices.DeleteDeviceAsync(state.CreatedDevice!.Id);
 
     [When("Devices are found by the original Site")]
-    public async Task FilterAsync() => state.Api.SearchResponse = await devices.FindDevicesBySiteAsync(state.Prerequisites.Site.Id);
+    public async Task FilterAsync() => state.ApiResponses.SearchResponse = await devices.FindDevicesBySiteAsync(state.Prerequisites.Site.Id);
 
     [When("the Device scenario is interrupted and cleanup runs")]
     public async Task InterruptAsync()
@@ -127,15 +127,15 @@ public sealed class DeviceApiSteps(ManufacturersApiClient manufacturers, DeviceT
     [Then("the requested Device details are returned")]
     public void VerifyCreation()
     {
-        DeviceDetailDto created = RequireDevice(state.Api.DetailResponse, HttpStatusCode.Created);
+        DeviceDetailDto created = RequireDevice(state.ApiResponses.SingleResponse, HttpStatusCode.Created);
         created.Should().BeEquivalentTo(new
         {
-            state.Request.Name,
-            state.Request.Description,
-            Site = new { Id = state.Request.Site },
-            DeviceType = new { Id = state.Request.DeviceType },
-            Role = new { Id = state.Request.Role },
-            Status = new { Value = state.Request.Status }
+            state.CreateRequest.Name,
+            state.CreateRequest.Description,
+            Site = new { Id = state.CreateRequest.Site },
+            DeviceType = new { Id = state.CreateRequest.DeviceType },
+            Role = new { Id = state.CreateRequest.Role },
+            Status = new { Value = state.CreateRequest.Status }
         }, options => options.ExcludingMissingMembers(),
             "Id, Url, Display and nested display labels are generated by NetBox");
         state.PersistedDevice = created;
@@ -144,19 +144,19 @@ public sealed class DeviceApiSteps(ManufacturersApiClient manufacturers, DeviceT
     [Then("only the expected Device is returned")]
     public void VerifySearch()
     {
-        state.Api.SearchResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        state.Api.SearchResponse.Data.Should().NotBeNull();
-        state.Api.SearchResponse.Data!.Count.Should().Be(1);
-        state.Api.SearchResponse.Data.Results.Should().ContainSingle().Which.Should().BeEquivalentTo(state.Created);
-        state.PersistedDevice = state.Created!;
+        state.ApiResponses.SearchResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        state.ApiResponses.SearchResponse.Data.Should().NotBeNull();
+        state.ApiResponses.SearchResponse.Data!.Count.Should().Be(1);
+        state.ApiResponses.SearchResponse.Data.Results.Should().ContainSingle().Which.Should().BeEquivalentTo(state.CreatedDevice);
+        state.PersistedDevice = state.CreatedDevice!;
     }
 
     [Then("the service saves the Device changes and retains its other details")]
     public async Task VerifyUpdateAsync()
     {
-        DeviceDetailDto updated = RequireDevice(state.Api.DetailResponse, HttpStatusCode.OK);
-        state.Created.Should().NotBeNull();
-        DeviceDetailDto created = state.Created!;
+        DeviceDetailDto updated = RequireDevice(state.ApiResponses.SingleResponse, HttpStatusCode.OK);
+        state.CreatedDevice.Should().NotBeNull();
+        DeviceDetailDto created = state.CreatedDevice!;
         SiteDetailDto expectedSite = state.ExpectedSite;
         using (new AssertionScope())
         {
@@ -164,11 +164,11 @@ public sealed class DeviceApiSteps(ManufacturersApiClient manufacturers, DeviceT
                 .Excluding(x => x.Site).Excluding(x => x.Status).Excluding(x => x.Description),
                 "only Site, Status and Description were requested to change");
             updated.Site.Should().BeEquivalentTo(new { expectedSite.Id, expectedSite.Url, expectedSite.Display, expectedSite.Name, expectedSite.Slug });
-            updated.Status.Value.Should().Be(state.Update.Status);
-            updated.Description.Should().Be(state.Update.Description);
+            updated.Status.Value.Should().Be(state.UpdateRequest.Status);
+            updated.Description.Should().Be(state.UpdateRequest.Description);
         }
 
-        DeviceDetailDto fetched = RequireDevice(await devices.GetDeviceAsync(state.Created!.Id), HttpStatusCode.OK);
+        DeviceDetailDto fetched = RequireDevice(await devices.GetDeviceAsync(state.CreatedDevice!.Id), HttpStatusCode.OK);
         fetched.Should().BeEquivalentTo(updated);
         state.PersistedDevice = fetched;
     }
@@ -176,22 +176,22 @@ public sealed class DeviceApiSteps(ManufacturersApiClient manufacturers, DeviceT
     [Then("the Device is unavailable through the service")]
     public async Task VerifyDeletionAsync()
     {
-        state.Api.DeleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        RestResponse<DeviceDetailDto> response = await devices.GetDeviceAsync(state.Created!.Id);
+        state.ApiResponses.DeleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        RestResponse<DeviceDetailDto> response = await devices.GetDeviceAsync(state.CreatedDevice!.Id);
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Then("only the Devices at the original Site are returned")]
     public void VerifyFilter()
     {
-        state.Api.SearchResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        state.Api.SearchResponse.Data.Should().NotBeNull();
+        state.ApiResponses.SearchResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        state.ApiResponses.SearchResponse.Data.Should().NotBeNull();
         using (new AssertionScope())
         {
-            state.Api.SearchResponse.Data!.Count.Should().Be(2);
-            state.Api.SearchResponse.Data.Results.Should().BeEquivalentTo(state.OwnedDevices.Take(2));
-            state.Api.SearchResponse.Data.Results.Should().OnlyContain(x => x.Site.Id == state.Prerequisites.Site.Id);
-            state.Api.SearchResponse.Data.Results.Should().NotContain(x => x.Id == state.OwnedDevices[2].Id);
+            state.ApiResponses.SearchResponse.Data!.Count.Should().Be(2);
+            state.ApiResponses.SearchResponse.Data.Results.Should().BeEquivalentTo(state.OwnedDevices.Take(2));
+            state.ApiResponses.SearchResponse.Data.Results.Should().OnlyContain(x => x.Site.Id == state.Prerequisites.Site.Id);
+            state.ApiResponses.SearchResponse.Data.Results.Should().NotContain(x => x.Id == state.OwnedDevices[2].Id);
         }
     }
 
@@ -203,14 +203,14 @@ public sealed class DeviceApiSteps(ManufacturersApiClient manufacturers, DeviceT
         RestResponse deviceType = await deviceTypes.GetDeviceTypeAsync(prerequisites.DeviceType.Id);
         RestResponse role = await roles.GetDeviceRoleAsync(prerequisites.Role.Id);
         RestResponse site = await sites.GetSiteAsync(prerequisites.Site.Id);
-        RestResponse<DeviceDetailDto>? device = state.Created is null ? null : await devices.GetDeviceAsync(state.Created.Id);
+        RestResponse<DeviceDetailDto>? device = state.CreatedDevice is null ? null : await devices.GetDeviceAsync(state.CreatedDevice.Id);
         using (new AssertionScope())
         {
             manufacturer.StatusCode.Should().Be(HttpStatusCode.NotFound);
             deviceType.StatusCode.Should().Be(HttpStatusCode.NotFound);
             role.StatusCode.Should().Be(HttpStatusCode.NotFound);
             site.StatusCode.Should().Be(HttpStatusCode.NotFound);
-            if (state.Created is not null)
+            if (state.CreatedDevice is not null)
             {
                 device.Should().NotBeNull();
                 device!.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -231,7 +231,7 @@ public sealed class DeviceApiSteps(ManufacturersApiClient manufacturers, DeviceT
     }
 
     [Then("the Device is no longer saved")]
-    public async Task VerifyAbsenceAsync() => (await database.GetByNameAsync(state.Request.Name)).Should().BeNull();
+    public async Task VerifyAbsenceAsync() => (await database.GetByNameAsync(state.CreateRequest.Name)).Should().BeNull();
 
     internal static async Task DeleteOwnedAsync(Func<Task<RestResponse>> delete, string resource, int id)
     {

@@ -19,87 +19,87 @@ public sealed class SiteApiSteps(SitesApiClient client, ScenarioCleanupActions c
     SiteScenarioState state, SitesDatabaseRepository database)
 {
     [Given("unique valid Site details")]
-    public void PrepareUniqueSite() => state.Request = new CreateSiteDtoBuilder().Default().Build();
+    public void PrepareUniqueSite() => state.CreateRequest = new CreateSiteDtoBuilder().Default().Build();
 
     [Given("an owned active Site")]
     public async Task CreatePrerequisiteAsync()
     {
         PrepareUniqueSite();
-        var response = await CreateOwnedSiteAsync(state.Request);
+        var response = await CreateOwnedSiteAsync(state.CreateRequest);
         response.StatusCode.Should().Be(HttpStatusCode.Created, "the scenario requires an owned Site");
         response.Data.Should().NotBeNull();
         response.Data!.Id.Should().BePositive();
-        state.Created = response.Data;
+        state.CreatedSite = response.Data;
     }
 
     [Given("valid changes to its status and description")]
-    public void PrepareUpdate() => state.Update = new UpdateSiteDtoBuilder().Default().Build();
+    public void PrepareUpdate() => state.UpdateRequest = new UpdateSiteDtoBuilder().Default().Build();
 
     [When("the Site is created through the service")]
-    public async Task CreateAsync() => state.Api.DetailResponse = await CreateOwnedSiteAsync(state.Request);
+    public async Task CreateAsync() => state.ApiResponses.SingleResponse = await CreateOwnedSiteAsync(state.CreateRequest);
 
     [When("the Site is retrieved through the service")]
-    public async Task RetrieveAsync() => state.Api.DetailResponse = await client.GetSiteAsync(state.Created.Id);
+    public async Task RetrieveAsync() => state.ApiResponses.SingleResponse = await client.GetSiteAsync(state.CreatedSite.Id);
 
     [When("the Site is found by its slug")]
-    public async Task FindAsync() => state.Api.SearchResponse = await client.FindSitesBySlugAsync(state.Created.Slug);
+    public async Task FindAsync() => state.ApiResponses.SearchResponse = await client.FindSitesBySlugAsync(state.CreatedSite.Slug);
 
     [When("the Site changes are submitted through the service")]
-    public async Task UpdateAsync() => state.Api.DetailResponse = await client.UpdateSiteAsync(state.Created.Id, state.Update);
+    public async Task UpdateAsync() => state.ApiResponses.SingleResponse = await client.UpdateSiteAsync(state.CreatedSite.Id, state.UpdateRequest);
 
     [When("the Site is deleted through the service")]
-    public async Task DeleteAsync() => state.Api.DeleteResponse = await client.DeleteSiteAsync(state.Created.Id);
+    public async Task DeleteAsync() => state.ApiResponses.DeleteResponse = await client.DeleteSiteAsync(state.CreatedSite.Id);
 
     [Then("the requested Site details are returned")]
     public void VerifyCreatedDetails()
     {
-        state.Api.DetailResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-        state.Api.DetailResponse.Data.Should().NotBeNull();
-        SiteDetailDto site = state.Api.DetailResponse.Data!;
+        state.ApiResponses.SingleResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        state.ApiResponses.SingleResponse.Data.Should().NotBeNull();
+        SiteDetailDto site = state.ApiResponses.SingleResponse.Data!;
         state.PersistedSite = site;
         using (new AssertionScope())
         {
             site.Id.Should().BePositive();
-            site.Name.Should().Be(state.Request.Name);
-            site.Slug.Should().Be(state.Request.Slug);
-            site.Status.Value.Should().Be(state.Request.Status);
-            site.Description.Should().Be(state.Request.Description);
+            site.Name.Should().Be(state.CreateRequest.Name);
+            site.Slug.Should().Be(state.CreateRequest.Slug);
+            site.Status.Value.Should().Be(state.CreateRequest.Status);
+            site.Description.Should().Be(state.CreateRequest.Description);
         }
     }
 
     [Then("the original Site details are returned")]
     public void VerifyRetrievedDetails()
     {
-        state.Api.DetailResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        state.Api.DetailResponse.Data.Should().NotBeNull();
-        state.Api.DetailResponse.Data.Should().BeEquivalentTo(state.Created);
-        state.PersistedSite = state.Created;
+        state.ApiResponses.SingleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        state.ApiResponses.SingleResponse.Data.Should().NotBeNull();
+        state.ApiResponses.SingleResponse.Data.Should().BeEquivalentTo(state.CreatedSite);
+        state.PersistedSite = state.CreatedSite;
     }
 
     [Then("only the expected Site is returned")]
     public void VerifySearch()
     {
-        state.Api.SearchResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        state.Api.SearchResponse.Data.Should().NotBeNull();
-        state.Api.SearchResponse.Data!.Count.Should().Be(1);
-        state.Api.SearchResponse.Data.Results.Should().ContainSingle().Which.Should().BeEquivalentTo(state.Created);
+        state.ApiResponses.SearchResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        state.ApiResponses.SearchResponse.Data.Should().NotBeNull();
+        state.ApiResponses.SearchResponse.Data!.Count.Should().Be(1);
+        state.ApiResponses.SearchResponse.Data.Results.Should().ContainSingle().Which.Should().BeEquivalentTo(state.CreatedSite);
     }
 
     [Then("the service saves the changes and retains the other Site details")]
     public async Task VerifyUpdateAsync()
     {
-        state.Api.DetailResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        state.Api.DetailResponse.Data.Should().NotBeNull();
-        SiteDetailDto updated = state.Api.DetailResponse.Data!;
+        state.ApiResponses.SingleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        state.ApiResponses.SingleResponse.Data.Should().NotBeNull();
+        SiteDetailDto updated = state.ApiResponses.SingleResponse.Data!;
         using (new AssertionScope())
         {
-            updated.Status.Value.Should().Be(state.Update.Status);
-            updated.Description.Should().Be(state.Update.Description);
-            updated.Name.Should().Be(state.Created.Name);
-            updated.Slug.Should().Be(state.Created.Slug);
+            updated.Status.Value.Should().Be(state.UpdateRequest.Status);
+            updated.Description.Should().Be(state.UpdateRequest.Description);
+            updated.Name.Should().Be(state.CreatedSite.Name);
+            updated.Slug.Should().Be(state.CreatedSite.Slug);
         }
 
-        var retrieved = await client.GetSiteAsync(state.Created.Id);
+        var retrieved = await client.GetSiteAsync(state.CreatedSite.Id);
         retrieved.StatusCode.Should().Be(HttpStatusCode.OK);
         retrieved.Data.Should().NotBeNull();
         retrieved.Data.Should().BeEquivalentTo(updated);
@@ -109,8 +109,8 @@ public sealed class SiteApiSteps(SitesApiClient client, ScenarioCleanupActions c
     [Then("the Site is unavailable through the service")]
     public async Task VerifyDeletionAsync()
     {
-        state.Api.DeleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        var retrieved = await client.GetSiteAsync(state.Created.Id);
+        state.ApiResponses.DeleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var retrieved = await client.GetSiteAsync(state.CreatedSite.Id);
         retrieved.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -131,7 +131,7 @@ public sealed class SiteApiSteps(SitesApiClient client, ScenarioCleanupActions c
     }
 
     [Then("the Site is no longer saved")]
-    public async Task VerifyAbsenceAsync() => (await database.GetBySlugAsync(state.Created.Slug)).Should().BeNull();
+    public async Task VerifyAbsenceAsync() => (await database.GetBySlugAsync(state.CreatedSite.Slug)).Should().BeNull();
 
     internal static async Task DeleteOwnedSiteAsync(SitesApiClient client, int id)
     {

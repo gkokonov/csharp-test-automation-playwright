@@ -5,7 +5,7 @@ namespace CsharpTestAutomation.Bdd.Tests.Api.Dtos.DeviceRoles;
 /// <summary>
 /// GET/POST /api/dcim/device-roles/ response shape (list, detail, and create share one schema).
 /// </summary>
-public sealed record DeviceRoleDto
+public sealed record DeviceRoleResponseDto
 {
     [JsonPropertyName("id")]
     public int Id { get; set; }
@@ -25,3 +25,4 @@ public sealed record DeviceRoleDto
     [JsonPropertyName("color")]
     public string Color { get; set; } = string.Empty;
 }
+

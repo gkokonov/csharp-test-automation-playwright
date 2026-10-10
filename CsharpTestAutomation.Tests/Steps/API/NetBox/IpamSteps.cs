@@ -10,9 +10,9 @@ namespace CsharpTestAutomation.Tests.Steps.Api.NetBox;
 /// <summary>Registers owned IPAM records on the fixture's LIFO cleanup stack; clients are borrowed.</summary>
 public sealed class IpamSteps(IpamApiClient client, ScenarioCleanupActions cleanup)
 {
-    public async Task<RestResponse<PrefixDto>> CreatePrefixAsync(CreatePrefixDto request)
+    public async Task<RestResponse<PrefixDetailDto>> CreatePrefixAsync(CreatePrefixDto request)
     {
-        RestResponse<PrefixDto> response = await client.CreatePrefixAsync(request);
+        RestResponse<PrefixDetailDto> response = await client.CreatePrefixAsync(request);
         if (response.Data is { Id: > 0 } prefix)
         {
             RegisterPrefixCleanup(prefix.Id);
@@ -22,9 +22,9 @@ public sealed class IpamSteps(IpamApiClient client, ScenarioCleanupActions clean
     }
 
     /// <summary>Create the prerequisite Prefix first so cleanup deletes its addresses before it.</summary>
-    public async Task<RestResponse<IpAddressDto>> CreateIpAddressAsync(CreateIpAddressDto request)
+    public async Task<RestResponse<IpAddressDetailDto>> CreateIpAddressAsync(CreateIpAddressDto request)
     {
-        RestResponse<IpAddressDto> response = await client.CreateIpAddressAsync(request);
+        RestResponse<IpAddressDetailDto> response = await client.CreateIpAddressAsync(request);
         if (response.Data is { Id: > 0 } address)
         {
             cleanup.AddCleanUpAction(() => DeleteAsync(() => client.DeleteIpAddressAsync(address.Id), "IP address", address.Id));
@@ -39,13 +39,13 @@ public sealed class IpamSteps(IpamApiClient client, ScenarioCleanupActions clean
     /// <summary>Register before form submission; a unique description identifies the owned Prefix if navigation fails.</summary>
     public void RegisterUiPrefixCleanup(CreatePrefixDto request) => cleanup.AddCleanUpAction(async () =>
     {
-        RestResponse<PagedResultDto<PrefixDto>> response = await client.FindPrefixesByCidrAsync(request.Prefix, request.Description);
+        RestResponse<PagedResultDto<PrefixDetailDto>> response = await client.FindPrefixesByCidrAsync(request.Prefix, request.Description);
         if (response.StatusCode != HttpStatusCode.OK || response.Data is null)
         {
             throw new InvalidOperationException($"Could not find the UI-created prefix for cleanup: {response.StatusCode}.");
         }
 
-        foreach (PrefixDto prefix in response.Data.Results.Where(x => x.Prefix == request.Prefix && x.Description == request.Description))
+        foreach (PrefixDetailDto prefix in response.Data.Results.Where(x => x.Prefix == request.Prefix && x.Description == request.Description))
         {
             await DeleteAsync(() => client.DeletePrefixAsync(prefix.Id), "prefix", prefix.Id);
         }

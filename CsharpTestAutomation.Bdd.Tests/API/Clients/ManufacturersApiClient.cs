@@ -15,16 +15,16 @@ public sealed class ManufacturersApiClient(IRestClientFactory factory, IAuthenti
 
     private readonly IRestClient _client = factory.Create(ServiceName, authenticator);
 
-    public Task<RestResponse<ManufacturerDto>> CreateManufacturerAsync(CreateManufacturerDto manufacturer, CancellationToken cancellationToken = default)
+    public Task<RestResponse<ManufacturerResponseDto>> CreateManufacturerAsync(CreateManufacturerDto manufacturer, CancellationToken cancellationToken = default)
     {
         RestRequest request = new RestRequest(Resource, Method.Post).AddJsonBody(manufacturer);
-        return _client.ExecuteAsync<ManufacturerDto>(request, cancellationToken);
+        return _client.ExecuteAsync<ManufacturerResponseDto>(request, cancellationToken);
     }
 
-    public Task<RestResponse<ManufacturerDto>> GetManufacturerAsync(int id, CancellationToken cancellationToken = default)
+    public Task<RestResponse<ManufacturerResponseDto>> GetManufacturerAsync(int id, CancellationToken cancellationToken = default)
     {
         var request = new RestRequest($"{Resource}{id}/");
-        return _client.ExecuteAsync<ManufacturerDto>(request, cancellationToken);
+        return _client.ExecuteAsync<ManufacturerResponseDto>(request, cancellationToken);
     }
 
     public Task<RestResponse> DeleteManufacturerAsync(int id, CancellationToken cancellationToken = default)

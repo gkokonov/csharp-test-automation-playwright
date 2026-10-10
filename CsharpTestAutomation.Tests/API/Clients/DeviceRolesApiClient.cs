@@ -15,16 +15,16 @@ public sealed class DeviceRolesApiClient(IRestClientFactory factory, IAuthentica
 
     private readonly IRestClient _client = factory.Create(ServiceName, authenticator);
 
-    public Task<RestResponse<DeviceRoleDto>> CreateDeviceRoleAsync(CreateDeviceRoleDto role, CancellationToken cancellationToken = default)
+    public Task<RestResponse<DeviceRoleResponseDto>> CreateDeviceRoleAsync(CreateDeviceRoleDto role, CancellationToken cancellationToken = default)
     {
         RestRequest request = new RestRequest(Resource, Method.Post).AddJsonBody(role);
-        return _client.ExecuteAsync<DeviceRoleDto>(request, cancellationToken);
+        return _client.ExecuteAsync<DeviceRoleResponseDto>(request, cancellationToken);
     }
 
-    public Task<RestResponse<DeviceRoleDto>> GetDeviceRoleAsync(int id, CancellationToken cancellationToken = default)
+    public Task<RestResponse<DeviceRoleResponseDto>> GetDeviceRoleAsync(int id, CancellationToken cancellationToken = default)
     {
         var request = new RestRequest($"{Resource}{id}/");
-        return _client.ExecuteAsync<DeviceRoleDto>(request, cancellationToken);
+        return _client.ExecuteAsync<DeviceRoleResponseDto>(request, cancellationToken);
     }
 
     public Task<RestResponse> DeleteDeviceRoleAsync(int id, CancellationToken cancellationToken = default)

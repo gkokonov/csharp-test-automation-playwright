@@ -6,7 +6,7 @@ using CsharpTestAutomation.Bdd.Tests.Api.Dtos.Sites;
 namespace CsharpTestAutomation.Bdd.Tests.Steps.Api.NetBox;
 
 public sealed record DevicePrerequisites(
-    ManufacturerDto Manufacturer,
-    DeviceTypeDto DeviceType,
-    DeviceRoleDto Role,
+    ManufacturerResponseDto Manufacturer,
+    DeviceTypeResponseDto DeviceType,
+    DeviceRoleResponseDto Role,
     SiteDetailDto Site);

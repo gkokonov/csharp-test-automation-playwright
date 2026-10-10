@@ -15,16 +15,16 @@ public sealed class DeviceTypesApiClient(IRestClientFactory factory, IAuthentica
 
     private readonly IRestClient _client = factory.Create(ServiceName, authenticator);
 
-    public Task<RestResponse<DeviceTypeDto>> CreateDeviceTypeAsync(CreateDeviceTypeDto deviceType, CancellationToken cancellationToken = default)
+    public Task<RestResponse<DeviceTypeResponseDto>> CreateDeviceTypeAsync(CreateDeviceTypeDto deviceType, CancellationToken cancellationToken = default)
     {
         RestRequest request = new RestRequest(Resource, Method.Post).AddJsonBody(deviceType);
-        return _client.ExecuteAsync<DeviceTypeDto>(request, cancellationToken);
+        return _client.ExecuteAsync<DeviceTypeResponseDto>(request, cancellationToken);
     }
 
-    public Task<RestResponse<DeviceTypeDto>> GetDeviceTypeAsync(int id, CancellationToken cancellationToken = default)
+    public Task<RestResponse<DeviceTypeResponseDto>> GetDeviceTypeAsync(int id, CancellationToken cancellationToken = default)
     {
         var request = new RestRequest($"{Resource}{id}/");
-        return _client.ExecuteAsync<DeviceTypeDto>(request, cancellationToken);
+        return _client.ExecuteAsync<DeviceTypeResponseDto>(request, cancellationToken);
     }
 
     public Task<RestResponse> DeleteDeviceTypeAsync(int id, CancellationToken cancellationToken = default)

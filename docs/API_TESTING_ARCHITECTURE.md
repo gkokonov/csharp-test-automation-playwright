@@ -173,35 +173,40 @@ typed clients, payload building in `API/Factories/`, and generated values in
 
 ## 5. DTO Conventions
 
-DTOs live in `CsharpTestAutomation.Tests/API/DTOs/` and are organized by **resource** — one sub-folder per API resource group. This keeps all shapes for a feature in one place rather than splitting them across generic `Requests/` and `Responses/` buckets.
+DTOs live in each application project's `API/DTOs/` directory and are organized by **resource** — one sub-folder per API resource group. NUnit and BDD use the same naming policy for corresponding contracts, but each project owns its application types and references only the framework. Application DTOs do not belong in the framework or its self-tests. The canonical policy is in the [API rules](../.agents/rules/api-testing.md#dto-naming-conventions).
 
 ```text
 API/DTOs/
  Resources/
-  ResourceListItemDto.cs <- GET /api/resources (list item)
-  ResourceDetailDto.cs   <- GET /api/resources/{id}
+  ResourceListItemDto.cs <- Only if the list item differs from the detail contract
+  ResourceDetailDto.cs   <- Detailed response; reused where the contract is the same
   CreateResourceDto.cs   <- POST /api/resources request body
  Categories/
-  CategoryDto.cs
+  CategoryResponseDto.cs
  Labels/
-  LabelDto.cs
-  Users/
-    UserDto.cs
-  MasterData/
-    CountryDto.cs
+  LabelResponseDto.cs
+ Users/
+  UserResponseDto.cs
+ MasterData/
+  CountryResponseDto.cs
 ```
 
 **Naming rules:**
 
 | Pattern | Example | When to use |
 | --- | --- | --- |
-| `{Resource}ListItemDto` | `ResourceListItemDto` | Collection / list response item |
-| `{Resource}DetailDto` | `ResourceDetailDto` | Single-resource GET response |
+| `{Resource}ListItemDto` | `ResourceListItemDto` | Collection item only when its contract differs from the detail response |
+| `{Resource}DetailDto` | `SiteDetailDto`, `DeviceDetailDto` | Detailed resource response; also used for list items and create/update responses with the same contract |
 | `Create{Resource}Dto` | `CreateResourceDto` | POST request body (current repository convention) |
 | `Update{Resource}Dto` | `UpdateResourceDto` | PUT / PATCH request body |
-| `{Resource}Dto` | `CategoryDto`, `LabelDto` | Simple sub-resource response with no list/detail distinction |
+| `{Resource}ResponseDto` | `ManufacturerResponseDto`, `DeviceRoleResponseDto` | Standard resource response with no separate list/detail contract |
+| `Brief{Resource}Dto` | `BriefSiteDto`, `BriefManufacturerDto` | NetBox brief resource representation, usually embedded; contains resource-specific identifying fields |
 
-Avoid generic suffixes such as `Response` or `Dto` alone on top-level resources — the name should communicate which endpoint it represents.
+Name DTOs by their contract and purpose. Do not use bare `{Resource}Dto` for top-level response shapes; use `DetailDto` or `ResponseDto`. Keep existing compliant names, including `DetailDto` types reused by list endpoints. Do not create separate list/detail types when their contracts are identical.
+
+`Brief` follows NetBox's API terminology; it is not required by C#. It describes a reduced resource representation, not nesting alone. Its fields depend on the resource and can include `Id`, `Url`, `Display`, `Name`/`Model`, and `Slug`. Nested values such as `StatusFieldDto` do not need this qualifier. Keep brief and standard response types separate for distinct API contracts, even when their currently modeled fields match, as with `BriefManufacturerDto` and `ManufacturerResponseDto`.
+
+Request and response contracts remain separate. Do not infer that a write request has the same shape as its response. Confirm JSON field names and shapes against the target API schema when adding or changing a DTO.
 
 Do **not** namespace DTOs under the typed-client namespace; the `Api.Dtos.<Resource>` namespace (e.g. `CsharpTestAutomation.Tests.Api.Dtos.Resources`) keeps them independently reusable across multiple clients.
 
@@ -377,6 +382,7 @@ Newest first. Bump the version and add a row whenever this document changes so f
 
 | Version | Date | Summary |
 | --- | --- | --- |
+| 1.13 | 2026-10-10 | Align NUnit and BDD DTO guidance; clarify brief contracts and reuse of identical response shapes. |
+| 1.12 | 2026-10-10 | Harmonize DTO naming: use {Resource}ResponseDto and Brief{Resource}Dto. |
 | 1.11 | 2026-10-10 | BDD scope includes independent Site and Device coverage. |
 | 1.10 | 2026-09-27 | Document NetBox token authentication and clarify API logging configuration. |
-| 1.9 | 2026-09-27 | Replace application-specific examples with generic resource templates. |

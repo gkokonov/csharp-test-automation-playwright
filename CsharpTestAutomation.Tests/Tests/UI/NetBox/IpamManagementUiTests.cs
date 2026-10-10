@@ -47,12 +47,12 @@ public class IpamManagementUiTests : NetBoxUiTestBase
         await listPage.NavigateAsync();
         PrefixEditPage editPage = await listPage.AddPrefixAsync();
         PrefixDetailsPage detailsPage = await editPage.CreatePrefixAsync(request);
-        RestResponse<PagedResultDto<PrefixDto>> response = await IpamClient.FindPrefixesByCidrAsync(request.Prefix, request.Description);
+        RestResponse<PagedResultDto<PrefixDetailDto>> response = await IpamClient.FindPrefixesByCidrAsync(request.Prefix, request.Description);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Data.Should().NotBeNull();
-        PrefixDto prefix = response.Data!.Results.Should().ContainSingle(x => x.Description == request.Description).Which;
+        PrefixDetailDto prefix = response.Data!.Results.Should().ContainSingle(x => x.Description == request.Description).Which;
         IpamSteps.RegisterPrefixCleanup(prefix.Id);
         response.Data.Count.Should().Be(1);
         prefix.Id.Should().BePositive();
