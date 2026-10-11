@@ -98,6 +98,10 @@ Alias SQL columns to DB-row C# member names; tests must not translate
   use asynchronous connection acquisition and Dapper execution.
 - Prefer Bogus `Faker`/`Randomizer` and the existing generator pattern for unique
   or varied test values. Fixed domain values remain constants.
+- Teardown attempts evidence independently, then attempts every cleanup/release.
+  Preserve an existing test failure and report secondary errors. Fail a passing
+  test when data cleanup or resource release fails. Finalize traces through the
+  framework and release shared Playwright state only at run end.
 - Register prerequisite cleanup in creation order so LIFO deletion removes
   dependents first. For UI creation, register lookup-based cleanup before
   submission and identify only the test-owned record if later operations fail.

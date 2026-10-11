@@ -67,7 +67,7 @@ public static class TestIdentifier
     /// </summary>
     private static void EnsureWithinTestContext(TestContextSnapshot snapshot)
     {
-        var isAdhocContext = string.Equals(snapshot.MethodName, AdhocTestMethodName, StringComparison.Ordinal);
+        bool isAdhocContext = string.Equals(snapshot.MethodName, AdhocTestMethodName, StringComparison.Ordinal);
 
         if (isAdhocContext || string.IsNullOrEmpty(snapshot.Id))
         {

@@ -27,12 +27,12 @@ public static class EntraIdTokenService
     /// <returns>The access token string.</returns>
     public static async Task<string> GetTokenAsync(string scopeKey)
     {
-        if (s_tokenCache.TryGetValue(scopeKey, out var cachedToken))
+        if (s_tokenCache.TryGetValue(scopeKey, out string? cachedToken))
         {
             return cachedToken;
         }
 
-        var token = await AcquireTokenAsync(scopeKey);
+        string token = await AcquireTokenAsync(scopeKey);
         s_tokenCache[scopeKey] = token;
         return token;
     }
@@ -61,14 +61,14 @@ public static class EntraIdTokenService
             ?? throw new InvalidOperationException(
                 "EntraIdSettings configuration section is missing. Configure 'EntraIdSettings' in appsettings.");
 
-        if (!settings.EntraIdScopes.TryGetValue(scopeKey, out var scope))
+        if (!settings.EntraIdScopes.TryGetValue(scopeKey, out string? scope))
         {
             throw new KeyNotFoundException(
                 $"Scope key '{scopeKey}' was not found in EntraIdSettings.EntraIdScopes. " +
                 $"Available keys: {string.Join(", ", settings.EntraIdScopes.Keys)}");
         }
 
-        var authority = $"https://login.microsoftonline.com/{settings.EntraIdTenantId}";
+        string authority = $"https://login.microsoftonline.com/{settings.EntraIdTenantId}";
         IConfidentialClientApplication app = ConfidentialClientApplicationBuilder
             .Create(settings.EntraIdClientId)
             .WithClientSecret(settings.EntraIdClientSecret)

@@ -72,7 +72,7 @@ public sealed class PostgreSqlConnectionPool : IDisposable
         {
             foreach (DatabaseInfo db in dbSettings.Database)
             {
-                var dbName = db.DbName
+                string dbName = db.DbName
                     ?? throw new InvalidOperationException(
                         "DbSettings.Database[].DbName is not configured.");
 
@@ -99,7 +99,7 @@ public sealed class PostgreSqlConnectionPool : IDisposable
 
     private static NpgsqlDataSource CreateDataSource(DatabaseInfo dbInfo, DBConfigurationDTO dbSettings)
     {
-        var connectionString = BuildConnectionString(dbInfo, dbSettings);
+        string connectionString = BuildConnectionString(dbInfo, dbSettings);
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 
         return dataSourceBuilder.Build();
@@ -107,7 +107,8 @@ public sealed class PostgreSqlConnectionPool : IDisposable
 
     private static string BuildConnectionString(DatabaseInfo dbInfo, DBConfigurationDTO dbSettings)
     {
-        var connectionStringParts = new Dictionary<string, object> {
+        var connectionStringParts = new Dictionary<string, object>
+        {
             ["Host"] = dbSettings.Server
                 ?? throw new InvalidOperationException("DbSettings.Server is not configured."),
             ["Database"] = dbInfo.DbName
@@ -131,7 +132,7 @@ public sealed class PostgreSqlConnectionPool : IDisposable
         connectionStringParts["MaxPoolSize"] = 20;
         connectionStringParts["Command Timeout"] = 30;
 
-        var connectionString = string.Join(";", connectionStringParts.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+        string connectionString = string.Join(";", connectionStringParts.Select(kvp => $"{kvp.Key}={kvp.Value}"));
         return connectionString;
     }
 

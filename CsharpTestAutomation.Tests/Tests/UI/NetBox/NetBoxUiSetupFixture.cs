@@ -37,6 +37,7 @@ public sealed class NetBoxUiSetupFixture
             ?? throw new InvalidOperationException("Could not resolve the NetBox UI storage-state directory.");
         Directory.CreateDirectory(storageStateDirectory);
 
+        Exception? primaryError = null;
         await PlaywrightBrowserFactory.InitializeAsync();
         try
         {
@@ -49,10 +50,29 @@ public sealed class NetBoxUiSetupFixture
 
             s_log.Info($"Captured shared NetBox UI storage state at '{StorageStatePath}'.");
         }
+        catch (Exception ex)
+        {
+            primaryError = ex;
+            try { await PlaywrightBrowserFactory.StopTracingAsync(testFailed: true); }
+            catch (Exception traceError) { s_log.Error(traceError, "Could not retain authentication trace."); }
+            throw;
+        }
         finally
         {
-            await PlaywrightBrowserFactory.DisposeContextAsync();
-            await PlaywrightBrowserFactory.DisposeBrowserAsync();
+            List<Exception> errors = [];
+            try { await PlaywrightBrowserFactory.DisposeContextAsync(); }
+            catch (Exception ex) { errors.Add(ex); }
+            try { await PlaywrightBrowserFactory.DisposeBrowserAsync(); }
+            catch (Exception ex) { errors.Add(ex); }
+            foreach (Exception error in errors)
+            {
+                s_log.Error(error, "Authentication browser release failed.");
+            }
+
+            if (primaryError is null && errors.Count > 0)
+            {
+                throw new AggregateException("Authentication browser release failed.", errors);
+            }
         }
     }
 

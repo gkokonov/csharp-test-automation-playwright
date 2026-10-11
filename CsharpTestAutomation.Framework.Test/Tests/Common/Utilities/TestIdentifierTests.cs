@@ -12,7 +12,7 @@ public class TestIdentifierTests
     [Test]
     public void Verify_TestIdContainsMethodName_When_CalledWithinTest()
     {
-        var testId = TestIdentifier.GetTestId();
+        string testId = TestIdentifier.GetTestId();
 
         testId.Should().NotBeNullOrEmpty();
         testId.Should().Contain(nameof(Verify_TestIdContainsMethodName_When_CalledWithinTest));
@@ -21,8 +21,8 @@ public class TestIdentifierTests
     [Test]
     public void Verify_TestIdRemainsStable_When_CalledMultipleTimes()
     {
-        var first = TestIdentifier.GetTestId();
-        var second = TestIdentifier.GetTestId();
+        string first = TestIdentifier.GetTestId();
+        string second = TestIdentifier.GetTestId();
 
         second.Should().Be(first);
     }
@@ -30,10 +30,10 @@ public class TestIdentifierTests
     [Test]
     public void Verify_EquivalentTestIdGenerated_When_CacheIsCleared()
     {
-        var before = TestIdentifier.GetTestId();
+        string before = TestIdentifier.GetTestId();
 
         TestIdentifier.ClearCache();
-        var after = TestIdentifier.GetTestId();
+        string after = TestIdentifier.GetTestId();
 
         after.Should().Be(before);
     }

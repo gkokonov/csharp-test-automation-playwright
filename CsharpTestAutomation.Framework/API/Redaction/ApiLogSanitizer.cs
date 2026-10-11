@@ -134,7 +134,7 @@ public sealed class ApiLogSanitizer(ApiLoggingSettings settings) : IApiLogSaniti
             return fields;
         }
 
-        foreach (var field in settings.AdditionalRedactedFields)
+        foreach (string field in settings.AdditionalRedactedFields)
         {
             if (!string.IsNullOrWhiteSpace(field))
             {
@@ -154,7 +154,7 @@ public sealed class ApiLogSanitizer(ApiLoggingSettings settings) : IApiLogSaniti
             return names;
         }
 
-        foreach (var name in additional)
+        foreach (string name in additional)
         {
             if (!string.IsNullOrWhiteSpace(name))
             {

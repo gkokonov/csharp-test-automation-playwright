@@ -23,7 +23,7 @@ public class ScenarioCleanupActionsTests
     public async Task Verify_CleanupActionsRunOnce_When_CleanupIsCalledTwice()
     {
         var cleanup = new CsharpTestAutomation.Framework.Common.ScenarioCleanupActions();
-        var count = 0;
+        int count = 0;
         cleanup.AddCleanUpAction(() => count++);
 
         await cleanup.CleanUpAsync();
@@ -36,7 +36,7 @@ public class ScenarioCleanupActionsTests
     public async Task Verify_AllActionsKept_When_CleanupActionsAreAddedConcurrently()
     {
         var cleanup = new CsharpTestAutomation.Framework.Common.ScenarioCleanupActions();
-        var count = 0;
+        int count = 0;
 
         Parallel.For(0, 1_000, _ => cleanup.AddCleanUpAction(() => Interlocked.Increment(ref count)));
         await cleanup.CleanUpAsync();

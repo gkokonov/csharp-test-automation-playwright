@@ -58,7 +58,7 @@ public abstract class BaseBuilder<TModel>
             {
                 if (string.Equals(kvp.Key, property.Name, StringComparison.OrdinalIgnoreCase) || aliases != null && aliases!.Any(x => x.Alias.Equals(kvp.Key, StringComparison.OrdinalIgnoreCase)))
                 {
-                    var value = kvp.Value;
+                    object? value = kvp.Value;
                     if (value != null && property.PropertyType != value.GetType())
                     {
                         Type targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;

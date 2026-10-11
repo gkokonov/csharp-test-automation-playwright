@@ -21,7 +21,7 @@ public class User
 
         var comparedUserObject = (User)obj;
 
-        var result =
+        bool result =
             Id == comparedUserObject.Id &&
             FirstName == comparedUserObject.FirstName &&
             SirName == comparedUserObject.SirName &&

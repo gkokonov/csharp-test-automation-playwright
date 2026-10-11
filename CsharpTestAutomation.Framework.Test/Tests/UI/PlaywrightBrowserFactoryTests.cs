@@ -167,8 +167,8 @@ public class PlaywrightBrowserFactoryTests
     public async Task Verify_CookiesPreserved_When_ContextUsesStorageState()
     {
         // Arrange
-        var testCookieName = "testCookie";
-        var testCookieValue = "cookieValue123";
+        string testCookieName = "testCookie";
+        string testCookieValue = "cookieValue123";
 
         await PlaywrightBrowserFactory.InitializeAsync();
 
@@ -185,7 +185,7 @@ public class PlaywrightBrowserFactoryTests
                 }
             ]);
 
-        var storageStatePath = await page1.Context.StorageStateAsync();
+        string storageStatePath = await page1.Context.StorageStateAsync();
 
         await PlaywrightBrowserFactory.DisposeContextAsync();
 
@@ -209,7 +209,8 @@ public class PlaywrightBrowserFactoryTests
         // Arrange
         // httpbin.org/basic-auth/{username}/{password} requires matching credentials
         CoreConfiguration config = AppConfiguration<CoreConfiguration>.Instance.Settings;
-        config.HttpCredentials = new HttpCredentials {
+        config.HttpCredentials = new HttpCredentials
+        {
             Username = "user",
             Password = "passwd",
             Origin = "https://httpbin.org" // The origin must match the site we are testing
@@ -223,7 +224,7 @@ public class PlaywrightBrowserFactoryTests
         await page.GotoAsync("https://httpbin.org/basic-auth/user/passwd");
 
         // Assert
-        var content = await page.ContentAsync();
+        string content = await page.ContentAsync();
         content.Should().Contain("\"authenticated\": true");
 
         await AllureExtensions.CaptureScreenshotAsync(page, "HttpAuthSuccessScreenshot");

@@ -16,7 +16,7 @@ public static class LocatorExtensions
         if (options.Count <= 1)
             return false;
 
-        var randomIndex = Random.Shared.Next(1, options.Count);
+        int randomIndex = Random.Shared.Next(1, options.Count);
 
         await locator.SelectOptionAsync(new SelectOptionValue { Index = randomIndex });
 
@@ -27,7 +27,7 @@ public static class LocatorExtensions
 
     public static async Task<bool> IsDisabledAsync(this ILocator locator)
     {
-        var isDisabled = !await locator.IsEnabledAsync();
+        bool isDisabled = !await locator.IsEnabledAsync();
         return isDisabled;
     }
 
@@ -41,7 +41,8 @@ public static class LocatorExtensions
     {
         try
         {
-            await locator.WaitForAsync(new LocatorWaitForOptions {
+            await locator.WaitForAsync(new LocatorWaitForOptions
+            {
                 State = WaitForSelectorState.Visible,
                 Timeout = (float)(timeout ?? TimeSpan.FromSeconds(5)).TotalMilliseconds
             });

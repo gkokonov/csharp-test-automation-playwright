@@ -16,7 +16,7 @@ public static class FileExtentions
     /// <returns>The full path to the file as string</returns>
     public static string GetTestDataFilePath(string fileName, params string[] subFolders)
     {
-        var assemblyDir = Path.GetDirectoryName(Path.GetFullPath(Assembly.GetExecutingAssembly().Location));
+        string? assemblyDir = Path.GetDirectoryName(Path.GetFullPath(Assembly.GetExecutingAssembly().Location));
 
         // Build the test data path
         var pathParts = new List<string> { "TestData" };
@@ -29,7 +29,7 @@ public static class FileExtentions
 
         pathParts.Add(fileName);
 
-        var testDataFilePath = Path.Combine(assemblyDir ?? throw new InvalidOperationException("Assembly dir is empty!"),
+        string testDataFilePath = Path.Combine(assemblyDir ?? throw new InvalidOperationException("Assembly dir is empty!"),
                                             Path.Combine(pathParts.ToArray()));
 
         return testDataFilePath;
@@ -44,7 +44,7 @@ public static class FileExtentions
     /// <returns>Content of the specified file as string</returns>
     public static string GetTestDataFileContent(string fileName, params string[] subFolders)
     {
-        var testDataFilePath = GetTestDataFilePath(fileName, subFolders);
+        string testDataFilePath = GetTestDataFilePath(fileName, subFolders);
         return File.ReadAllText(testDataFilePath);
     }
 }

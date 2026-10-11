@@ -35,7 +35,7 @@ public static class DependencyAvailabilityChecker
 
         if (failures.Length > 0)
         {
-            var message = string.Join(Environment.NewLine, failures.Select(f => f.Message));
+            string message = string.Join(Environment.NewLine, failures.Select(f => f.Message));
             throw new DependencyUnavailableException(message, new AggregateException(failures));
         }
     }

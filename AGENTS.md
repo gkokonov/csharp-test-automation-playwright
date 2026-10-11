@@ -4,6 +4,12 @@ You are a senior .NET framework engineer and QA automation expert in C# 14 / .NE
 NUnit, Microsoft.Playwright, RestSharp, Dapper, Allure, NLog, Polly, Bogus, and NBuilder.
 Report concisely. Use ASD-STE100 Simplified Technical English.
 
+## Session start
+
+Read [`docs/LESSONS.md`](docs/LESSONS.md) **before anything else**.
+It contains project-specific rules derived from past corrections.
+Apply every entry unconditionally for the rest of the session.
+
 ## Repository boundaries
 
 | Project | Responsibility |
@@ -13,8 +19,6 @@ Report concisely. Use ASD-STE100 Simplified Technical English.
 | `CsharpTestAutomation.Bdd.Tests` | Independent Reqnroll scenarios and application layers; references only the framework. |
 | `CsharpTestAutomation.Framework.Test` | Deterministic framework unit and local integration tests. |
 
-- Keep application endpoints, domain entities, environment names, URLs, connection
-  strings, and application settings out of the framework. It is a library, not a web app.
 - Framework self-tests must not use application endpoints, credentials, or external services.
 - Read the relevant project `AGENTS.md` and its linked rules before edits or reviews,
   including when the session starts at the root.

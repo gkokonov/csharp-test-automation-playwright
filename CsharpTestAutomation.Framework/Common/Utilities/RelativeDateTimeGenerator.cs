@@ -84,14 +84,15 @@ public static partial class RelativeDateTimeGenerator
         if (!match.Success)
             throw new FormatException($"Invalid date string: '{input}'");
 
-        var value = int.Parse(match.Groups["value"].Value, CultureInfo.InvariantCulture);
-        var unit = match.Groups["unit"].Value.ToLowerInvariant();
-        var direction = match.Groups["direction"].Value.ToLowerInvariant();
+        int value = int.Parse(match.Groups["value"].Value, CultureInfo.InvariantCulture);
+        string unit = match.Groups["unit"].Value.ToLowerInvariant();
+        string direction = match.Groups["direction"].Value.ToLowerInvariant();
 
         DateTime baseDate = DateTime.Today;
-        var sign = direction == "before" ? -1 : 1;
+        int sign = direction == "before" ? -1 : 1;
 
-        DateTime result = unit switch {
+        DateTime result = unit switch
+        {
             "day" or "days" => baseDate.AddDays(sign * value),
             "month" or "months" => baseDate.AddMonths(sign * value),
             "year" or "years" => baseDate.AddYears(sign * value),
@@ -126,14 +127,15 @@ public static partial class RelativeDateTimeGenerator
         if (!match.Success)
             throw new FormatException($"Invalid time string: '{input}'");
 
-        var value = int.Parse(match.Groups["value"].Value, CultureInfo.InvariantCulture);
-        var unit = match.Groups["unit"].Value.ToLowerInvariant();
-        var direction = match.Groups["direction"].Value.ToLowerInvariant();
+        int value = int.Parse(match.Groups["value"].Value, CultureInfo.InvariantCulture);
+        string unit = match.Groups["unit"].Value.ToLowerInvariant();
+        string direction = match.Groups["direction"].Value.ToLowerInvariant();
 
         DateTime baseTime = DateTime.Now;
-        var sign = direction == "before" ? -1 : 1;
+        int sign = direction == "before" ? -1 : 1;
 
-        DateTime result = unit switch {
+        DateTime result = unit switch
+        {
             "hour" or "hours" => baseTime.AddHours(sign * value),
             "min" or "minute" or "minutes" => baseTime.AddMinutes(sign * value),
             "sec" or "second" or "seconds" => baseTime.AddSeconds(sign * value),

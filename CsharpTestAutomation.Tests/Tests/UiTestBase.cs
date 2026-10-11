@@ -42,45 +42,33 @@ public abstract class UiTestBase : TestBase
 
     protected override async Task OnTearDownAsync()
     {
+        bool testFailed = TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed;
+        List<Exception> errors = [];
+
+        if (testFailed && _page is { } page)
+        {
+            await AttemptTeardownAsync(() => CaptureScreenshotOnFailureAsync(page), errors);
+            if (s_configuration.CaptureBrowserLogs && _context is { } context)
+            {
+                await AttemptTeardownAsync(() => CaptureBrowserLogsOnFailureAsync(context), errors);
+            }
+        }
+
+        await AttemptTeardownAsync(() => AllureExtensions.CaptureTraceAsync(testFailed), errors);
         try
         {
-            var testFailed = TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed;
-
-            // Capture screenshot on failure
-            if (testFailed && _page is { } page)
-            {
-                await CaptureScreenshotOnFailureAsync(page);
-
-                // Also capture browser logs on failure if configured
-                if (s_configuration.CaptureBrowserLogs && _context is { } context)
-                {
-                    await CaptureBrowserLogsOnFailureAsync(context);
-                }
-            }
+            await AttemptTeardownAsync(PlaywrightBrowserFactory.DisposeContextAsync, errors);
+            await AttemptTeardownAsync(PlaywrightBrowserFactory.DisposeBrowserAsync, errors);
         }
         finally
         {
-            // Keep the original test result. A disposal failure must not replace it.
-            try
-            {
-                await PlaywrightBrowserFactory.DisposeContextAsync();
-            }
-            catch (Exception ex)
-            {
-                s_log.Error(ex, "Failed to dispose the browser context.");
-            }
-
-            try
-            {
-                await PlaywrightBrowserFactory.DisposeBrowserAsync();
-            }
-            catch (Exception ex)
-            {
-                s_log.Error(ex, "Failed to dispose the browser.");
-            }
-
             _context = null;
             _page = null;
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new AggregateException("UI test teardown failed.", errors);
         }
     }
 
@@ -103,5 +91,19 @@ public abstract class UiTestBase : TestBase
     /// </summary>
     private static async Task CaptureBrowserLogsOnFailureAsync(IBrowserContext context) =>
         await AllureExtensions.CaptureBrowserLogsAsync(context, TestContext.CurrentContext.Test.MethodName);
+
+    private static async Task AttemptTeardownAsync(Func<Task> action, List<Exception> errors)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex);
+            s_log.Error(ex, "UI test teardown action failed.");
+            TestContext.Error.WriteLine($"Secondary UI teardown error: {ex}");
+        }
+    }
 
 }

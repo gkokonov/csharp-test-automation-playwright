@@ -27,10 +27,11 @@ public static partial class RandomPlaceholderReplacer
 
         return s_placeholderPattern.Replace(input, match =>
         {
-            var type = match.Groups[1].Value;
-            var count = int.Parse(match.Groups[2].Value);
+            string type = match.Groups[1].Value;
+            int count = int.Parse(match.Groups[2].Value);
 
-            return type switch {
+            return type switch
+            {
                 "d" => s_random.String(count, '0', '9'),
                 "a" => s_random.String(count, 'a', 'z'),
                 "A" => s_random.String(count, 'A', 'Z'),

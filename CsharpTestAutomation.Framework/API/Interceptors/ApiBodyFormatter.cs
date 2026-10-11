@@ -13,7 +13,8 @@ namespace CsharpTestAutomation.Framework.API.Interceptors;
 internal static class ApiBodyFormatter
 {
     /// <summary>Serializes <paramref name="body"/> to JSON, or returns it unchanged when it is already a string.</summary>
-    public static string Serialize(object? body) => body switch {
+    public static string Serialize(object? body) => body switch
+    {
         null => string.Empty,
         string s => s,
         _ => JsonSerializer.Serialize(body, JsonExtensions.DefaultOptions)
@@ -25,7 +26,7 @@ internal static class ApiBodyFormatter
     /// </summary>
     public static string ExtractRequestBody(RestResponseBase response)
     {
-        var value = response.Request?.Parameters
+        object? value = response.Request?.Parameters
             .FirstOrDefault(p => p.Type == ParameterType.RequestBody)?.Value;
 
         return Serialize(value);

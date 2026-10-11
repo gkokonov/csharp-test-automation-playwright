@@ -69,7 +69,7 @@ public class ScenarioCleanupActions
         }
 
         List<Exception>? exceptions = null;
-        for (var i = actions.Length - 1; i >= 0; i--)
+        for (int i = actions.Length - 1; i >= 0; i--)
         {
             try
             {
@@ -102,7 +102,7 @@ public class ScenarioCleanupActions
     {
         lock (_lock)
         {
-            var index = _actions.FindLastIndex(entry => entry.IsAsync == isAsync);
+            int index = _actions.FindLastIndex(entry => entry.IsAsync == isAsync);
             if (index >= 0)
             {
                 _actions.RemoveAt(index);

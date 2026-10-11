@@ -41,7 +41,7 @@ public class TestContainer
     /// </summary>
     public T? Get<T>(string? name) where T : class
     {
-        if (_services.TryGetValue((typeof(T), name ?? string.Empty), out var service))
+        if (_services.TryGetValue((typeof(T), name ?? string.Empty), out object? service))
         {
             return (T)service;
         }
@@ -67,24 +67,30 @@ public class TestContainer
     public void Clear() => _services.Clear();
 
     /// <summary>
-    /// Try to dispose all disposable services in the container.
+    /// Attempts each distinct disposable service, then reports all disposal failures.
     /// </summary>
     public async Task DisposeServicesAsync()
     {
-        foreach (var service in _services.Values)
+        List<Exception> errors = [];
+        foreach (object service in _services.Values.Distinct(ReferenceEqualityComparer.Instance))
         {
             if (service is IAsyncDisposable asyncDisposable)
             {
                 try
                 { await asyncDisposable.DisposeAsync(); }
-                catch (Exception ex) { s_log.Error(ex, $"Error async disposing service of type {service.GetType().Name}"); }
+                catch (Exception ex) { errors.Add(ex); s_log.Error(ex, $"Error async disposing service of type {service.GetType().Name}"); }
             }
             else if (service is IDisposable disposable)
             {
                 try
                 { disposable.Dispose(); }
-                catch (Exception ex) { s_log.Error(ex, $"Error disposing service of type {service.GetType().Name}"); }
+                catch (Exception ex) { errors.Add(ex); s_log.Error(ex, $"Error disposing service of type {service.GetType().Name}"); }
             }
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new AggregateException("Test service disposal failed.", errors);
         }
     }
 }

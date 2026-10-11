@@ -60,10 +60,11 @@ public sealed class ApiLoggingInterceptor(IApiLogSanitizer sanitizer, ApiLogging
                 sanitizer.SanitizeHeaders(ApiHeaderExtractor.ExtractRequestHeaders(response));
             IReadOnlyDictionary<string, string> responseHeaders =
                 sanitizer.SanitizeHeaders(ApiHeaderExtractor.ExtractResponseHeaders(response));
-            var requestBody = Truncate(sanitizer.SanitizeBody(ApiBodyFormatter.ExtractRequestBody(response)));
-            var responseBody = Truncate(sanitizer.SanitizeBody(response.Content ?? string.Empty));
+            string requestBody = Truncate(sanitizer.SanitizeBody(ApiBodyFormatter.ExtractRequestBody(response)));
+            string responseBody = Truncate(sanitizer.SanitizeBody(response.Content ?? string.Empty));
 
-            var entry = new ApiLogEntry {
+            var entry = new ApiLogEntry
+            {
                 Method = response.Request.Method.ToString().ToUpperInvariant(),
                 Resource = response.Request.Resource,
                 FullUri = response.ResponseUri,
@@ -93,7 +94,7 @@ public sealed class ApiLoggingInterceptor(IApiLogSanitizer sanitizer, ApiLogging
 
     private static void LogToNLog(ApiLogEntry entry, Exception? errorException)
     {
-        var message =
+        string message =
             $"[API] {entry.Method} {entry.Resource} → {entry.StatusCode} | {entry.Elapsed.TotalMilliseconds:F0}ms";
 
         if (errorException is not null || entry.StatusCode >= 500)
@@ -250,11 +251,11 @@ public sealed class ApiLoggingInterceptor(IApiLogSanitizer sanitizer, ApiLogging
             try
             {
                 var formatted = new StringBuilder();
-                foreach (var pair in body.Split('&'))
+                foreach (string pair in body.Split('&'))
                 {
-                    var parts = pair.Split('=', 2);
-                    var key = Uri.UnescapeDataString(parts[0]);
-                    var value = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty;
+                    string[] parts = pair.Split('=', 2);
+                    string key = Uri.UnescapeDataString(parts[0]);
+                    string value = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty;
                     formatted.AppendLine($"{key}: {value}");
                 }
 
@@ -271,14 +272,14 @@ public sealed class ApiLoggingInterceptor(IApiLogSanitizer sanitizer, ApiLogging
 
     private string Truncate(string value)
     {
-        var maxBytes = settings.MaxBodySizeBytes;
+        int maxBytes = settings.MaxBodySizeBytes;
         if (string.IsNullOrEmpty(value) || Encoding.UTF8.GetByteCount(value) <= maxBytes)
         {
             return value;
         }
 
-        var byteCount = 0;
-        var charCount = 0;
+        int byteCount = 0;
+        int charCount = 0;
         foreach (Rune rune in value.EnumerateRunes())
         {
             byteCount += rune.Utf8SequenceLength;

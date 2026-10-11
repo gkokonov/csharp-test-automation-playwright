@@ -27,7 +27,7 @@ public sealed class NetBoxAuthClient(HttpClient httpClient, NetBoxConfigurationD
         // "version": 1 requests a classic single-secret token; NetBox 4.x defaults to v2, whose
         // split key/secret pair requires the "Bearer <key>.<token>" scheme instead of this client's
         // "Authorization: Token <value>" (see NetBoxTokenAuthenticator).
-        var requestBody = JsonSerializer.Serialize(new { username = configuration.Username, password = configuration.Password, version = 1 });
+        string requestBody = JsonSerializer.Serialize(new { username = configuration.Username, password = configuration.Password, version = 1 });
         using var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
         using HttpResponseMessage response = await httpClient.PostAsync(endpoint, content, cancellationToken);
 

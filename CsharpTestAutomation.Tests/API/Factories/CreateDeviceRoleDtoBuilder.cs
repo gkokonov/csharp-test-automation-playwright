@@ -8,7 +8,7 @@ public class CreateDeviceRoleDtoBuilder : BaseBuilder<CreateDeviceRoleDto>
 {
     public override BaseBuilder<CreateDeviceRoleDto> Default()
     {
-        var name = NetBoxTestData.NewName("role");
+        string name = NetBoxTestData.NewName("role");
 
         With(x => x.Name = name);
         With(x => x.Slug = name);

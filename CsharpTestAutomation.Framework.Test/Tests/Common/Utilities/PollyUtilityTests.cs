@@ -11,7 +11,7 @@ public class PollyUtilityTests
     [Test]
     public async Task Verify_ActionCompletes_When_MatchingExceptionIsRetried()
     {
-        var attempts = 0;
+        int attempts = 0;
 
         await PollyUtility.WaitForAction<InvalidOperationException>(
             () =>
@@ -31,7 +31,7 @@ public class PollyUtilityTests
     [Test]
     public async Task Verify_FinalResultCaptured_When_MatchingExceptionIsRetried()
     {
-        var attempts = 0;
+        int attempts = 0;
 
         PolicyResult<int> result = await PollyUtility.WaitForActionWithResult<int, InvalidOperationException>(
             () =>
@@ -52,9 +52,9 @@ public class PollyUtilityTests
     [Test]
     public async Task Verify_ThirdResultReturned_When_MatchOccursOnThirdAttempt()
     {
-        var attempts = 0;
+        int attempts = 0;
 
-        var result = await PollyUtility.WaitForResult(
+        int result = await PollyUtility.WaitForResult(
             _ => Task.FromResult(++attempts),
             attempt => attempt < 3,
             retryCount: 3,
@@ -67,7 +67,7 @@ public class PollyUtilityTests
     [Test]
     public async Task Verify_RetryExceptionThrown_When_ResultNeverMatches()
     {
-        var attempts = 0;
+        int attempts = 0;
 
         Task Act() => PollyUtility.WaitForResult(
             _ => Task.FromResult(++attempts),
@@ -82,7 +82,7 @@ public class PollyUtilityTests
     [Test]
     public async Task Verify_ActionExceptionPropagated_When_ActionThrows()
     {
-        var attempts = 0;
+        int attempts = 0;
 
         Task Act() => PollyUtility.WaitForResult<int>(
             _ =>

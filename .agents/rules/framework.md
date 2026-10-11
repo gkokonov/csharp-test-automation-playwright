@@ -74,6 +74,15 @@ Read only the reference for the layer under work; cross-layer work reads both.
 - `DisposeAllAsync` closes every browser and the shared Playwright instance. Call
   it only from an assembly-level teardown, or from a `[NonParallelizable]` fixture
   that owns that process. A parallel fixture must not call it.
+- Diagnostics are owned per context by the factory. Collect console and page-error
+  events before pages open. Create and track diagnostics only when logging or
+  tracing is enabled; allocate the log queue only when log capture is enabled.
+  `TraceEnabled` retains all traces; `TraceOnFailure`
+  records all contexts but retains only failed-test traces. Finalize tracing before
+  closing the context and attach retained traces through `AllureExtensions`.
+- Evidence helpers propagate capture errors. Callers attempt artifacts independently
+  and report secondary errors. Resource release attempts all owned resources, then
+  reports failures; a passing test must fail on release failure.
 - Device emulation copies device fields onto a new context-options object. Do not
   replace the options with `Devices[name]` and do not mutate that cached
   descriptor. Storage state, HTTP credentials, `BypassCSP`, and video settings

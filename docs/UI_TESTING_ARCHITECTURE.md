@@ -135,7 +135,12 @@ uses the BDD scenario lifecycle described afterward; bindings do not derive from
 `PlaywrightBrowserFactory` owns the browser/context/page **per test** (keyed by test id, safe for parallel execution). `UiTestBase` wires it into the NUnit lifecycle:
 
 - **Setup** (`OnSetUpAsync` → `InitializePlaywrightEnvironmentAsync`): initialize Playwright, create a context (optionally from a `storageState`), and open a page.
-- **Teardown** (`OnTearDownAsync`): on failure, attach a **screenshot** and, when `CaptureBrowserLogs` is `true`, **browser logs** to Allure; then dispose the context (auto-saving a trace if `TraceEnabled`) and the browser.
+- **Teardown** (`OnTearDownAsync`): independently capture a screenshot and optional
+  browser logs on failure, finalize and attach retained traces, then release the
+  context and browser. `TestBase` attempts data cleanup and every service release,
+  preserves the original failure, and fails a passing test on release errors.
+- **Run end**: `GlobalSetupFixture` releases shared Playwright state after all
+  fixtures finish, even if database release fails.
 
 ### NUnit NetBox authenticated UI state
 
@@ -162,7 +167,15 @@ and use the `Steps` suffix. Add that layer only when a repeated workflow needs i
 
 Optional artifacts are produced by the factory based on configuration:
 
-- **Tracing** (`TraceEnabled`): a Playwright trace `.zip` per context is written to `TraceDir` on context disposal (open with `playwright show-trace`).
+- **Tracing**: `TraceEnabled` retains all contexts; `TraceOnFailure` records all contexts
+  but discards passing-test traces. Hooks finalize traces before closing contexts
+  and attach retained test traces to Allure. Context disposal provides a fallback
+  for callers that do not finalize explicitly. Trace filenames are sanitized and unique.
+- **Browser logs**: the factory subscribes to context console and page-error events
+  before pages open. Logs include popups and pages closed before teardown.
+- **Disabled diagnostics**: when logging and both trace options are disabled,
+  the factory creates no diagnostics object or tracking entry. Trace-only contexts
+  have no log queue or console/error subscriptions.
 - **Video** (`RecordVideoEnabled`): recorded to `RecordDir`.
 - **Screenshots / browser logs**: captured by `UiTestBase` on failure and attached via `AllureExtensions`.
 
@@ -173,6 +186,10 @@ Allure suite/feature/story metadata is applied with attributes on the fixture an
 In `CsharpTestAutomation.Bdd.Tests`, `CommonHooks` registers one typed state and
 cleanup/lifecycle owner before bindings resolve. `ScenarioHooks` sets metadata
 and API dependencies, then creates browser resources only for `@UI` scenarios.
+Successful API reachability checks run once per run through the framework
+`DependencyAvailabilityChecker`; UI checks run only for UI scenarios. Failed
+checks are not cached. These checks run after metadata and before dependencies
+are acquired. Database initialization remains unchanged.
 Each scenario gets a fresh browser, context, and page. Acquired resources are
 registered for release immediately and injected into BoDi with `dispose:false`.
 
@@ -188,7 +205,8 @@ failure, executes LIFO data cleanup while API clients remain usable, then releas
 context, browser, and client. The primary scenario failure is preserved; secondary
 errors are reported without preventing later releases. Cleanup/release failure
 after a passing body fails NUnit and Allure before Allure.Reqnroll emits the result.
-Trace/video behavior remains owned by the factory. `AfterTestRun` removes the owned
+Trace/video behavior remains owned by the factory. Hooks use `AllureExtensions`
+for screenshots, browser logs, and retained trace attachments. `AfterTestRun` removes the owned
 snapshot, releases run services, and calls process-wide `DisposeAllAsync` after
 all scenarios finish. Feature fixtures use two workers and sequential scenarios.
 
@@ -197,8 +215,8 @@ scenario actions, assertions, and pre-submission cleanup registration. API setup
 and persistence steps live in `SiteApiSteps`; neither uses an extra workflow
 helper layer. The NUnit `Steps` layer described above remains unchanged.
 
-The factory currently suppresses some browser-close errors; these cannot become
-scenario failures unless the factory exposes them. See [BDD rules](../.agents/rules/bdd-testing.md)
+The factory exposes aggregated context-release errors after attempting trace
+finalization and close. Browser-close errors also propagate to the lifecycle. See [BDD rules](../.agents/rules/bdd-testing.md)
 for metadata and
 assertion contracts.
 
@@ -222,6 +240,7 @@ UI settings are bound from `CoreConfiguration` (extended by `ExtendedConfigurati
 | `HttpCredentials` | `HttpCredentials` | `null` | Default HTTP Basic credentials applied to the context. |
 | `CaptureBrowserLogs` | `bool` | `false` | Attach browser console logs to Allure on failure. |
 | `TraceEnabled` | `bool` | `false` | Record a Playwright trace per context, saved to `TraceDir`. |
+| `TraceOnFailure` | `bool` | `false` | Record traces but retain only failed-test traces unless `TraceEnabled` retains all. |
 | `TraceDir` | `string` | `<output>/Traces` | Output directory for trace `.zip` files. |
 | `RecordVideoEnabled` | `bool` | `false` | Record video per context, saved to `RecordDir`. |
 | `RecordDir` | `string` | `<output>/Videos` | Output directory for recorded video. |
@@ -330,6 +349,6 @@ Newest first. Bump the version and add a row whenever this document changes so f
 
 | Version | Date | Summary |
 | --- | --- | --- |
+| 1.4 | 2026-10-11 | Add failure-only tracing, context browser logs, and teardown error handling. |
 | 1.3 | 2026-10-01 | `DisposeContextAsync` always saves the trace when `TraceEnabled` is set; dropped the discard-trace overload. |
 | 1.2 | 2026-09-27 | Device emulation keeps storage state and credentials. `DisposeAllAsync` is process-wide. |
-| 1.1 | 2026-09-26 | Repair rule links and use the configured Playwright CLI workflow. |

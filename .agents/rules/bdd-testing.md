@@ -59,6 +59,12 @@ base classes and Allure.NUnit attributes apply to the NUnit application project.
   stopping later cleanup. Cleanup or explicit release failure after a passing
   body must fail both NUnit and Allure before the adapter emits the result.
   Do not assign `ScenarioContext.TestError` or silently swallow teardown errors.
+- Use the framework `AllureExtensions` for screenshot, browser logs, and retained
+  trace attachments. Keep evidence attempts independent and finalize traces before
+  context release, including partial setup.
+- Check NetBox HTTP dependencies through `DependencyAvailabilityChecker` after
+  metadata and before scenario setup. Cache successful checks per run under a lock;
+  check the UI only for UI scenarios and permit a later attempt after failure.
 - `BddRunResources` owns configuration, controlled token/pool initialization,
   and the lazy UI snapshot. A failed initialization is not cached; release the
   lock and partial resources before another attempt. API-only runs do not log in

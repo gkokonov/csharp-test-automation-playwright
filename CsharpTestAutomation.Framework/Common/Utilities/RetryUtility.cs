@@ -70,9 +70,10 @@ public static class PollyUtility
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(retryCount);
         ArgumentOutOfRangeException.ThrowIfNegative(retryEveryNSeconds);
 
-        var resultMatched = false;
+        bool resultMatched = false;
         ResiliencePipeline<TResult> pipeline = new ResiliencePipelineBuilder<TResult>()
-            .AddRetry(new RetryStrategyOptions<TResult> {
+            .AddRetry(new RetryStrategyOptions<TResult>
+            {
                 ShouldHandle = new PredicateBuilder<TResult>()
                     .HandleResult(result => resultMatched = retryWhile(result)),
                 MaxRetryAttempts = retryCount,

@@ -22,6 +22,8 @@ public class CoreConfiguration
     public bool ProxyMode { get; set; }  // default false if not set
     public bool CaptureBrowserLogs { get; set; }  // default false if not set
     public bool TraceEnabled { get; set; }  // default false if not set
+    /// <summary>Records every context but retains its trace only on failure, unless TraceEnabled retains all traces.</summary>
+    public bool TraceOnFailure { get; set; }
     public string TraceDir { get; set; } = Path.Combine(s_defaultOutputPath, "Traces");
     public string ReportDir { get; set; } = Path.Combine(s_defaultOutputPath, "Report");
     public bool RecordVideoEnabled { get; set; } // default false if not set

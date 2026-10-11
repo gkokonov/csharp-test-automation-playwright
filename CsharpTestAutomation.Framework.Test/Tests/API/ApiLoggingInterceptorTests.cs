@@ -34,7 +34,7 @@ public class ApiLoggingInterceptorTests
     {
         _server = WireMockServer.Start();
 
-        foreach (var delay in s_delaysInMs)
+        foreach (int delay in s_delaysInMs)
         {
             _server
                 .Given(Request.Create().WithPath($"/delay/{delay}/*").UsingGet())
@@ -52,7 +52,8 @@ public class ApiLoggingInterceptorTests
             .Given(Request.Create().WithPath("/ok/*").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200));
 
-        _logTarget = new MemoryTarget($"api-interceptor-{Guid.NewGuid():N}") {
+        _logTarget = new MemoryTarget($"api-interceptor-{Guid.NewGuid():N}")
+        {
             Layout = $"${{scopeproperty:{ApiLoggingInterceptor.TestNameScopeProperty}}}{Separator}${{message}}"
         };
 
@@ -60,8 +61,10 @@ public class ApiLoggingInterceptorTests
         LogManager.Configuration.AddRule(LogLevel.Debug, LogLevel.Fatal, _logTarget, InterceptorLoggerName);
         LogManager.ReconfigExistingLoggers();
 
-        _factory = new RestClientFactory(new ApiSettings {
-            Services = new Dictionary<string, ApiServiceSettings> {
+        _factory = new RestClientFactory(new ApiSettings
+        {
+            Services = new Dictionary<string, ApiServiceSettings>
+            {
                 [ServiceName] = new() { BaseUrl = _server.Url!, TimeoutSeconds = 30 }
             },
             Logging = new ApiLoggingSettings { AttachToAllure = false, LogFullDetail = true, MaxBodySizeBytes = 10 }
@@ -83,17 +86,17 @@ public class ApiLoggingInterceptorTests
     public async Task Verify_ElapsedTimeLoggedPerCall_When_RequestsRunInParallel()
     {
         using IRestClient client = _factory.Create(ServiceName);
-        var runId = Guid.NewGuid().ToString("N");
+        string runId = Guid.NewGuid().ToString("N");
         await client.ExecuteAsync(new RestRequest($"ok/{runId}-warmup"));
 
         Task<RestResponse>[] calls = [.. Enumerable.Range(0, 9)
             .Select(i => client.ExecuteAsync(new RestRequest($"delay/{s_delaysInMs[i % s_delaysInMs.Length]}/{runId}-{i}")))];
         await Task.WhenAll(calls);
 
-        for (var i = 0; i < calls.Length; i++)
+        for (int i = 0; i < calls.Length; i++)
         {
-            var delay = s_delaysInMs[i % s_delaysInMs.Length];
-            var elapsedMs = ReadElapsedMs($"delay/{delay}/{runId}-{i}");
+            int delay = s_delaysInMs[i % s_delaysInMs.Length];
+            int elapsedMs = ReadElapsedMs($"delay/{delay}/{runId}-{i}");
 
             elapsedMs.Should().BeInRange(delay - 50, delay + 999, $"call {i} was delayed by {delay}ms on the server");
         }
@@ -103,11 +106,11 @@ public class ApiLoggingInterceptorTests
     public async Task Verify_TestNameScopePropertyLogged_When_RequestComesFromTest()
     {
         using IRestClient client = _factory.Create(ServiceName);
-        var resource = $"ok/{Guid.NewGuid():N}";
+        string resource = $"ok/{Guid.NewGuid():N}";
 
         await client.ExecuteAsync(new RestRequest(resource));
 
-        var summary = FindSummaryLine(resource);
+        string summary = FindSummaryLine(resource);
         summary.Should().StartWith(TestContext.CurrentContext.Test.FullName + Separator);
     }
 
@@ -115,11 +118,11 @@ public class ApiLoggingInterceptorTests
     public async Task Verify_BodyTruncatedByUtf8Bytes_When_MultiByteBodyExceedsLimit()
     {
         using IRestClient client = _factory.Create(ServiceName);
-        var resource = $"multibyte/{Guid.NewGuid():N}";
+        string resource = $"multibyte/{Guid.NewGuid():N}";
 
         await client.ExecuteAsync(new RestRequest(resource));
 
-        var detail = _logTarget.Logs.Single(line => line.Contains("=== API RESPONSE ===") && line.Contains(resource));
+        string detail = _logTarget.Logs.Single(line => line.Contains("=== API RESPONSE ===") && line.Contains(resource));
         detail.Should().Contain(new string('é', 5) + " [TRUNCATED]");
         detail.Should().NotContain(new string('é', 6));
     }

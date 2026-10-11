@@ -5,6 +5,7 @@ using CsharpTestAutomation.Framework.Common;
 using CsharpTestAutomation.Framework.Common.Extensions;
 using CsharpTestAutomation.Framework.Common.Reporting.Allure;
 using CsharpTestAutomation.Framework.Common.Utilities;
+using CsharpTestAutomation.Framework.UI;
 using CsharpTestAutomation.Tests.Configurations;
 using CsharpTestAutomation.Tests.Database;
 using NLog;
@@ -34,6 +35,7 @@ public class GlobalSetupFixture
     {
         s_log.Debug("Global one-time teardown starting...");
 
+        List<Exception> errors = [];
         try
         {
             // Close the shared PostgreSQL connection pool once, after every fixture has finished.
@@ -41,11 +43,18 @@ public class GlobalSetupFixture
         }
         catch (Exception ex)
         {
+            errors.Add(ex);
             s_log.Error(ex, "Error during global teardown.");
         }
 
+        try { await PlaywrightBrowserFactory.DisposeAllAsync(); }
+        catch (Exception ex) { errors.Add(ex); }
+        if (errors.Count > 0)
+        {
+            throw new AggregateException("Global resource release failed.", errors);
+        }
+
         s_log.Debug("Global one-time teardown complete");
-        await Task.CompletedTask;
     }
 
     private static async Task CheckDependenciesAsync()

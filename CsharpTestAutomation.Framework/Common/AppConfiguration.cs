@@ -40,7 +40,7 @@ public class AppConfiguration<TSettingsModel>
 
     internal static IConfiguration BuildDefaultConfiguration(string basePath, string? environmentName)
     {
-        var hasEnvironment = !string.IsNullOrWhiteSpace(environmentName);
+        bool hasEnvironment = !string.IsNullOrWhiteSpace(environmentName);
 
         IConfigurationBuilder builder = new ConfigurationBuilder()
             .SetBasePath(basePath)

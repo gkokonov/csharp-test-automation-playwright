@@ -54,10 +54,10 @@ public class SiteManagementUiTests : NetBoxUiTestBase
         SiteDetailsPage detailsPage = await editPage.CreateSiteAsync(request);
 
         // Assert
-        var uiName = await detailsPage.GetNameAsync();
-        var uiSlug = await detailsPage.GetSlugAsync();
-        var uiStatus = await detailsPage.GetStatusAsync();
-        var uiDescription = await detailsPage.GetDescriptionAsync();
+        string uiName = await detailsPage.GetNameAsync();
+        string uiSlug = await detailsPage.GetSlugAsync();
+        string uiStatus = await detailsPage.GetStatusAsync();
+        string uiDescription = await detailsPage.GetDescriptionAsync();
 
         using (new AssertionScope())
         {
@@ -109,8 +109,8 @@ public class SiteManagementUiTests : NetBoxUiTestBase
         detailsPage = await editPage.UpdateAsync(update.Status, update.Description);
 
         // Assert
-        var uiStatus = await detailsPage.GetStatusAsync();
-        var uiDescription = await detailsPage.GetDescriptionAsync();
+        string uiStatus = await detailsPage.GetStatusAsync();
+        string uiDescription = await detailsPage.GetDescriptionAsync();
 
         using (new AssertionScope())
         {
@@ -154,7 +154,7 @@ public class SiteManagementUiTests : NetBoxUiTestBase
 
         // Assert
         await Expect(listPage.GetSiteRow(created.Name)).Not.ToBeVisibleAsync();
-        var rowPresent = await listPage.ContainsSiteAsync(created.Name);
+        bool rowPresent = await listPage.ContainsSiteAsync(created.Name);
         rowPresent.Should().BeFalse();
 
         RestResponse<SiteDetailDto> getResponse = await SitesClient.GetSiteAsync(created.Id);

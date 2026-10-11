@@ -5,6 +5,7 @@ using CsharpTestAutomation.Bdd.Tests.Authentication;
 using CsharpTestAutomation.Bdd.Tests.Lifecycle;
 using CsharpTestAutomation.Bdd.Tests.TestData.NetBox;
 using CsharpTestAutomation.Framework.API.Clients;
+using CsharpTestAutomation.Framework.Common.Reporting.Allure;
 using CsharpTestAutomation.Framework.UI;
 using Microsoft.Playwright;
 using Reqnroll;
@@ -31,6 +32,10 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
         AllureApi.SetSeverity(severity);
         AllureApi.SetOwner(isDevice ? DeviceScenarioMetadata.Owner : SiteScenarioMetadata.Owner);
     }
+
+    [BeforeScenario("NetBox", Order = 15)]
+    public Task CheckDependenciesAsync() =>
+        BddRunResources.Current.EnsureDependenciesAsync(scenario.ScenarioInfo.CombinedTags.Contains("UI"));
 
     [BeforeScenario("NetBox", Order = 20)]
     public async Task RegisterSiteDependenciesAsync()
@@ -64,16 +69,6 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
         container.RegisterInstanceAs(await resources.GetDevicesRepositoryAsync(), dispose: false);
     }
 
-    private void RegisterClient<T>(T client, string name) where T : class, IDisposable
-    {
-        lifecycle.AddRelease(name, () =>
-        {
-            client.Dispose();
-            return Task.CompletedTask;
-        });
-        container.RegisterInstanceAs(client, dispose: false);
-    }
-
     [BeforeScenario("UI", Order = 30)]
     public async Task RegisterUiDependenciesAsync()
     {
@@ -81,26 +76,21 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
         string storageState = await resources.GetStorageStateAsync();
         await PlaywrightBrowserFactory.InitializeAsync();
         lifecycle.AddRelease("scenario browser", PlaywrightBrowserFactory.DisposeBrowserAsync);
-        IBrowserContext context = await PlaywrightBrowserFactory.CreateContextAsync(storageState);
         lifecycle.AddRelease("scenario context", PlaywrightBrowserFactory.DisposeContextAsync);
+        lifecycle.AddRelease("scenario trace", () => AllureExtensions.CaptureTraceAsync(scenario.TestError is not null));
+        lifecycle.AddEvidence("Playwright trace", () => AllureExtensions.CaptureTraceAsync(testFailed: true));
+        IBrowserContext context = await PlaywrightBrowserFactory.CreateContextAsync(storageState);
+        if (resources.Configuration.CaptureBrowserLogs)
+        {
+            lifecycle.AddEvidence("browser logs", () => AllureExtensions.CaptureBrowserLogsAsync(context, "Browser logs"));
+        }
+
         IPage page = await PlaywrightBrowserFactory.CreatePageAsync();
         container.RegisterInstanceAs(PlaywrightBrowserFactory.GetCurrentBrowser(), dispose: false);
         container.RegisterInstanceAs(context, dispose: false);
         container.RegisterInstanceAs(page, dispose: false);
 
-        lifecycle.AddEvidence("screenshot", async () =>
-        {
-            byte[] bytes = await page.ScreenshotAsync();
-            AllureApi.AddAttachment("Screenshot", "image/png", bytes);
-        });
-        if (resources.Configuration.CaptureBrowserLogs)
-        {
-            lifecycle.AddEvidence("browser logs", async () =>
-            {
-                string logs = await page.EvaluateAsync<string>("() => (window.jsErrors || []).join('\\n')");
-                AllureApi.AddAttachment("Browser logs", "text/plain", Encoding.UTF8.GetBytes(logs));
-            });
-        }
+        lifecycle.AddEvidence("screenshot", () => AllureExtensions.CaptureScreenshotAsync(page, "Screenshot"));
     }
 
     // Allure.Reqnroll 2.15.0 emits results on ScenarioFinishedEvent after AfterScenario hooks.
@@ -124,5 +114,15 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
         string message = $"{name}: {error}";
         output.WriteLine(message);
         AllureApi.AddAttachment($"Secondary error: {name}", "text/plain", Encoding.UTF8.GetBytes(message));
+    }
+
+    private void RegisterClient<T>(T client, string name) where T : class, IDisposable
+    {
+        lifecycle.AddRelease(name, () =>
+        {
+            client.Dispose();
+            return Task.CompletedTask;
+        });
+        container.RegisterInstanceAs(client, dispose: false);
     }
 }

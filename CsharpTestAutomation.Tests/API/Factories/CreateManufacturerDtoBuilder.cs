@@ -8,7 +8,7 @@ public class CreateManufacturerDtoBuilder : BaseBuilder<CreateManufacturerDto>
 {
     public override BaseBuilder<CreateManufacturerDto> Default()
     {
-        var name = NetBoxTestData.NewName("manufacturer");
+        string name = NetBoxTestData.NewName("manufacturer");
 
         With(x => x.Name = name);
         With(x => x.Slug = name);

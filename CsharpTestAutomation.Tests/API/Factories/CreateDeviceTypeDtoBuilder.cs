@@ -12,7 +12,7 @@ public class CreateDeviceTypeDtoBuilder : BaseBuilder<CreateDeviceTypeDto>
 {
     public override BaseBuilder<CreateDeviceTypeDto> Default()
     {
-        var name = NetBoxTestData.NewName("devicetype");
+        string name = NetBoxTestData.NewName("devicetype");
 
         With(x => x.Model = name);
         With(x => x.Slug = name);

@@ -15,6 +15,7 @@ public static class PlaywrightBrowserFactory
     private static readonly Logger s_log = LogManager.GetCurrentClassLogger();
     private static readonly ConcurrentDictionary<string, IBrowser> s_browsers = new();
     private static readonly ConcurrentDictionary<string, IBrowserContext> s_contexts = new();
+    private static readonly ConcurrentDictionary<IBrowserContext, BrowserContextDiagnostics> s_diagnostics = new();
     private static readonly SemaphoreSlim s_playwrightLock = new(1, 1);
     private static volatile IPlaywright? s_playwrightInstance;
 
@@ -25,7 +26,7 @@ public static class PlaywrightBrowserFactory
     /// </summary>
     public static IBrowser GetCurrentBrowser()
     {
-        var testId = GetCurrentTestId();
+        string testId = GetCurrentTestId();
         return s_browsers.TryGetValue(testId, out IBrowser? browser)
             ? browser
             : throw new InvalidOperationException($"Browser not initialized for test {testId}");
@@ -36,7 +37,7 @@ public static class PlaywrightBrowserFactory
     /// </summary>
     public static IBrowserContext GetCurrentContext()
     {
-        var testId = GetCurrentTestId();
+        string testId = GetCurrentTestId();
         return s_contexts.TryGetValue(testId, out IBrowserContext? context)
             ? context
             : throw new InvalidOperationException($"Browser context not initialized for test {testId}");
@@ -47,7 +48,7 @@ public static class PlaywrightBrowserFactory
     /// </summary>
     public static async Task InitializeAsync()
     {
-        var testId = GetCurrentTestId();
+        string testId = GetCurrentTestId();
 
         // Initialize Playwright with thread-safe locking
         if (s_playwrightInstance == null)
@@ -93,7 +94,7 @@ public static class PlaywrightBrowserFactory
     /// </summary>
     public static async Task<IPage> CreatePageAsync()
     {
-        var testId = GetCurrentTestId();
+        string testId = GetCurrentTestId();
         try
         {
             IBrowserContext context = GetCurrentContext();
@@ -107,51 +108,36 @@ public static class PlaywrightBrowserFactory
         }
     }
 
-    /// <summary>
-    /// Disposes the current context, saving its trace to <see cref="CoreConfiguration.TraceDir"/>
-    /// when <see cref="CoreConfiguration.TraceEnabled"/> is <see langword="true"/>.
-    /// </summary>
+    /// <summary>Stops tracing and closes the context, reporting failures after all attempts.
+    /// Call StopTracingAsync first to retain failure-only traces.</summary>
     public static async Task DisposeContextAsync()
     {
-        var testId = GetCurrentTestId();
-
+        string testId = GetCurrentTestId();
         if (s_contexts.TryRemove(testId, out IBrowserContext? context))
         {
-            if (s_configuration.TraceEnabled)
-            {
-                try
-                {
-                    var traceDir = s_configuration.TraceDir;
-                    if (!Directory.Exists(traceDir))
-                    {
-                        Directory.CreateDirectory(traceDir);
-                    }
-
-                    var sanitizedName = SanitizeFileName(testId);
-                    var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-
-                    var traceFile = Path.Combine(traceDir, $"{sanitizedName}_{timestamp}.zip");
-
-                    await context.Tracing.StopAsync(new() { Path = traceFile }).ConfigureAwait(false);
-
-                    s_log.Debug($"Saved Playwright trace to {traceFile}.");
-                }
-                catch (Exception ex)
-                {
-                    s_log.Error(ex, $"Failed to stop Playwright tracing for test {testId}.");
-                }
-            }
-
-            try
-            {
-                await context.CloseAsync().ConfigureAwait(false);
-                s_log.Debug($"[{testId}] : Browser context closed.");
-            }
-            catch (Exception ex)
-            {
-                s_log.Error(ex, $"Error closing browser context for test {testId}");
-            }
+            await CloseContextAsync(context, testId).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>Stops the current context's trace and returns its saved path, or null when no trace is retained.</summary>
+    /// <param name="testFailed">Whether the test failed; controls failure-only retention.</param>
+    public static Task<string?> StopTracingAsync(bool testFailed)
+    {
+        string testId = GetCurrentTestId();
+        return s_contexts.TryGetValue(testId, out IBrowserContext? context)
+            && s_diagnostics.TryGetValue(context, out BrowserContextDiagnostics? diagnostics)
+            ? diagnostics.StopTracingAsync(testFailed, testId)
+            : Task.FromResult<string?>(null);
+    }
+
+    /// <summary>Returns console messages and page errors, including popups and pages already closed.</summary>
+    /// <param name="context">A context created by this factory with CaptureBrowserLogs enabled.</param>
+    public static IReadOnlyList<string> GetBrowserLogs(IBrowserContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        return s_diagnostics.TryGetValue(context, out BrowserContextDiagnostics? diagnostics)
+            ? diagnostics.GetLogs()
+            : throw new InvalidOperationException("Browser diagnostics are not registered for this context.");
     }
 
     /// <summary>
@@ -159,7 +145,7 @@ public static class PlaywrightBrowserFactory
     /// </summary>
     public static async Task DisposeBrowserAsync()
     {
-        var testId = GetCurrentTestId();
+        string testId = GetCurrentTestId();
 
         if (s_browsers.TryRemove(testId, out IBrowser? browser))
         {
@@ -171,6 +157,7 @@ public static class PlaywrightBrowserFactory
             catch (Exception ex)
             {
                 s_log.Error(ex, $"Error closing browser for test {testId}");
+                throw;
             }
         }
     }
@@ -183,45 +170,50 @@ public static class PlaywrightBrowserFactory
     /// </summary>
     public static async Task DisposeAllAsync()
     {
-        // Snapshot before iterating so concurrent additions/removals in parallel runs
-        // cannot cause entries to be silently skipped or double-closed.
-        foreach (KeyValuePair<string, IBrowserContext> pair in s_contexts.ToList())
+        List<Exception> errors = [];
+        foreach (string testId in s_contexts.Keys.ToArray())
         {
-            try
+            if (s_contexts.TryRemove(testId, out IBrowserContext? context))
             {
-                await pair.Value.CloseAsync().ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                s_log.Error(ex, $"Error closing browser context for test {pair.Key}");
+                try { await CloseContextAsync(context, testId).ConfigureAwait(false); }
+                catch (Exception ex) { errors.Add(ex); }
             }
         }
 
-        s_contexts.Clear();
-
-        foreach (KeyValuePair<string, IBrowser> pair in s_browsers.ToList())
+        foreach (string testId in s_browsers.Keys.ToArray())
         {
-            try
+            if (s_browsers.TryRemove(testId, out IBrowser? browser))
             {
-                await pair.Value.CloseAsync().ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                s_log.Error(ex, $"Error closing browser for test {pair.Key}");
+                try { await browser.CloseAsync().ConfigureAwait(false); }
+                catch (Exception ex) { errors.Add(ex); }
             }
         }
 
-        s_browsers.Clear();
+        try { s_playwrightInstance?.Dispose(); }
+        catch (Exception ex) { errors.Add(ex); }
+        finally { s_playwrightInstance = null; }
 
-        s_playwrightInstance?.Dispose();
-        s_playwrightInstance = null;
+        if (errors.Count > 0)
+        {
+            throw new AggregateException("Playwright resource release failed.", errors);
+        }
+    }
 
-        s_log.Debug("All Playwright resources disposed.");
+    private static async Task CloseContextAsync(IBrowserContext context, string testId)
+    {
+        if (s_diagnostics.TryRemove(context, out BrowserContextDiagnostics? diagnostics))
+        {
+            await diagnostics.CloseAsync(testId).ConfigureAwait(false);
+        }
+        else
+        {
+            await context.CloseAsync().ConfigureAwait(false);
+        }
     }
 
     private static async Task<IBrowserContext> CreateAndStoreContextAsync(string? storageState, HttpCredentials? httpCredentials)
     {
-        var testId = GetCurrentTestId();
+        string testId = GetCurrentTestId();
 
         if (!s_browsers.TryGetValue(testId, out IBrowser? browser))
         {
@@ -231,13 +223,17 @@ public static class PlaywrightBrowserFactory
         // Dispose any stale context from a previous call (e.g. a test retry that skipped teardown)
         if (s_contexts.TryRemove(testId, out IBrowserContext? stale))
         {
-            try
-            { await stale.CloseAsync().ConfigureAwait(false); }
-            catch (Exception ex) { s_log.Warn(ex, $"Failed to close stale context for test {testId} before replacement"); }
+            await CloseContextAsync(stale, testId).ConfigureAwait(false);
         }
 
         IBrowserContext context = await CreateBrowserContextAsync(browser, storageState, httpCredentials).ConfigureAwait(false);
         s_contexts[testId] = context;
+        if (s_configuration.CaptureBrowserLogs || s_configuration.TraceEnabled || s_configuration.TraceOnFailure)
+        {
+            var diagnostics = new BrowserContextDiagnostics(context, s_configuration);
+            s_diagnostics[context] = diagnostics;
+            await diagnostics.StartTracingAsync().ConfigureAwait(false);
+        }
 
         return context;
     }
@@ -285,32 +281,7 @@ public static class PlaywrightBrowserFactory
         context.SetDefaultNavigationTimeout(PlaywrightTimeouts.NavigationTimeoutInMS);
         context.SetDefaultTimeout(PlaywrightTimeouts.ActionsTimeoutInMS);
 
-        if (s_configuration.TraceEnabled)
-        {
-            try
-            {
-                await context.Tracing.StartAsync(new()
-                {
-                    Screenshots = true,
-                    Snapshots = true,
-                    Sources = true
-                });
-
-                s_log.Debug("Started Playwright trace recording.");
-            }
-            catch (Exception ex)
-            {
-                s_log.Error(ex, "Failed to start tracing");
-            }
-        }
-
         return context;
-    }
-
-    private static string SanitizeFileName(string fileName)
-    {
-        var invalidChars = Path.GetInvalidFileNameChars();
-        return string.Join("_", fileName.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)).Trim();
     }
 
     /// <summary>

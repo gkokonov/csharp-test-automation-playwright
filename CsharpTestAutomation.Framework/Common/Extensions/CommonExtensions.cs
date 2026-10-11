@@ -8,13 +8,15 @@ public static class CommonExtensions
     /// <summary>
     /// Return unique 18 characters number.
     /// </summary>
-    public static long UtcNowTicks {
-        get {
+    public static long UtcNowTicks
+    {
+        get
+        {
             long original, newValue;
             do
             {
                 original = field;
-                var now = DateTime.UtcNow.Ticks;
+                long now = DateTime.UtcNow.Ticks;
                 newValue = Math.Max(now, original + 1);
             } while (Interlocked.CompareExchange
                          (ref field, newValue, original) != original);

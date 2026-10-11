@@ -8,7 +8,7 @@ public class CreateSiteDtoBuilder : BaseBuilder<CreateSiteDto>
 {
     public override BaseBuilder<CreateSiteDto> Default()
     {
-        var name = NetBoxTestData.NewName("site");
+        string name = NetBoxTestData.NewName("site");
 
         With(x => x.Name = name);
         With(x => x.Slug = name);

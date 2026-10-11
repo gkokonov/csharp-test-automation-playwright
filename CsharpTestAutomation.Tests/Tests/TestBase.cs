@@ -48,13 +48,27 @@ public abstract class TestBase
     {
         s_log.Info($"{Environment.NewLine}----- Ending test '{TestIdentifier.GetTestId()}' -----");
 
+        bool testFailed = TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed;
+        List<Exception> errors = [];
         try
         {
-            await OnTearDownAsync();
+            await AttemptTeardownAsync(OnTearDownAsync, errors);
+            if (TestContainer.Get<ScenarioCleanupActions>() is { } cleanup)
+            {
+                await AttemptTeardownAsync(() => cleanup.CleanUpAsync(), errors);
+            }
+
+            await AttemptTeardownAsync(TestContainer.DisposeServicesAsync, errors);
         }
         finally
         {
-            await CleanUpContainerAsync();
+            TestContainer.Clear();
+        }
+
+        if (!testFailed && errors.Count > 0)
+        {
+            var error = new AggregateException("Test teardown failed.", errors);
+            throw new AssertionException(error.Message, error);
         }
     }
 
@@ -70,32 +84,14 @@ public abstract class TestBase
     /// </summary>
     protected virtual Task OnTearDownAsync() => Task.CompletedTask;
 
-    private async Task CleanUpContainerAsync()
+    private static async Task AttemptTeardownAsync(Func<Task> action, List<Exception> errors)
     {
-        try
-        {
-            // Execute cleanup actions in LIFO order
-            if (TestContainer.HasService<ScenarioCleanupActions>())
-            {
-                await TestContainer.Get<ScenarioCleanupActions>()!.CleanUpAsync();
-            }
-        }
+        try { await action(); }
         catch (Exception ex)
         {
-            s_log.Error(ex, "Error during test tear down");
-            throw;
-        }
-        finally
-        {
-            try
-            {
-                s_log.Debug("Dispose Test Container and its services");
-                await TestContainer.DisposeServicesAsync();
-            }
-            finally
-            {
-                TestContainer.Clear();
-            }
+            errors.Add(ex);
+            s_log.Error(ex, "Test teardown failed.");
+            TestContext.Error.WriteLine($"Secondary teardown error: {ex}");
         }
     }
 }

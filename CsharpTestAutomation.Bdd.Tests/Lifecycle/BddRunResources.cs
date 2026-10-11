@@ -5,6 +5,8 @@ using CsharpTestAutomation.Bdd.Tests.Database.NetBox.Queries;
 using CsharpTestAutomation.Bdd.Tests.UI.Pages;
 using CsharpTestAutomation.Bdd.Tests.UI.Pages.NetBox;
 using CsharpTestAutomation.Framework.Common;
+using CsharpTestAutomation.Framework.Common.Reporting.Allure;
+using CsharpTestAutomation.Framework.Common.Utilities;
 using CsharpTestAutomation.Framework.UI;
 using Microsoft.Playwright;
 
@@ -15,6 +17,10 @@ public sealed class BddRunResources
 {
     private static readonly Lazy<BddRunResources> s_current = new(() => new());
     private readonly HttpClient _authenticationHttpClient = new();
+    private readonly HttpClient _dependencyHttpClient = new() { Timeout = TimeSpan.FromSeconds(5) };
+    private readonly SemaphoreSlim _dependencyLock = new(1, 1);
+    private bool _apiAvailable;
+    private bool _uiAvailable;
     private readonly SemaphoreSlim _databaseLock = new(1, 1);
     private readonly AuthenticationSnapshot _snapshot;
     private PostgreSqlConnectionPool? _connections;
@@ -33,6 +39,35 @@ public sealed class BddRunResources
     public ExtendedConfiguration Configuration { get; }
 
     public NetBoxSession TokenSession { get; }
+
+    public async Task EnsureDependenciesAsync(bool includeUi)
+    {
+        await _dependencyLock.WaitAsync();
+        try
+        {
+            List<(string Name, string Url)> dependencies = [];
+            if (!_apiAvailable)
+            {
+                dependencies.Add(("NetBox API", Configuration.NetBox.ApiBaseUrl));
+            }
+
+            if (includeUi && !_uiAvailable)
+            {
+                dependencies.Add(("NetBox UI", Configuration.NetBox.BaseUrl));
+            }
+
+            if (dependencies.Count > 0)
+            {
+                await DependencyAvailabilityChecker.EnsureAllAvailableAsync(_dependencyHttpClient, dependencies);
+                _apiAvailable = true;
+                _uiAvailable |= includeUi;
+            }
+        }
+        finally
+        {
+            _dependencyLock.Release();
+        }
+    }
 
     public async Task<SitesDatabaseRepository> GetSitesRepositoryAsync() =>
         new(await GetConnectionsAsync(), Configuration.DbQueryTimeoutSeconds);
@@ -101,6 +136,16 @@ public sealed class BddRunResources
                 resources._authenticationHttpClient.Dispose();
                 return Task.CompletedTask;
             }, report, errors);
+            await ScenarioLifecycle.AttemptAsync("dependency HTTP client", () =>
+            {
+                resources._dependencyHttpClient.Dispose();
+                return Task.CompletedTask;
+            }, report, errors);
+            await ScenarioLifecycle.AttemptAsync("dependency lock", () =>
+            {
+                resources._dependencyLock.Dispose();
+                return Task.CompletedTask;
+            }, report, errors);
             await ScenarioLifecycle.AttemptAsync("database lock", () =>
             {
                 resources._databaseLock.Dispose();
@@ -124,35 +169,50 @@ public sealed class BddRunResources
         }
 
         bool browserCreated = false;
-        bool contextCreated = false;
+        IPage? page = null;
+        IBrowserContext? context = null;
+        Exception? primaryError = null;
         try
         {
             await Task.Run(() => Directory.CreateDirectory(Path.GetDirectoryName(path)!));
             await PlaywrightBrowserFactory.InitializeAsync();
             browserCreated = true;
-            IBrowserContext context = await PlaywrightBrowserFactory.CreateContextAsync();
-            contextCreated = true;
-            IPage page = await PlaywrightBrowserFactory.CreatePageAsync();
+            context = await PlaywrightBrowserFactory.CreateContextAsync();
+            page = await PlaywrightBrowserFactory.CreatePageAsync();
             NetBoxLoginPage login = BaseUIPage.Create<NetBoxLoginPage>(page);
             await login.OpenAsync();
             await login.SignInAsync(Configuration.NetBox.Username, Configuration.NetBox.Password);
             await context.StorageStateAsync(new() { Path = path });
         }
+        catch (Exception ex)
+        {
+            primaryError = ex;
+            Action<string, Exception> report = (name, error) => TestContext.Error.WriteLine($"Could not capture {name}: {error}");
+            if (page is not null)
+            {
+                await ScenarioLifecycle.AttemptAsync("bootstrap screenshot", () => AllureExtensions.CaptureScreenshotAsync(page, "Authentication screenshot"), report, null);
+            }
+
+            if (Configuration.CaptureBrowserLogs && context is not null)
+            {
+                await ScenarioLifecycle.AttemptAsync("bootstrap logs", () => AllureExtensions.CaptureBrowserLogsAsync(context), report, null);
+            }
+
+            await ScenarioLifecycle.AttemptAsync("bootstrap trace", () => AllureExtensions.CaptureTraceAsync(testFailed: true), report, null);
+            throw;
+        }
         finally
         {
-            // The bootstrap closes before the scenario's fresh browser is created.
-            try
+            if (browserCreated)
             {
-                if (contextCreated)
+                List<Exception> errors = [];
+                await ScenarioLifecycle.AttemptAsync("bootstrap context", PlaywrightBrowserFactory.DisposeContextAsync,
+                    (name, error) => TestContext.Error.WriteLine($"Could not release {name}: {error}"), errors);
+                await ScenarioLifecycle.AttemptAsync("bootstrap browser", PlaywrightBrowserFactory.DisposeBrowserAsync,
+                    (name, error) => TestContext.Error.WriteLine($"Could not release {name}: {error}"), errors);
+                if (primaryError is null && errors.Count > 0)
                 {
-                    await PlaywrightBrowserFactory.DisposeContextAsync();
-                }
-            }
-            finally
-            {
-                if (browserCreated)
-                {
-                    await PlaywrightBrowserFactory.DisposeBrowserAsync();
+                    throw new AggregateException("Authentication browser release failed.", errors);
                 }
             }
         }

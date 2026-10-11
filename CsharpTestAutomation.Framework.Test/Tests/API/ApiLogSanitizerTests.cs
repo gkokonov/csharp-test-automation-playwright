@@ -16,7 +16,8 @@ public class ApiLogSanitizerTests
     [Test]
     public void Verify_AuthorizationHeaderRedacted_When_SanitizingHeaders()
     {
-        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
+        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string>
+        {
             ["Authorization"] = "Bearer abc"
         };
 
@@ -28,7 +29,8 @@ public class ApiLogSanitizerTests
     [Test]
     public void Verify_CookieHeaderRedacted_When_SanitizingHeaders()
     {
-        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
+        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string>
+        {
             ["Cookie"] = "session=xyz"
         };
 
@@ -40,7 +42,8 @@ public class ApiLogSanitizerTests
     [Test]
     public void Verify_UnknownHeaderPassedThrough_When_SanitizingHeaders()
     {
-        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
+        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string>
+        {
             ["X-Custom"] = "value"
         };
 
@@ -52,11 +55,13 @@ public class ApiLogSanitizerTests
     [Test]
     public void Verify_ConfiguredHeaderRedacted_When_SanitizingHeaders()
     {
-        var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings {
+        var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings
+        {
             RedactSensitiveData = true,
             AdditionalRedactedHeaders = ["X-Api-Key"]
         });
-        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
+        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string>
+        {
             ["X-Api-Key"] = "secret"
         };
 
@@ -68,7 +73,8 @@ public class ApiLogSanitizerTests
     [Test]
     public void Verify_HeaderRedactedCaseInsensitively_When_SanitizingHeaders()
     {
-        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
+        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string>
+        {
             ["authorization"] = "token"
         };
 
@@ -82,7 +88,7 @@ public class ApiLogSanitizerTests
     {
         const string body = """{"name":"Alice","password":"s3cr3t"}""";
 
-        var sanitized = _sanitizer.SanitizeBody(body);
+        string sanitized = _sanitizer.SanitizeBody(body);
 
         sanitized.Should().Contain("***REDACTED***");
         sanitized.Should().NotContain("s3cr3t");
@@ -94,7 +100,7 @@ public class ApiLogSanitizerTests
     {
         const string body = """{"data":{"access_token":"abc"}}""";
 
-        var sanitized = _sanitizer.SanitizeBody(body);
+        string sanitized = _sanitizer.SanitizeBody(body);
 
         sanitized.Should().Contain("***REDACTED***");
         sanitized.Should().NotContain("abc");
@@ -105,7 +111,7 @@ public class ApiLogSanitizerTests
     {
         const string body = """{"name":"Alice"}""";
 
-        var sanitized = _sanitizer.SanitizeBody(body);
+        string sanitized = _sanitizer.SanitizeBody(body);
 
         sanitized.Should().Contain("Alice");
         sanitized.Should().NotContain("***REDACTED***");
@@ -116,7 +122,7 @@ public class ApiLogSanitizerTests
     {
         const string body = "not json";
 
-        var sanitized = _sanitizer.SanitizeBody(body);
+        string sanitized = _sanitizer.SanitizeBody(body);
 
         sanitized.Should().Be(body);
     }
@@ -124,7 +130,7 @@ public class ApiLogSanitizerTests
     [Test]
     public void Verify_NullReturned_When_BodyIsNull()
     {
-        var sanitized = _sanitizer.SanitizeBody(null!);
+        string sanitized = _sanitizer.SanitizeBody(null!);
 
         sanitized.Should().BeNull();
     }
@@ -136,7 +142,7 @@ public class ApiLogSanitizerTests
         var sanitizer = new ApiLogSanitizer(settings);
         const string body = """{"mySecret":"x"}""";
 
-        var sanitized = sanitizer.SanitizeBody(body);
+        string sanitized = sanitizer.SanitizeBody(body);
 
         sanitized.Should().Contain("***REDACTED***");
         sanitized.Should().NotContain("\"x\"");
@@ -146,7 +152,8 @@ public class ApiLogSanitizerTests
     public void Verify_SensitiveHeaderPassedThrough_When_RedactionIsDisabled()
     {
         var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings { RedactSensitiveData = false });
-        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string> {
+        IReadOnlyDictionary<string, string> headers = new Dictionary<string, string>
+        {
             ["Authorization"] = "Bearer abc"
         };
 
@@ -161,7 +168,7 @@ public class ApiLogSanitizerTests
         var sanitizer = new ApiLogSanitizer(new ApiLoggingSettings { RedactSensitiveData = false });
         const string body = """{"name":"Alice","password":"s3cr3t"}""";
 
-        var sanitized = sanitizer.SanitizeBody(body);
+        string sanitized = sanitizer.SanitizeBody(body);
 
         sanitized.Should().Be(body);
         sanitized.Should().NotContain("***REDACTED***");

@@ -33,7 +33,7 @@ The **suggested** typed-client pattern injects the `IRestClientFactory`, creates
 | --- | --- |
 | `ApiSettings` / `ApiServiceSettings` / `ApiLoggingSettings` | Configuration bound from the `Api` key in `appsettings.json`. `ApiServiceSettings.Validate(name)` and `ApiLoggingSettings.Validate()` fail fast on empty/invalid `BaseUrl`, non-positive `TimeoutSeconds`, or non-positive `MaxBodySizeBytes`. |
 | `IRestClientFactory` / `RestClientFactory` | Creates configured `IRestClient` instances per named service. Construct via `new RestClientFactory(apiSettings, proxy?)`, passing `CoreConfiguration.Api` as the settings. Internally wires `ApiLogSanitizer` → `ApiLoggingInterceptor`, validates settings, applies an optional **explicit** `IWebProxy` (proxy is opt-in and not derived from `ProxyMode`/`ProxyServer`), accepts an optional client-wide `IAuthenticator`, and sets `ThrowOnAnyError=false` + `FailOnDeserializationError=true`. Both opt into `#nullable enable`, so the optional `IWebProxy?` / `IAuthenticator?` parameters are explicitly annotated. |
-| Typed API client | Consuming-project class (for example, the illustrative `ExampleApiClient`). The **suggested** shape injects an `IRestClientFactory`, creates and **owns** its `IRestClient` (service name held as a private `const`), implements `IDisposable` (`(_client as IDisposable)?.Dispose()`), builds `RestRequest`s, and returns RestSharp's native `RestResponse` / `RestResponse<T>`. No framework base class. |
+| Typed API client | Consuming-project class (for example, the illustrative `ExampleApiClient`). The **suggested** shape injects an `IRestClientFactory`, creates and **owns** its `IRestClient` (service name held as a private `const`), implements `IDisposable` (`_client.Dispose()`), builds `RestRequest`s, and returns RestSharp's native `RestResponse` / `RestResponse<T>`. No framework base class. |
 | `ApiTestBase` (Tests project) | **Mandatory** NUnit base class for every API fixture in `CsharpTestAutomation.Tests` — this is the reason the class exists, so a plain `[TestFixture]` is never used for API tests even when a fixture does not need `RequireDbData`. Builds the shared `RestClientFactory` from `CoreConfiguration.Api` in setup and exposes `NetBoxAuthenticator`, `RequireDbData<T>`, and `RegisterClient`/`GetClient<T>` (thin wrappers around `TestContainer.Register`/`Get` that give disposable typed clients correct, cleanup-ordered disposal without fixtures touching `TestContainer` directly). Not part of the framework. |
 | `IApiLogSanitizer` / `ApiLogSanitizer` | Redacts sensitive headers and JSON body fields when enabled; never throws. Used **only** by the logging interceptor. |
 | `ApiHeaderExtractor` / `ApiBodyFormatter` | Read request/response headers and bodies from the RestSharp `RestResponse` for logging; never mutate it. |
@@ -98,7 +98,7 @@ for fixture registration, missing seed data, request builders, and API assertion
 1. Add the service `BaseUrl` + `TimeoutSeconds` under `Api.Services.<name>` in `CsharpTestAutomation.Tests/appsettings.json`.
 2. Create `API/Clients/<Name>ApiClient.cs` as a thin wrapper that takes an `IRestClientFactory` (a primary-constructor parameter) and creates its client in a `private readonly IRestClient _client` field initializer: `factory.Create(ServiceName)` — there is no base class. Keep the service name in a `private const string ServiceName`.
 3. Add typed methods that build a `RestRequest` and call `_client.ExecuteAsync<TDto>(...)`, returning `Task<RestResponse<TDto>>`.
-4. Implement `IDisposable` with `public void Dispose() => (_client as IDisposable)?.Dispose();` (RestSharp's `IRestClient` is not `IDisposable` — only the concrete `RestClient` is — so the cast is required and null-safe). The class is `sealed` with no finalizer, so no `GC.SuppressFinalize` is needed. Note: `RestClientFactory` itself does not implement `IDisposable` and must not be disposed; only the `IRestClient` instances it creates require disposal.
+4. Implement `IDisposable` with `public void Dispose() => _client.Dispose();`. In the repository's RestSharp 114.0.0 version, `IRestClient` inherits `IDisposable`, so no cast is required. Existing `(_client as IDisposable)?.Dispose()` calls remain valid but are redundant. The class is `sealed` with no finalizer, so no `Dispose(bool)` overload or `GC.SuppressFinalize` is needed. Note: `RestClientFactory` itself does not implement `IDisposable` and must not be disposed; only the `IRestClient` instances it creates require disposal.
 5. Create DTOs in `API/DTOs/<Resource>/` as `record` types with `[JsonPropertyName]` (see Section 5).
 6. Add a DTO builder in `API/Factories/` when tests need to construct request payloads.
 7. Write tests in `Tests/API/<Name>ApiTests.cs`.
@@ -277,7 +277,7 @@ public sealed class SecureApiClient(IRestClientFactory factory, IAuthenticator? 
         return _client.ExecuteAsync<EchoResponse>(request, ct);
     }
 
-    public void Dispose() => (_client as IDisposable)?.Dispose();
+    public void Dispose() => _client.Dispose();
 }
 ```
 

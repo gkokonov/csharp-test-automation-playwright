@@ -44,7 +44,7 @@ public class ExampleUiTests : UiTestBase
         await loginPage.HandleSecondaryLoginAsync(FederatedUsername, FederatedPassword);
 
         // Assert
-        var loginPageStillVisible = await loginPage.IsLoadedAsync();
+        bool loginPageStillVisible = await loginPage.IsLoadedAsync();
         loginPageStillVisible.Should().BeFalse("a successful sign-in should navigate away from the login page");
     }
 }
