@@ -1,0 +1,90 @@
+name = "researcher"
+description = "Research bounded technical questions using official sources without edits."
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Read AGENTS.md, .agents/instructions/tooling.md and the Optional research section of .agents/implementation/IMPLEMENTATION.md. Answer only the bounded research question with official source links, version limits and uncertainties. No edits, builds, tests, publication or subdelegation.
+"""
+
+[agents]
+enabled = false
+
+# Tool-selection and cache rules are owned by .agents/instructions/tooling.md.
+# Explicit transports avoid placeholder commands in standalone config layers.
+
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+bearer_token_env_var = "CONTEXT7_API_KEY"
+enabled = true
+required = false
+enabled_tools = ["resolve-library-id", "query-docs"]
+
+[mcp_servers.microsoft-learn]
+url = "https://learn.microsoft.com/api/mcp?maxTokenBudget=5000"
+enabled = true
+required = false
+enabled_tools = [
+    "microsoft_docs_search",
+    "microsoft_docs_fetch",
+    "microsoft_code_sample_search",
+]
+
+[mcp_servers.fff]
+command = "powershell.exe"
+args = [
+    "-NoLogo",
+    "-NoProfile",
+    "-NonInteractive",
+    "-Command",
+    "& (Join-Path $env:LOCALAPPDATA 'fff-mcp/bin/fff-mcp.exe'); exit $LASTEXITCODE",
+]
+env_vars = ["LOCALAPPDATA"]
+enabled = true
+required = false
+enabled_tools = ["find_files", "grep", "multi_grep"]
+
+[mcp_servers.codebase-memory-mcp]
+command = "C:/Users/georg/AppData/Local/Programs/codebase-memory-mcp/codebase-memory-mcp.exe"
+args = []
+cwd = "C:/GK/Sources/csharp-test-automation-playwright"
+env_vars = ["LOCALAPPDATA", "USERPROFILE"]
+startup_timeout_sec = 60
+enabled = true
+required = false
+enabled_tools = [
+    "list_projects",
+    "search_graph",
+    "search_code",
+    "trace_path",
+    "get_architecture",
+    "get_code_snippet",
+    "get_file_outline",
+    "get_graph_schema",
+    "query_graph",
+    "index_status",
+    "check_index_coverage",
+    "detect_changes",
+    "compare_graphs",
+]
+
+[mcp_servers.chrome-devtools]
+command = "cmd.exe"
+args = [
+    "/d",
+    "/c",
+    "npx",
+    "--prefer-offline",
+    "-y",
+    "chrome-devtools-mcp@latest",
+    "--headless",
+    "--no-usage-statistics",
+]
+env_vars = [
+    "SystemRoot",
+    "PROGRAMFILES",
+    "LOCALAPPDATA",
+    "APPDATA",
+    "USERPROFILE",
+]
+startup_timeout_sec = 60
+enabled = false
+required = false

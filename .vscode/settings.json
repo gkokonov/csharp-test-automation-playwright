@@ -55,7 +55,7 @@
   ],
   "github.copilot.chat.reviewSelection.instructions": [
     {
-      "file": ".agents/instructions/code-review-instructions.md"
+      "file": ".agents/review/REVIEW.md"
     }
   ],
   // ========== CUCUMBER AUTOCOMPLETE ==========

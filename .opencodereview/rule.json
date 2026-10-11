@@ -1,0 +1,64 @@
+{
+  "include": [
+    "**/*.cs",
+    "**/*.feature",
+    "**/*.md",
+    "**/*.csproj",
+    "**/*.props",
+    "**/*.targets",
+    "**/*.config",
+    "**/*.slnx",
+    "**/*.json",
+    "**/*.toml",
+    "**/*.yaml",
+    "**/*.yml",
+    "**/*.ps1",
+    ".editorconfig",
+    ".gitignore"
+  ],
+  "exclude": [
+    "**/bin/**",
+    "**/obj/**",
+    "**/node_modules/**",
+    "artifacts/**",
+    "**/TestResults/**",
+    "**/allure-results/**",
+    "**/Traces/**",
+    "**/Videos/**",
+    "**/*.feature.cs",
+    "**/*.log",
+    "**/appsettings.local.json",
+    "**/credentials.json",
+    "**/playwright/.auth/**",
+    "**/storage-state-*.json",
+    "auth.json",
+    ".playwright-cli/**"
+  ],
+  "rules": [
+    {
+      "path": "CsharpTestAutomation.Framework/**",
+      "rule": ".agents/review/rules/framework.md",
+      "merge_system_rule": false
+    },
+    {
+      "path": "CsharpTestAutomation.Tests/**",
+      "rule": ".agents/review/rules/nunit.md",
+      "merge_system_rule": false
+    },
+    {
+      "path": "CsharpTestAutomation.Bdd.Tests/**",
+      "rule": ".agents/review/rules/bdd.md",
+      "merge_system_rule": false
+    },
+    {
+      "path": "CsharpTestAutomation.Framework.Test/**",
+      "rule": ".agents/review/rules/framework-tests.md",
+      "merge_system_rule": false
+    },
+    {
+      "path": "**",
+      "rule": ".agents/review/rules/repository.md",
+      "merge_system_rule": false
+    }
+  ]
+}

@@ -4,12 +4,6 @@ You are a senior .NET framework engineer and QA automation expert in C# 14 / .NE
 NUnit, Microsoft.Playwright, RestSharp, Dapper, Allure, NLog, Polly, Bogus, and NBuilder.
 Report concisely. Use ASD-STE100 Simplified Technical English.
 
-## Session start
-
-Read [`docs/LESSONS.md`](docs/LESSONS.md) **before anything else**.
-It contains project-specific rules derived from past corrections.
-Apply every entry unconditionally for the rest of the session.
-
 ## Repository boundaries
 
 | Project | Responsibility |
@@ -36,7 +30,8 @@ before instruction reads. Reuse guidance already available in the session.
 | NUnit application work | [NUnit scope](CsharpTestAutomation.Tests/AGENTS.md); routes API, UI, and supporting helpers. |
 | BDD application work | [BDD scope](CsharpTestAutomation.Bdd.Tests/AGENTS.md); routes features, steps, hooks, and application layers. |
 | Framework self-tests | [Self-test scope](CsharpTestAutomation.Framework.Test/AGENTS.md). |
-| Code review | [Review instructions](.agents/instructions/code-review-instructions.md); read-only unless fixes are requested. |
+| Implementation agent | [Implementation workflow](.agents/implementation/IMPLEMENTATION.md); one writer for all four projects. |
+| Code review agent | [Review workflow](.agents/review/REVIEW.md); read-only findings go to the Implementator for fixes. |
 | Commit message or authorized commit | [Commit instructions](.agents/instructions/commit-instructions.md); these do not authorize a commit. |
 | Detailed tool selection or workflows | [Tooling instructions](.agents/instructions/tooling.md) for fallbacks and operational details; read it before external docs or browser work. |
 | Instruction or host setup changes | [Agent support](docs/AGENT_SUPPORT.md). |

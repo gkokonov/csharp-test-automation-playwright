@@ -19,6 +19,18 @@
       "command": "C:/Users/georg/AppData/Local/Programs/codebase-memory-mcp/codebase-memory-mcp.exe",
       "args": [],
       "cwd": "C:/GK/Sources/csharp-test-automation-playwright"
+    },
+    "chrome-devtools": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "--prefer-offline",
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--headless",
+        "--no-usage-statistics"
+      ]
     }
   }
 }
