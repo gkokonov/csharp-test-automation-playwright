@@ -52,13 +52,15 @@ Do not reference one application test assembly from the other.
 | Approach | Setup and state | Teardown and reporting |
 | --- | --- | --- |
 | NUnit | `ApiTestBase` builds the factory/authenticator; `OnSetUpAsync` registers scenario clients through `RegisterClient`. Fixture state is per test. | `TestBase` runs the inherited cleanup stack before disposing the test container. Allure.NUnit uses fixture/test attributes. |
-| BDD | `CommonHooks` registers typed state and one cleanup/lifecycle owner. `ScenarioHooks` sets metadata, creates a scenario client, registers its release, and injects borrowed instances with `dispose:false`. | `ScenarioLifecycle` attempts failure evidence, then LIFO data cleanup, then reverse resource release. Hooks preserve the primary error and fail a passing body when cleanup/release fails. Allure.Reqnroll emits the scenario result after hooks. |
+| BDD | `CommonHooks` registers one cleanup/lifecycle owner. Scoped Site, Device, and IPAM hooks register their state and scenario clients, register releases, and inject borrowed instances with `dispose:false`. Feature/scenario Allure tags supply report labels. | `ScenarioLifecycle` attempts failure evidence, then LIFO data cleanup, then reverse resource release. Hooks preserve the primary error and fail a passing body when cleanup/release fails. Allure.Reqnroll emits the scenario result after hooks. |
 
 BDD run services own configuration, controlled API token initialization, and the
 asynchronous PostgreSQL pool. Clients remain scenario-owned; API-only execution
 does not initialize browser authentication. Bindings keep native RestSharp
 responses in typed state and assert status before extracting payloads or querying
-persistence. `Then` bindings own behavior assertions.
+persistence. `Then` bindings own behavior assertions without preparing state for
+another assertion. Persistence checks consume the action response or independently
+identify a UI-created record from its unique request.
 
 BDD step definitions use `Steps/API/<App>/` and the `Steps` suffix. `SiteApiSteps`
 contains prerequisite creation, API actions, persistence assertions, and owned-ID

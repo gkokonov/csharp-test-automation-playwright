@@ -2,6 +2,13 @@
   "$schema": "https://raw.githubusercontent.com/allure-framework/allure-csharp/2.15.0/src/Allure.Net.Commons/Schemas/allureConfig.schema.json",
   "allure": {
     "directory": "artifacts/bdd/allure-results",
-    "title": "CsharpTestAutomation.Bdd.Tests"
+    "title": "CsharpTestAutomation.Bdd.Tests",
+    "gherkinPatterns": {
+      "links": {
+        "link": "^(?:allure\\.)?link:(.+)$",
+        "issue": "^(?:allure\\.)?issue:(.+)$",
+        "tms": "^(?:allure\\.)?tms:(.+)$"
+      }
+    }
   }
 }

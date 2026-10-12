@@ -1,10 +1,6 @@
 using System.Text;
 using Allure.Net.Commons;
-using CsharpTestAutomation.Bdd.Tests.Api.Clients;
-using CsharpTestAutomation.Bdd.Tests.Authentication;
 using CsharpTestAutomation.Bdd.Tests.Lifecycle;
-using CsharpTestAutomation.Bdd.Tests.TestData.NetBox;
-using CsharpTestAutomation.Framework.API.Clients;
 using CsharpTestAutomation.Framework.Common.Reporting.Allure;
 using CsharpTestAutomation.Framework.UI;
 using Microsoft.Playwright;
@@ -18,68 +14,14 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
     ScenarioLifecycle lifecycle,
     IReqnrollOutputHelper output)
 {
-    [BeforeScenario("NetBox", Order = 10)]
-    public void SetMetadata()
-    {
-        string[] tags = scenario.ScenarioInfo.CombinedTags;
-        bool isDevice = tags.Contains("Device");
-        bool isIpam = tags.Contains("Ipam");
-        (string story, SeverityLevel severity) = isIpam ? IpamScenarioMetadata.Get(tags)
-            : isDevice ? DeviceScenarioMetadata.Get(tags) : SiteScenarioMetadata.Get(tags);
-        AllureLifecycle.Instance.UpdateTestCase(result => result.labels.RemoveAll(label => label.name == "feature"));
-        AllureApi.AddSuite(tags.Contains("UI") ? "UI" : "API");
-        AllureApi.AddEpic("NetBox");
-        AllureApi.AddFeature(isIpam ? (tags.Contains("Prefix") ? "IPAM - Prefix" : "IPAM - IP Address")
-            : isDevice ? "Device Management" : "Site Management");
-        AllureApi.AddStory(story);
-        AllureApi.SetSeverity(severity);
-        AllureApi.SetOwner(isIpam ? IpamScenarioMetadata.Owner
-            : isDevice ? DeviceScenarioMetadata.Owner : SiteScenarioMetadata.Owner);
-    }
-
     [BeforeScenario("NetBox", Order = 15)]
     public Task CheckDependenciesAsync() =>
         BddRunResources.Current.EnsureDependenciesAsync(scenario.ScenarioInfo.CombinedTags.Contains("UI"));
 
     [BeforeScenario("NetBox", Order = 20)]
-    public async Task RegisterSiteDependenciesAsync()
+    public void RegisterConfiguration()
     {
-        BddRunResources resources = BddRunResources.Current;
-        container.RegisterInstanceAs(resources.Configuration, dispose: false);
-        var factory = new RestClientFactory(resources.Configuration.Api);
-        var client = new SitesApiClient(factory, new NetBoxTokenAuthenticator(resources.TokenSession));
-        lifecycle.AddRelease("Site API client", () =>
-        {
-            client.Dispose();
-            return Task.CompletedTask;
-        });
-        container.RegisterInstanceAs(client, dispose: false);
-        if (scenario.ScenarioInfo.CombinedTags.Contains("Site"))
-        {
-            container.RegisterInstanceAs(await resources.GetSitesRepositoryAsync(), dispose: false);
-        }
-    }
-
-    [BeforeScenario("Device", Order = 25)]
-    public async Task RegisterDeviceDependenciesAsync()
-    {
-        BddRunResources resources = BddRunResources.Current;
-        var factory = new RestClientFactory(resources.Configuration.Api);
-        var authenticator = new NetBoxTokenAuthenticator(resources.TokenSession);
-        RegisterClient(new ManufacturersApiClient(factory, authenticator), "Manufacturer API client");
-        RegisterClient(new DeviceTypesApiClient(factory, authenticator), "Device type API client");
-        RegisterClient(new DeviceRolesApiClient(factory, authenticator), "Device role API client");
-        RegisterClient(new DevicesApiClient(factory, authenticator), "Device API client");
-        container.RegisterInstanceAs(await resources.GetDevicesRepositoryAsync(), dispose: false);
-    }
-
-    [BeforeScenario("Ipam", Order = 25)]
-    public async Task RegisterIpamDependenciesAsync()
-    {
-        BddRunResources resources = BddRunResources.Current;
-        var factory = new RestClientFactory(resources.Configuration.Api);
-        RegisterClient(new IpamApiClient(factory, new NetBoxTokenAuthenticator(resources.TokenSession)), "IPAM API client");
-        container.RegisterInstanceAs(await resources.GetIpamRepositoryAsync(), dispose: false);
+        container.RegisterInstanceAs(BddRunResources.Current.Configuration, dispose: false);
     }
 
     [BeforeScenario("UI", Order = 30)]
@@ -129,13 +71,4 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
         AllureApi.AddAttachment($"Secondary error: {name}", "text/plain", Encoding.UTF8.GetBytes(message));
     }
 
-    private void RegisterClient<T>(T client, string name) where T : class, IDisposable
-    {
-        lifecycle.AddRelease(name, () =>
-        {
-            client.Dispose();
-            return Task.CompletedTask;
-        });
-        container.RegisterInstanceAs(client, dispose: false);
-    }
 }

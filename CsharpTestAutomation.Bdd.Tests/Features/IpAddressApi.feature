@@ -1,29 +1,29 @@
-@NetBox @Ipam @IpAddress @API
+@NetBox @Ipam @IpAddress @API @allure.label.epic:NetBox @allure.label.suite:API @allure.label.owner:AutomationTeam
 Feature: IP Address management through the service
     Administrators can manage IP Addresses and retrieve their saved details.
 
-    @IpAddressApi01
+    @IpAddressApi01 @critical
     Scenario: Creating an IP Address returns its requested details
         Given unique valid IP Address details
         When the IP Address is created through the service
         Then the requested IP Address details are returned and retrievable
         And the IP Address details are saved
 
-    @IpAddressApi02
+    @IpAddressApi02 @normal
     Scenario: Finding an IP Address by its address returns only that IP Address
         Given an owned active IP Address
         When the IP Address is found by its address
         Then only the expected IP Address is returned
 
-    @IpAddressApi03
+    @IpAddressApi03 @normal
     Scenario: An active IP Address can be reserved without changing its CIDR
         Given an owned active IP Address
-        And valid changes to the IP Address status and description
+        And an IP Address status change to "reserved" and a new description
         When the IP Address changes are submitted through the service
         Then the service reserves the IP Address and retains its other details
         And the IP Address details are saved
 
-    @IpAddressApi04
+    @IpAddressApi04 @critical
     Scenario: Deleting an IP Address removes its saved details
         Given an owned active IP Address
         When the IP Address is deleted through the service

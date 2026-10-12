@@ -12,8 +12,6 @@ public sealed class SiteScenarioState
 
     public SiteDetailDto CreatedSite { get; set; } = null!;
 
-    public SiteDetailDto PersistedSite { get; set; } = null!;
-
     public ApiResponseState<SiteDetailDto> ApiResponses { get; } = new();
 
     public SiteDetailsPage DetailsPage { get; set; } = null!;

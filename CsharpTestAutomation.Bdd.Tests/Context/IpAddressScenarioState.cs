@@ -10,7 +10,5 @@ public sealed class IpAddressScenarioState
 
     public IpAddressDetailDto CreatedIpAddress { get; set; } = null!;
 
-    public IpAddressDetailDto PersistedIpAddress { get; set; } = null!;
-
     public ApiResponseState<IpAddressDetailDto> ApiResponses { get; } = new();
 }

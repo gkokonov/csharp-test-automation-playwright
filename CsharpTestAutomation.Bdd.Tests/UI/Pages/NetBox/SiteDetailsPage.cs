@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using CsharpTestAutomation.Bdd.Tests.Configurations;
 using CsharpTestAutomation.Bdd.Tests.UI.Components.NetBox;
 using Microsoft.Playwright;
@@ -20,27 +19,14 @@ public sealed class SiteDetailsPage(IPage page) : BaseUIPage(page)
         await WaitUntilLoadedAsync();
     }
 
-    public Task<string> GetNameAsync() => GetAttributeValueAsync("Name");
+    public ILocator Name => AttributeValue("Name");
 
-    public async Task<string> GetSlugAsync()
-    {
-        ILocator codeLocator = Page.Locator(".page-header code");
-        if (await codeLocator.CountAsync() > 0)
-        {
-            string text = await codeLocator.InnerTextAsync();
-            Match match = Regex.Match(text, @"\(([^)]+)\)");
-            if (match.Success)
-            {
-                return match.Groups[1].Value.Trim();
-            }
-        }
+    // NetBox displays the slug in the page header, outside the attribute table.
+    public ILocator Slug => Page.Locator(".page-header code");
 
-        return await GetAttributeValueAsync("Slug");
-    }
+    public ILocator Status => AttributeValue("Status");
 
-    public Task<string> GetStatusAsync() => GetAttributeValueAsync("Status");
-
-    public Task<string> GetDescriptionAsync() => GetAttributeValueAsync("Description");
+    public ILocator Description => AttributeValue("Description");
 
     public async Task<SiteEditPage> EditAsync()
     {
@@ -59,12 +45,11 @@ public sealed class SiteDetailsPage(IPage page) : BaseUIPage(page)
         return sitesPage;
     }
 
-    private async Task<string> GetAttributeValueAsync(string attributeName)
+    private ILocator AttributeValue(string attributeName)
     {
         ILocator attributeNameLocator = Page.GetByText(attributeName, new() { Exact = true });
         ILocator attributeRow = Page.GetByRole(AriaRole.Row).Filter(new() { Has = attributeNameLocator });
-        string text = await attributeRow.GetByRole(AriaRole.Cell).Last.InnerTextAsync();
-        return text.Trim();
+        return attributeRow.GetByRole(AriaRole.Cell).Last;
     }
 }
 

@@ -26,10 +26,6 @@ public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioClean
         await list.NavigateAsync();
         SiteEditPage edit = await list.AddSiteAsync();
         state.DetailsPage = await edit.CreateSiteAsync(state.CreateRequest);
-        if (Environment.GetEnvironmentVariable("BDD_VALIDATE_UI_SUBMISSION_FAILURE") == "1")
-        {
-            throw new AssertionException("Injected failure after UI submission and before API identification.");
-        }
     }
 
     [When("the Site is edited in the web application")]
@@ -52,17 +48,10 @@ public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioClean
     [Then("the requested Site details are displayed and retrievable")]
     public async Task VerifyCreationAsync()
     {
-        string name = await state.DetailsPage.GetNameAsync();
-        string slug = await state.DetailsPage.GetSlugAsync();
-        string status = await state.DetailsPage.GetStatusAsync();
-        string description = await state.DetailsPage.GetDescriptionAsync();
-        using (new AssertionScope())
-        {
-            name.Should().Be(state.CreateRequest.Name);
-            slug.Should().Be(state.CreateRequest.Slug);
-            status.Should().BeEquivalentTo(state.CreateRequest.Status);
-            description.Should().Be(state.CreateRequest.Description);
-        }
+        await Expect(state.DetailsPage.Name).ToHaveTextAsync(state.CreateRequest.Name);
+        await Expect(state.DetailsPage.Slug).ToContainTextAsync($"({state.CreateRequest.Slug})");
+        await Expect(state.DetailsPage.Status).ToHaveTextAsync(state.CreateRequest.Status, new() { IgnoreCase = true });
+        await Expect(state.DetailsPage.Description).ToHaveTextAsync(state.CreateRequest.Description);
 
         var response = await client.FindSitesBySlugAsync(state.CreateRequest.Slug);
         // Register a usable ID before any response assertions; the slug fallback already exists.
@@ -84,19 +73,13 @@ public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioClean
             site.Description.Should().Be(state.CreateRequest.Description);
         }
 
-        state.PersistedSite = site;
     }
 
     [Then("the application displays and saves the changes and retains the other Site details")]
     public async Task VerifyUpdateAsync()
     {
-        string status = await state.DetailsPage.GetStatusAsync();
-        string description = await state.DetailsPage.GetDescriptionAsync();
-        using (new AssertionScope())
-        {
-            status.Should().BeEquivalentTo(state.UpdateRequest.Status);
-            description.Should().Be(state.UpdateRequest.Description);
-        }
+        await Expect(state.DetailsPage.Status).ToHaveTextAsync(state.UpdateRequest.Status, new() { IgnoreCase = true });
+        await Expect(state.DetailsPage.Description).ToHaveTextAsync(state.UpdateRequest.Description);
 
         var response = await client.GetSiteAsync(state.CreatedSite.Id);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -110,7 +93,6 @@ public sealed class SiteUiSteps(IPage page, SitesApiClient client, ScenarioClean
             site.Slug.Should().Be(state.CreatedSite.Slug);
         }
 
-        state.PersistedSite = site;
     }
 
     [Then("the Site is absent from the application and service")]

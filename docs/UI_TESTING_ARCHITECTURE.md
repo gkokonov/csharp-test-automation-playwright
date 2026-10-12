@@ -183,9 +183,10 @@ Allure suite/feature/story metadata is applied with attributes on the fixture an
 
 ### BDD scenario lifecycle and authentication
 
-In `CsharpTestAutomation.Bdd.Tests`, `CommonHooks` registers one typed state and
-cleanup/lifecycle owner before bindings resolve. `ScenarioHooks` sets metadata
-and API dependencies, then creates browser resources only for `@UI` scenarios.
+In `CsharpTestAutomation.Bdd.Tests`, `CommonHooks` registers one cleanup/lifecycle
+owner before bindings resolve. Scoped feature hooks register typed state and API
+dependencies. Native Allure tags provide report metadata. `ScenarioHooks` creates
+browser resources only for `@UI` scenarios.
 Successful API reachability checks run once per run through the framework
 `DependencyAvailabilityChecker`; UI checks run only for UI scenarios. Failed
 checks are not cached. These checks run after metadata and before dependencies

@@ -30,7 +30,7 @@ public sealed class ScenarioLifecycle(ScenarioCleanupActions cleanup)
         }
 
         List<Exception> errors = [];
-        await AttemptAsync("Site cleanup", () => cleanup.CleanUpAsync(), report, errors);
+        await AttemptAsync("scenario data cleanup", () => cleanup.CleanUpAsync(), report, errors);
         for (int index = _releases.Count - 1; index >= 0; index--)
         {
             (string name, Func<Task> release) = _releases[index];

@@ -46,8 +46,9 @@ public sealed class IpAddressApiSteps(IpamApiClient client, ScenarioCleanupActio
         state.CreatedIpAddress.Status.Value.Should().Be(NetBoxTestData.ActiveStatus);
     }
 
-    [Given("valid changes to the IP Address status and description")]
-    public void PrepareUpdate() => state.UpdateRequest = new UpdateIpAddressDtoBuilder().Default().Build();
+    [Given("an IP Address status change to {string} and a new description")]
+    public void PrepareUpdate(string status) => state.UpdateRequest = new UpdateIpAddressDtoBuilder().Default()
+        .With(x => x.Status = status).Build();
 
     [When("the IP Address is created through the service")]
     public async Task CreateAsync() => state.ApiResponses.SingleResponse = await CreateOwnedIpAddressAsync(state.CreateRequest);
@@ -74,7 +75,6 @@ public sealed class IpAddressApiSteps(IpamApiClient client, ScenarioCleanupActio
         RestResponse<IpAddressDetailDto> retrieved = await client.GetIpAddressAsync(created.Id);
         retrieved.StatusCode.Should().Be(HttpStatusCode.OK);
         retrieved.Data.Should().BeEquivalentTo(created);
-        state.PersistedIpAddress = created;
     }
 
     [Then("only the expected IP Address is returned")]
@@ -104,7 +104,6 @@ public sealed class IpAddressApiSteps(IpamApiClient client, ScenarioCleanupActio
         RestResponse<IpAddressDetailDto> retrieved = await client.GetIpAddressAsync(updated.Id);
         retrieved.StatusCode.Should().Be(HttpStatusCode.OK);
         retrieved.Data.Should().BeEquivalentTo(updated);
-        state.PersistedIpAddress = updated;
     }
 
     [Then("the IP Address is unavailable through the service")]
@@ -122,7 +121,22 @@ public sealed class IpAddressApiSteps(IpamApiClient client, ScenarioCleanupActio
     [Then("the IP Address details are saved")]
     public async Task VerifyPersistenceAsync()
     {
-        IpAddressDetailDto actual = state.PersistedIpAddress;
+        IpAddressDetailDto actual;
+        if (state.ApiResponses.SingleResponse is { } response)
+        {
+            response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.OK);
+            response.Data.Should().NotBeNull("a successful IP Address action must return details");
+            actual = response.Data!;
+        }
+        else
+        {
+            state.ApiResponses.SearchResponse.Should().NotBeNull("create, update or find an IP Address before checking persistence");
+            state.ApiResponses.SearchResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            state.ApiResponses.SearchResponse.Data.Should().NotBeNull();
+            actual = state.ApiResponses.SearchResponse.Data!.Results.Should().ContainSingle().Which;
+        }
+
+        actual.Id.Should().BePositive();
         IpAddressRowDto? row = await database.GetIpAddressByAddressAsync(actual.Address);
         row.Should().NotBeNull();
         row.Should().BeEquivalentTo(new IpAddressRowDto

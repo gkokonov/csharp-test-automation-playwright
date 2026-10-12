@@ -80,8 +80,8 @@ typed scenario state, and asynchronous database query.
 | `DeviceApi04` | Change status/description and move to a second owned Site. |
 | `DeviceApi05` | Delete, service absence, and database absence. |
 | `DeviceApi06` | Include two matching Devices, exclude the other Site's Device, and verify all three persisted records. |
-| `DeviceApi07` | Interrupted scenario cleanup before Device creation. |
-| `DeviceApi08` | Interrupted scenario cleanup after Device creation. |
+| `DeviceApi07` | Explicit cleanup before Device creation. |
+| `DeviceApi08` | Explicit cleanup after Device creation. |
 | `DeviceUi01` | Create through the web application; verify displayed, service, and database fields. |
 
 `DeviceApiSteps` contains prerequisite setup, service actions, assertions, and
@@ -89,7 +89,7 @@ cleanup registration. `DeviceUiSteps` owns UI creation and pre-submission
 lookup cleanup restricted to the unique Device name and owned Site.
 `NetBoxUiSteps` verifies administrator authentication for both Site and Device
 features. Hooks register scenario clients for explicit lifecycle release after
-data cleanup and apply `DeviceScenarioMetadata` under Device Management.
+data cleanup. Feature/scenario Allure tags supply report metadata directly.
 
 Run the BDD project with `--filter "TestCategory=Device"`, or select one stable
 ID. Keep the eight API cases and one UI case as separate reported scenarios.

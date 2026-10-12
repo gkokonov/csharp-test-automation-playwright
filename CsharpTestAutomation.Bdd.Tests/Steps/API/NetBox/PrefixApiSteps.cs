@@ -34,8 +34,9 @@ public sealed class PrefixApiSteps(IpamApiClient client, ScenarioCleanupActions 
         state.CreatedPrefix.Status.Value.Should().Be(NetBoxTestData.ActiveStatus);
     }
 
-    [Given("valid changes to the Prefix status and description")]
-    public void PrepareUpdate() => state.UpdateRequest = new UpdatePrefixDtoBuilder().Default().Build();
+    [Given("a Prefix status change to {string} and a new description")]
+    public void PrepareUpdate(string status) => state.UpdateRequest = new UpdatePrefixDtoBuilder().Default()
+        .With(x => x.Status = status).Build();
 
     [When("the Prefix is created through the service")]
     public async Task CreateAsync() => state.ApiResponses.SingleResponse = await CreateOwnedPrefixAsync(state.CreateRequest);
@@ -62,7 +63,6 @@ public sealed class PrefixApiSteps(IpamApiClient client, ScenarioCleanupActions 
         RestResponse<PrefixDetailDto> retrieved = await client.GetPrefixAsync(created.Id);
         retrieved.StatusCode.Should().Be(HttpStatusCode.OK);
         retrieved.Data.Should().BeEquivalentTo(created);
-        state.PersistedPrefix = created;
     }
 
     [Then("only the expected Prefix is returned")]
@@ -92,7 +92,6 @@ public sealed class PrefixApiSteps(IpamApiClient client, ScenarioCleanupActions 
         RestResponse<PrefixDetailDto> retrieved = await client.GetPrefixAsync(updated.Id);
         retrieved.StatusCode.Should().Be(HttpStatusCode.OK);
         retrieved.Data.Should().BeEquivalentTo(updated);
-        state.PersistedPrefix = updated;
     }
 
     [Then("the Prefix is unavailable through the service")]
@@ -110,7 +109,24 @@ public sealed class PrefixApiSteps(IpamApiClient client, ScenarioCleanupActions 
     [Then("the Prefix details are saved")]
     public async Task VerifyPersistenceAsync()
     {
-        PrefixDetailDto actual = state.PersistedPrefix;
+        PrefixDetailDto actual;
+        if (state.ApiResponses.SingleResponse is { } response)
+        {
+            response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.OK);
+            response.Data.Should().NotBeNull("a successful Prefix action must return details");
+            actual = response.Data!;
+        }
+        else
+        {
+            state.CreateRequest.Should().NotBeNull("Prefix details must be prepared before persistence is checked");
+            RestResponse<PagedResultDto<PrefixDetailDto>> found = state.ApiResponses.SearchResponse
+                ?? await client.FindPrefixesByCidrAsync(state.CreateRequest.Prefix, state.CreateRequest.Description);
+            found.StatusCode.Should().Be(HttpStatusCode.OK);
+            found.Data.Should().NotBeNull();
+            actual = found.Data!.Results.Should().ContainSingle().Which;
+        }
+
+        actual.Id.Should().BePositive();
         PrefixRowDto? row = await database.GetPrefixByCidrAsync(actual.Prefix);
         row.Should().NotBeNull();
         row.Should().BeEquivalentTo(new PrefixRowDto

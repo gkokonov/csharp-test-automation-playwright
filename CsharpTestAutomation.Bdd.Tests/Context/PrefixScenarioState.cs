@@ -11,8 +11,6 @@ public sealed class PrefixScenarioState
 
     public PrefixDetailDto CreatedPrefix { get; set; } = null!;
 
-    public PrefixDetailDto PersistedPrefix { get; set; } = null!;
-
     public ApiResponseState<PrefixDetailDto> ApiResponses { get; } = new();
 
     public PrefixDetailsPage DetailsPage { get; set; } = null!;

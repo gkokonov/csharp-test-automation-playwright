@@ -1,4 +1,3 @@
-using CsharpTestAutomation.Bdd.Tests.Context;
 using CsharpTestAutomation.Bdd.Tests.Lifecycle;
 using CsharpTestAutomation.Framework.Common;
 using Reqnroll;
@@ -13,10 +12,6 @@ public sealed class CommonHooks(IObjectContainer container)
     public void RegisterCommonState()
     {
         var cleanup = new ScenarioCleanupActions();
-        container.RegisterInstanceAs(new SiteScenarioState(), dispose: false);
-        container.RegisterInstanceAs(new DeviceScenarioState(), dispose: false);
-        container.RegisterInstanceAs(new PrefixScenarioState(), dispose: false);
-        container.RegisterInstanceAs(new IpAddressScenarioState(), dispose: false);
         container.RegisterInstanceAs(cleanup, dispose: false);
         container.RegisterInstanceAs(new ScenarioLifecycle(cleanup), dispose: false);
     }

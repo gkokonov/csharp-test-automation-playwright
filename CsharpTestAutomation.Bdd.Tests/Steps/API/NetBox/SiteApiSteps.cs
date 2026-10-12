@@ -2,6 +2,7 @@ using System.Net;
 using AwesomeAssertions;
 using AwesomeAssertions.Execution;
 using CsharpTestAutomation.Bdd.Tests.Api.Clients;
+using CsharpTestAutomation.Bdd.Tests.Api.Dtos.Common;
 using CsharpTestAutomation.Bdd.Tests.Api.Dtos.Sites;
 using CsharpTestAutomation.Bdd.Tests.Api.Factories;
 using CsharpTestAutomation.Bdd.Tests.Context;
@@ -30,10 +31,12 @@ public sealed class SiteApiSteps(SitesApiClient client, ScenarioCleanupActions c
         response.Data.Should().NotBeNull();
         response.Data!.Id.Should().BePositive();
         state.CreatedSite = response.Data;
+        state.CreatedSite.Status.Value.Should().Be("active");
     }
 
-    [Given("valid changes to its status and description")]
-    public void PrepareUpdate() => state.UpdateRequest = new UpdateSiteDtoBuilder().Default().Build();
+    [Given("a Site status change to {string} and a new description")]
+    public void PrepareUpdate(string status) => state.UpdateRequest = new UpdateSiteDtoBuilder().Default()
+        .With(x => x.Status = status).Build();
 
     [When("the Site is created through the service")]
     public async Task CreateAsync() => state.ApiResponses.SingleResponse = await CreateOwnedSiteAsync(state.CreateRequest);
@@ -56,7 +59,6 @@ public sealed class SiteApiSteps(SitesApiClient client, ScenarioCleanupActions c
         state.ApiResponses.SingleResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         state.ApiResponses.SingleResponse.Data.Should().NotBeNull();
         SiteDetailDto site = state.ApiResponses.SingleResponse.Data!;
-        state.PersistedSite = site;
         using (new AssertionScope())
         {
             site.Id.Should().BePositive();
@@ -73,7 +75,6 @@ public sealed class SiteApiSteps(SitesApiClient client, ScenarioCleanupActions c
         state.ApiResponses.SingleResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         state.ApiResponses.SingleResponse.Data.Should().NotBeNull();
         state.ApiResponses.SingleResponse.Data.Should().BeEquivalentTo(state.CreatedSite);
-        state.PersistedSite = state.CreatedSite;
     }
 
     [Then("only the expected Site is returned")]
@@ -103,7 +104,6 @@ public sealed class SiteApiSteps(SitesApiClient client, ScenarioCleanupActions c
         retrieved.StatusCode.Should().Be(HttpStatusCode.OK);
         retrieved.Data.Should().NotBeNull();
         retrieved.Data.Should().BeEquivalentTo(updated);
-        state.PersistedSite = updated;
     }
 
     [Then("the Site is unavailable through the service")]
@@ -117,7 +117,24 @@ public sealed class SiteApiSteps(SitesApiClient client, ScenarioCleanupActions c
     [Then("the Site details are saved")]
     public async Task VerifyPersistenceAsync()
     {
-        var site = state.PersistedSite;
+        SiteDetailDto site;
+        if (state.ApiResponses.SingleResponse is { } response)
+        {
+            response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.OK);
+            response.Data.Should().NotBeNull("a successful Site action must return details");
+            site = response.Data!;
+        }
+        else
+        {
+            state.CreateRequest.Should().NotBeNull("Site details must be prepared before persistence is checked");
+            RestResponse<PagedResultDto<SiteDetailDto>> found =
+                state.ApiResponses.SearchResponse ?? await client.FindSitesBySlugAsync(state.CreateRequest.Slug);
+            found.StatusCode.Should().Be(HttpStatusCode.OK);
+            found.Data.Should().NotBeNull();
+            site = found.Data!.Results.Should().ContainSingle().Which;
+        }
+
+        site.Id.Should().BePositive();
         SiteRowDto? row = await database.GetBySlugAsync(site.Slug);
         row.Should().NotBeNull();
         row.Should().BeEquivalentTo(new SiteRowDto

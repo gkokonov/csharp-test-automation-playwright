@@ -14,7 +14,6 @@ public sealed class DeviceScenarioState
     public SiteDetailDto? OtherSite { get; set; }
     public SiteDetailDto ExpectedSite { get; set; } = null!;
     public DeviceDetailDto? CreatedDevice { get; set; }
-    public DeviceDetailDto PersistedDevice { get; set; } = null!;
     public List<DeviceDetailDto> OwnedDevices { get; } = [];
     public ApiResponseState<DeviceDetailDto> ApiResponses { get; } = new();
     public DeviceDetailsPage DetailsPage { get; set; } = null!;
