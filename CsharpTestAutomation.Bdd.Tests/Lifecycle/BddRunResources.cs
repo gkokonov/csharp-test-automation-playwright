@@ -75,6 +75,9 @@ public sealed class BddRunResources
     public async Task<DevicesDatabaseRepository> GetDevicesRepositoryAsync() =>
         new(await GetConnectionsAsync(), Configuration.DbQueryTimeoutSeconds);
 
+    public async Task<IpamDatabaseRepository> GetIpamRepositoryAsync() =>
+        new(await GetConnectionsAsync(), Configuration.DbQueryTimeoutSeconds);
+
     private async Task<PostgreSqlConnectionPool> GetConnectionsAsync()
     {
         await _databaseLock.WaitAsync();

@@ -127,6 +127,44 @@ Resolved validation issue: a Debug rebuild attempted while the live test
 host held the assembly failed with MSB3027/MSB3021. Rebuilding after that test
 process exited passed without warnings or errors. No failed checks remain.
 
+## BDD IPAM port (2026-10-12)
+
+| Task | Status | Notes |
+| --- | --- | --- |
+| Port four Prefix and four IP Address service cases and one Prefix web case | DONE | Standalone BDD application layers, stable IDs, and assertion/cleanup parity. Original NUnit fixtures retained. See [IPAM parity](IPAM_BDD_PARITY.md). |
+| BDD build, formatting/analyzers, and discovery | DONE | Debug and Release builds: zero warnings/errors. Scoped `dotnet format --verify-no-changes` passed. Discovery reports nine IPAM scenarios. |
+| Three consecutive live headless runs | DONE | Each final run passed 9/9 with two NUnit workers; Prefix and IP Address fixture timestamps overlap. Results: `artifacts/bdd-ipam/ipam-final-{1,2,3}.trx`. Full NetBox BDD regression also passed 26/26: `artifacts/bdd-ipam/netbox-run-2.trx`. |
+| Independent final review | DONE | A separate Reviewer reassessed all 48 supplied task identities with the API/UI architecture and RTK references: no findings, zero skipped files. All task and supporting-source hashes were rechecked. Results: `artifacts/agent-follow-up/final-review-result.txt`. Native host activation remains unverified. |
+
+Allure output confirms all nine stable IDs, original story/severity/owner, API/UI
+suite, NetBox epic, and exactly one canonical IPAM feature per scenario.
+`git diff --check` passed. Follow-up repairs restored explicit Copilot and
+Antigravity role tool lists, removed reader command/browser grants, restored the
+Researcher's read-only sandbox, and aligned the checker and canonical guidance
+with the user's approved `workspace-write` Reviewer mode. Instruction maintenance
+and the standalone checker passed: 121 links, 18 path routes, nine adapters,
+10 OCR routes, root size (83 lines), and rejection of all 21 invalid fixtures.
+Filesystem writes are possible in the approved Reviewer mode; no-edit behavior
+remains required. A separate CLI request for `workspace-write` still reported
+effective read-only mode and rejected shell reads. Review therefore uses the
+[snapshot fallback](../AGENT_SUPPORT.md#review-fallback-when-shell-reads-are-rejected),
+with supplied evidence, explicit coverage accounting, and source hash checks.
+Its prompt forbids tool calls, and the session log recorded none; this is not a
+claim that the tool schema has no tools. MCP services were absent in that session.
+
+Codebase Memory refresh completed. Its raw `metadata_changed` warning is not
+fixed upstream. The read-only SHA-256/size audit verified all 349 physical cached
+files as content-current, with three virtual inputs counted separately. Stored
+nanosecond timestamps matched exactly; whole-second timestamp comparisons
+differed for all 349 files. Task coverage was 45 indexed content-current paths
+and three unsupported `.feature` sources. These features are checked directly
+and through Reqnroll discovery rather than treated as indexed source.
+The audit fixture passed current, stale, and unindexed cases, checked that the
+cache did not change, and confirmed connection closure. Reproduce the content
+audit with `python .agents/scripts/check_cbm_freshness.py --project
+'C-GK-Sources-csharp-test-automation-playwright'`; see the
+[tooling instructions](../../.agents/instructions/tooling.md#windows-freshness-and-unsupported-sources).
+
 ## Cross-Cutting Gates (recheck at end of each phase)
 
 - [x] `dotnet build .\CsharpTestAutomation.slnx` is warning-clean.

@@ -78,7 +78,7 @@ in an adapter does not prove activation. Use raw MCP tool names in Codex
 | --- | --- | --- | --- |
 | FFF and Codebase Memory inspection | Available. | Available with verified restrictions. | Use only when the bounded question needs repository context. |
 | Context7 and Microsoft Learn | Use the documentation routes above. | Verify a relevant API or contract. | Primary documentation tools; use official version-specific sources. |
-| Ripgrep and deterministic OCR/Git | Existing command access. | Only in a verified read-only OS sandbox; otherwise request operator evidence. | Use permitted search tools or supplied source; do not add a shell for research. |
+| Ripgrep and deterministic OCR/Git | Existing command access. | Verified read-only OS sandbox or explicit user-approved `workspace-write` reviewer; otherwise request operator evidence. | Use permitted search tools or supplied source; do not add a shell for research. |
 | Playwright CLI and Chrome DevTools | Authorized UI work; follow browser escalation above. | Inspect supplied snapshots, traces, and logs. | Use documentation tools and static URL fetches. |
 | RTK | Routine command summaries. | Preserve full patches and source. | No extra command access. |
 
@@ -92,8 +92,14 @@ trace ingestion, and ADR updates unavailable to readers. Implementator may also
 use `index_repository` for this checkout. Allowlist new tool names deliberately;
 do not use MCP wildcards for reader roles.
 
-Read-only means no changes to repository source, configuration, Git state, or
-application state. Search services may maintain their own normal caches and
+Read-only behavior means no changes to repository source, configuration, Git
+state, or application state. Read-only isolation is the default for readers.
+An explicit user-approved `workspace-write` reviewer is permitted. Verify its
+effective sandbox is no broader and record that no-edit behavior relies on
+instructions because the sandbox allows filesystem writes. Researcher remains
+read-only. Reviewer shell use stays limited to deterministic inspection; edit
+tools, browser tools, and MCP management remain unavailable.
+Search services may maintain their own normal caches and
 indexes outside the checkout. This exception grants no reader management tools
 and no permission to install tools, change cache settings, or refresh an index
 explicitly. If service writes cannot stay outside the checkout, keep it disabled
@@ -172,3 +178,26 @@ if ($LASTEXITCODE -ne 0) { throw 'CBM indexing failed.' }
 ```
 
 If CBM is unavailable, report the failure and use targeted `rg` and source reads.
+
+### Windows freshness and unsupported sources
+
+CBM 0.11.0 can report `metadata_changed` because Windows timestamp precision
+differs from the stored nanosecond value. After one refresh, compare content
+instead of repeatedly indexing or editing the cache. Run the read-only
+[hash audit](../scripts/check_cbm_freshness.py) with the exact project name:
+
+```powershell
+python .agents/scripts/check_cbm_freshness.py --project 'C-GK-Sources-csharp-test-automation-playwright'
+```
+
+Use repeated `--path <relative-path>` arguments to audit task paths. The script
+opens SQLite in read-only mode, compares SHA-256 and size, and reports timestamp
+differences separately. A content mismatch requires a refresh. Matching hashes
+establish content freshness only; they do not prove complete parsing or graph
+relationships. Virtual semantic inputs are counted separately.
+
+The installed version does not track Gherkin `.feature` sources. Read these
+files directly with targeted `rg` and file reads, and verify bindings through
+Reqnroll discovery. Do not map Gherkin to a different parser or unignore generated
+`.feature.cs` files to make a coverage check pass. Record this direct-source
+coverage separately from indexed C# coverage.

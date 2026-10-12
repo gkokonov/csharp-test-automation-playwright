@@ -1,6 +1,6 @@
 name = "researcher"
 description = "Research bounded technical questions using official sources without edits."
-sandbox_mode = "workspace-write"
+sandbox_mode = "read-only"
 developer_instructions = """
 Read AGENTS.md, .agents/instructions/tooling.md and the Optional research section of .agents/implementation/IMPLEMENTATION.md. Answer only the bounded research question with official source links, version limits and uncertainties. No edits, builds, tests, publication or subdelegation.
 """

@@ -13,15 +13,18 @@ Use the software-design-principles skill selectively for concrete design issues.
 Canonical rules, explicit exceptions, architecture, and feature specifications
 remain authoritative; these checklists do not duplicate their requirements.
 
-Require verified effective read-only permissions. Tool allowlists must exclude
-edits, unrestricted shell execution, and write-capable MCP.
+Verify effective permissions before dispatch. Read-only isolation is the default.
+An explicit user-approved `workspace-write` reviewer is permitted; record that
+exception and verify the effective sandbox is no broader. This sandbox permits
+filesystem writes, so the no-edit behavior is an instruction rather than an OS
+guarantee. Tool allowlists must still exclude edit tools, unrestricted shell
+execution, and write-capable MCP.
 Follow [tooling's agent access rules](../instructions/tooling.md#agent-tool-access)
 for the selected navigation/documentation tools and the external-cache exception.
 Browser tools and MCP management operations remain unavailable to readers.
-A verified read-only OS sandbox may allow shell tools for deterministic OCR/Git
-reads; a tool-only isolation setup must omit shell tools. Do not assume a Codex role default
-survives parent overrides. If isolation is unavailable, request a separate local
-read-only session or immutable snapshot and report the limitation.
+A verified read-only OS sandbox or user-approved `workspace-write` sandbox may
+allow shell tools for deterministic OCR/Git reads. The reviewer must not use
+them to edit source, configuration, Git state, or application state. Do not assume a Codex role default survives parent overrides. If the required sandbox cannot be verified, use a separate local session or immutable snapshot and report the limitation.
 
 ## Review helpers
 

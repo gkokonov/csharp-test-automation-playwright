@@ -64,6 +64,14 @@ try {
             throw "Playwright CLI update failed."
         }
 
+        Write-Step "Updating global Open Code Review CLI"
+
+        & npm install -g "@alibaba-group/open-code-review@latest"
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Open Code Review CLI update failed."
+        }
+
         Write-Step "Refreshing workspace-local Playwright skill"
 
         & playwright-cli install --skills=agents
@@ -83,6 +91,19 @@ try {
 
         if ($LASTEXITCODE -ne 0) {
             throw "Archify skill update failed."
+        }
+
+        Write-Step "Updating workspace-local Open Code Review delegate skill"
+
+        & npx -y skills add `
+            alibaba/open-code-review `
+            --skill open-code-review-delegate `
+            --agent codex `
+            --copy `
+            --yes
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Open Code Review delegate skill update failed."
         }
     }
 
@@ -151,6 +172,14 @@ try {
         Write-Warning "Playwright CLI not found."
     }
 
+    if (Get-Command ocr -ErrorAction SilentlyContinue) {
+        Write-Host -NoNewline "Open Code Review: "
+        & ocr --version
+    }
+    else {
+        Write-Warning "Open Code Review CLI not found."
+    }
+
     $PlaywrightSkill =
         Join-Path $WorkspaceRoot ".agents\skills\playwright-cli"
 
@@ -164,11 +193,21 @@ try {
     $ArchifySkill =
         Join-Path $WorkspaceRoot ".agents\skills\archify"
 
+    $OpenCodeReviewSkill =
+        Join-Path $WorkspaceRoot ".agents\skills\open-code-review-delegate"
+
     if (Test-Path $ArchifySkill) {
         Write-Host "Archify skill: $ArchifySkill"
     }
     else {
         Write-Warning "Workspace Archify skill not found."
+    }
+
+    if (Test-Path $OpenCodeReviewSkill) {
+        Write-Host "Open Code Review delegate skill: $OpenCodeReviewSkill"
+    }
+    else {
+        Write-Warning "Open Code Review delegate skill not found."
     }
 
     Write-Step "Agent tooling update completed."

@@ -1,6 +1,7 @@
 name = "reviewer"
 description = "Review requested changes and report evidence-based findings without edits."
 sandbox_mode = "workspace-write"
+# User-approved sandbox: review behavior remains no-edit; verify effective isolation.
 developer_instructions = """
 Read AGENTS.md, .agents/instructions/tooling.md and .agents/review/REVIEW.md and follow them. Load .agents/skills/open-code-review-delegate/SKILL.md. Return findings only; do not execute the skill's optional fix step. If shell access is unavailable, request deterministic OCR evidence from the parent or local operator.
 """

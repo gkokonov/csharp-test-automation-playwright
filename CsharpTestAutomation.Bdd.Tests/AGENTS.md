@@ -10,6 +10,7 @@ and [BDD rules](../.agents/rules/bdd-testing.md).
 | Pages, components, or UI step definitions | [UI rules](../.agents/rules/ui-testing.md). |
 | Hooks, lifecycle, authentication, or supporting helpers | Load API/UI rules by responsibility; load both for cross-layer work. |
 | NetBox Device features, bindings, or data | [Device specification](../docs/netbox-automation/03-device-management-spec.md). |
+| NetBox IPAM features, bindings, or data | [IPAM specification](../docs/netbox-automation/04-ipam-spec.md). |
 
 Layer design changes also read the architecture reference linked by the API/UI
 rule. Application layers remain in this project; do not reference the NUnit

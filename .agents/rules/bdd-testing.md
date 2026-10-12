@@ -43,6 +43,12 @@ base classes and Allure.NUnit attributes apply to the NUnit application project.
   Allure.Reqnroll only; do not activate Allure.NUnit or add retry plugins.
 - `DeviceScenarioMetadata` owns Device story, severity, and owner by stable ID.
   Hooks use the canonical Device Management feature for these scenarios.
+- Product IPAM scenarios use `@NetBox @Ipam`, one of `@Prefix`/`@IpAddress`,
+  one of `@API`/`@UI`, and exactly one stable ID: `@PrefixApi01` through
+  `@PrefixApi04`, `@IpAddressApi01` through `@IpAddressApi04`, or `@PrefixUi01`.
+  `IpamScenarioMetadata` preserves NUnit story, severity, and owner. Hooks use
+  `IPAM - Prefix` or `IPAM - IP Address`. Retain response, UI, persisted-field,
+  and cleanup assertions; register Prefix cleanup before its address cleanup.
 
 ## Hooks and resource ownership
 

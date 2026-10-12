@@ -116,7 +116,10 @@ def check(root):
         require(data.get("name") == role and data.get("description"), f"Invalid Codex role: {path}")
         references(root, path, data["developer_instructions"], targets)
         check_mcp(root, path, data, role, project, vscode)
-        if role != "implementator":
+        if role == "reviewer":
+            require(data.get("sandbox_mode") in {"read-only", "workspace-write"},
+                    f"Reviewer sandbox missing or unrestricted: {path}")
+        elif role == "researcher":
             require(data.get("sandbox_mode") == "read-only", f"Reader sandbox missing: {path}")
         if role == "researcher":
             require(data.get("agents", {}).get("enabled") is False,
@@ -223,7 +226,8 @@ def negative_fixtures(root):
             files.add(root / target)
     mutations = [
         (".codex/agents/researcher.toml", "enabled = false", "enabled = true", "Researcher delegation"),
-        (".codex/agents/reviewer.toml", 'sandbox_mode = "read-only"', 'sandbox_mode = "workspace-write"', "Reader sandbox"),
+        (".codex/agents/reviewer.toml", 'sandbox_mode = "workspace-write"', 'sandbox_mode = "danger-full-access"', "Reviewer unrestricted sandbox"),
+        (".codex/agents/researcher.toml", 'sandbox_mode = "read-only"', 'sandbox_mode = "workspace-write"', "Researcher writable sandbox"),
         (".github/agents/reviewer.agent.md", "'read'", "'edit'", "Reader edit tool"),
         (".agents/agents/reviewer.md", "tools: [", "tools: [broken: [", "Malformed YAML"),
         (".codex/agents/reviewer.toml", 'name = "reviewer"', 'name = [', "Malformed TOML"),

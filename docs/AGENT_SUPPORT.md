@@ -41,11 +41,15 @@ MCP binding/filtering still needs fresh host verification. Follow the
 [RTK evidence rules](../.agents/instructions/tooling.md#rtk-and-complete-evidence)
 when preparing complete patches, source, or OCR JSON.
 
-Reviewer must be read-only. Before delegation, inspect effective permissions,
-including MCP tools; adapter defaults do not prove runtime isolation. If the
-host cannot establish isolation, use a separate verified read-only session or
-immutable snapshot. Reviewer helpers must follow the shared workflow and cannot
-delegate further. Do not use destructive write probes to test permissions.
+Reviewer must preserve no-edit behavior. Read-only isolation is the default;
+an explicit user-approved `workspace-write` reviewer is permitted under the
+[review workflow](../.agents/review/REVIEW.md). The repository's Codex reviewer
+uses that approved mode. Filesystem writes are possible in this mode; report
+that limit and verify effective permissions, including MCP tools, before
+delegation. Adapter defaults do not prove runtime isolation. If the required
+sandbox cannot be verified, use a separate local session or immutable snapshot.
+Researcher remains read-only. Reviewer helpers follow the shared workflow and
+cannot delegate further. Do not use destructive write probes to test permissions.
 
 OCR can omit task-owned host settings or excluded provider files. Check the
 manifest exclusions and review task-owned settings separately. Report that
@@ -67,6 +71,46 @@ server. Configuration output alone does not prove a connection. Use the
 requirements and fallbacks. `.vscode/mcp.json` and
 `.agents/mcp_config.json` are separate host configurations; check each affected
 adapter when changing a shared endpoint or launch option.
+
+### Review fallback when shell reads are rejected
+
+A separate local CLI review can still reject harmless shell reads after a
+`--sandbox workspace-write` request when the effective session reports
+`read-only`. Keep the approved Reviewer TOML setting; the CLI request and static
+adapter checks do not prove native host activation or effective tool access.
+Use the review workflow's supplied-evidence route:
+
+1. The Implementator runs deterministic OCR preview/rule commands and prepares
+   complete task patches, source snapshots, applicable instructions, API/UI
+   architecture references, RTK guidance, validation results, and content hashes.
+2. Start a separate local Reviewer with that fixed evidence and instruct it to
+   review without tool calls. Check the effective session sandbox, absence of
+   configured MCP services, and the session log for tool calls. A no-call review
+   is an observation, not proof that its tool schema lacks tools. The Reviewer
+   reports findings and reviewed/skipped identities from the supplied snapshot;
+   it does not claim to have run OCR, builds, tests, or repository reads.
+3. Keep edits paused. Compare current task hashes with the snapshot before
+   accepting the report. Supply missing references or changed content and repeat
+   the whole task review. Report native host activation as unverified.
+
+This fallback establishes an independent static review of supplied content.
+For example, after preparing the fixed prompt and sources:
+
+```powershell
+Get-Content -Raw artifacts/agent-follow-up/snapshot-review-prompt.txt |
+    codex exec --ignore-user-config --sandbox workspace-write --ephemeral --color never `
+    -c 'features.multi_agent=false' -c 'web_search="disabled"' `
+    --output-last-message artifacts/agent-follow-up/snapshot-review-result.txt - `
+    > artifacts/agent-follow-up/snapshot-review-session.log 2>&1
+```
+
+The prompt forbids tool calls and includes OCR preview/rules, the full patch,
+numbered source and guidance, and a content-hash manifest. Inspect the session
+log and recheck hashes; the command alone does not establish complete coverage.
+Live test evidence remains the Implementator's responsibility. For CBM timestamp
+warnings and unsupported Gherkin sources, use the
+[Windows freshness audit](../.agents/instructions/tooling.md#windows-freshness-and-unsupported-sources)
+and direct `.feature` reads plus Reqnroll discovery.
 
 ## Discovery check
 

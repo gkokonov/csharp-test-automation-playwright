@@ -23,14 +23,18 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
     {
         string[] tags = scenario.ScenarioInfo.CombinedTags;
         bool isDevice = tags.Contains("Device");
-        (string story, SeverityLevel severity) = isDevice ? DeviceScenarioMetadata.Get(tags) : SiteScenarioMetadata.Get(tags);
+        bool isIpam = tags.Contains("Ipam");
+        (string story, SeverityLevel severity) = isIpam ? IpamScenarioMetadata.Get(tags)
+            : isDevice ? DeviceScenarioMetadata.Get(tags) : SiteScenarioMetadata.Get(tags);
         AllureLifecycle.Instance.UpdateTestCase(result => result.labels.RemoveAll(label => label.name == "feature"));
         AllureApi.AddSuite(tags.Contains("UI") ? "UI" : "API");
         AllureApi.AddEpic("NetBox");
-        AllureApi.AddFeature(isDevice ? "Device Management" : "Site Management");
+        AllureApi.AddFeature(isIpam ? (tags.Contains("Prefix") ? "IPAM - Prefix" : "IPAM - IP Address")
+            : isDevice ? "Device Management" : "Site Management");
         AllureApi.AddStory(story);
         AllureApi.SetSeverity(severity);
-        AllureApi.SetOwner(isDevice ? DeviceScenarioMetadata.Owner : SiteScenarioMetadata.Owner);
+        AllureApi.SetOwner(isIpam ? IpamScenarioMetadata.Owner
+            : isDevice ? DeviceScenarioMetadata.Owner : SiteScenarioMetadata.Owner);
     }
 
     [BeforeScenario("NetBox", Order = 15)]
@@ -67,6 +71,15 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
         RegisterClient(new DeviceRolesApiClient(factory, authenticator), "Device role API client");
         RegisterClient(new DevicesApiClient(factory, authenticator), "Device API client");
         container.RegisterInstanceAs(await resources.GetDevicesRepositoryAsync(), dispose: false);
+    }
+
+    [BeforeScenario("Ipam", Order = 25)]
+    public async Task RegisterIpamDependenciesAsync()
+    {
+        BddRunResources resources = BddRunResources.Current;
+        var factory = new RestClientFactory(resources.Configuration.Api);
+        RegisterClient(new IpamApiClient(factory, new NetBoxTokenAuthenticator(resources.TokenSession)), "IPAM API client");
+        container.RegisterInstanceAs(await resources.GetIpamRepositoryAsync(), dispose: false);
     }
 
     [BeforeScenario("UI", Order = 30)]

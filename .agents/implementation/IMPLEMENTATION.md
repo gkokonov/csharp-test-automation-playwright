@@ -38,12 +38,15 @@ blocked prerequisites; a review does not replace execution evidence.
 Follow [the review workflow](../review/REVIEW.md). Within an authorized implementation,
 delegation to the reviewer for final review is authorized. Use only the local
 host and verify its effective permissions before dispatch. The reviewer must
-have no edit, unrestricted shell, or write-capable MCP. It may use bounded read-only
-helpers under the review workflow; verify helper permissions before dispatch.
-Codex sandbox defaults can be overridden by the parent runtime: inspect effective
-permissions, not just its TOML. If read-only isolation cannot be verified, use a
-separate local read-only session or immutable snapshot; report a blocked review
-when neither is available. Never silently substitute self-review.
+have no edit tools, unrestricted shell, or write-capable MCP. It may use bounded
+read-only helpers under the review workflow; verify helper permissions before
+dispatch. Codex sandbox defaults can be overridden by the parent runtime:
+inspect effective permissions, not just its TOML. Read-only isolation is the
+default; an explicit user-approved `workspace-write` reviewer is permitted under
+the review workflow's no-edit behavior. Record the exception and its lack of an
+OS write prohibition. Use a separate local session or immutable snapshot when
+the required effective sandbox cannot be verified; report a blocked review when
+neither is available. Never silently substitute self-review.
 
 Pause edits during review. Provide the original request, acceptance criteria,
 constraints, task paths and baseline deltas, preview mode/resolved refs, current
