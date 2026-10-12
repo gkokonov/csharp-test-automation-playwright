@@ -86,16 +86,19 @@ Alias SQL columns to DB-row C# member names; tests must not translate
 
 ## Data ownership and cleanup
 
-- Query existing data first through `Database/<App>/Queries/`; reuse row DTOs.
+- When a scenario requires existing database data, query it through
+  `Database/<App>/Queries/` and reuse row DTOs. Database access is not required
+  for every prerequisite; select setup by the behavior and application contract.
   Records the test did not create are read-only: never mutate or delete them.
 - For a scenario that owns setup, create required records through the API or a
   DB helper. Register cleanup immediately, before validating the response or
   creating dependents. Use the fixture's inherited or hook-registered
   `ScenarioCleanupActions`; each scenario has one stack.
-- Never open a connection or embed a connection string in a test. Query methods
-  acquire short-lived connections from `PostgreSqlConnectionPool` through
-  the application's query helper, which disposes the connection. BDD queries
-  use asynchronous connection acquisition and Dapper execution.
+- Never open a connection or embed a connection string in a test. Application
+  query helpers acquire short-lived connections from the configured data source
+  or pool and dispose them after use. BDD queries use asynchronous connection
+  acquisition and Dapper execution. Project example: NetBox query helpers use
+  `PostgreSqlConnectionPool`; other applications select their database provider.
 - Prefer Bogus `Faker`/`Randomizer` and the existing generator pattern for unique
   or varied test values. Fixed domain values remain constants.
 - Teardown attempts evidence independently, then attempts every cleanup/release.

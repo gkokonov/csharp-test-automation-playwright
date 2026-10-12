@@ -1,4 +1,4 @@
-"""Validate adapter syntax, instruction references, reader permissions, and OCR routes."""
+"""Validate adapter syntax, instruction references, agent tools, and OCR routes."""
 
 import argparse
 import contextlib
@@ -116,11 +116,8 @@ def check(root):
         require(data.get("name") == role and data.get("description"), f"Invalid Codex role: {path}")
         references(root, path, data["developer_instructions"], targets)
         check_mcp(root, path, data, role, project, vscode)
-        if role == "reviewer":
-            require(data.get("sandbox_mode") in {"read-only", "workspace-write"},
-                    f"Reviewer sandbox missing or unrestricted: {path}")
-        elif role == "researcher":
-            require(data.get("sandbox_mode") == "read-only", f"Reader sandbox missing: {path}")
+        require(data.get("sandbox_mode") == "danger-full-access",
+                f"Custom agent must use the effective unrestricted shell/edit environment: {path}")
         if role == "researcher":
             require(data.get("agents", {}).get("enabled") is False,
                     f"Researcher delegation must be disabled: {path}")
@@ -140,11 +137,9 @@ def check(root):
             require(isinstance(tools, list), f"Tools must be a YAML list: {adapter}")
             if directory == ".github/agents":
                 require(header.get("target") == "vscode", f"Local target missing: {adapter}")
-                permitted = {"read", "search", "web"}
+                permitted = {"read", "search", "web", "edit", "execute"}
                 if role != "researcher":
                     permitted.add("agent")
-                if role == "implementator":
-                    permitted.update({"edit", "execute"})
                 permitted.update(f"{server}/{name}" for server, names in role_mcp_tools(role).items()
                                  for name in names)
                 require({"read", "search"} <= set(tools), f"Read/search tools missing: {adapter}")
@@ -153,8 +148,7 @@ def check(root):
                              "read_url_content", "list_permissions"}
                 if role != "researcher":
                     permitted.add("invoke_subagent")
-                if role == "implementator":
-                    permitted.update({"run_command", "replace_file_content"})
+                permitted.update({"run_command", "replace_file_content"})
                 require({"view_file", "grep_search"} <= set(tools), f"Read/search tools missing: {adapter}")
                 require(header.get("model") == "inherit" and header.get("mainAgent") is True
                         and header.get("subagent") is (role != "implementator"),
@@ -162,12 +156,9 @@ def check(root):
             require(all(isinstance(tool, str) for tool in tools)
                     and len(tools) == len(set(tools)) and set(tools) == permitted,
                     f"Missing, unknown, duplicate, or unsafe adapter tool: {adapter}")
-            if role != "implementator":
-                require(not set(tools) & {"edit", "execute", "run_command", "replace_file_content"},
-                        f"Reader has edit/command tools: {adapter}")
-                if directory == ".agents/agents":
-                    require(header.get("commandExecutionPolicy") == "off",
-                            f"Reader command policy is not off: {adapter}")
+            if directory == ".agents/agents":
+                require(header.get("commandExecutionPolicy") == "auto",
+                        f"Custom agent command policy must use the effective shell: {adapter}")
             if role == "researcher":
                 require(delegation not in tools, f"Researcher can delegate: {adapter}")
                 if directory == ".github/agents":
@@ -210,7 +201,7 @@ def check(root):
         if path.is_file():
             for line_number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
                 require(line.rstrip(" \t") == line, f"Trailing whitespace: {path}:{line_number}")
-    print(f"Checked nine adapters, MCP transports and role allowlists, instruction references, reader restrictions, five OCR rule references, and {len(samples)} OCR routes.")
+    print(f"Checked nine adapters, MCP transports and role allowlists, instruction references, shell/edit access, role boundaries, five OCR rule references, and {len(samples)} OCR routes.")
 
 
 def negative_fixtures(root):
@@ -226,10 +217,11 @@ def negative_fixtures(root):
             files.add(root / target)
     mutations = [
         (".codex/agents/researcher.toml", "enabled = false", "enabled = true", "Researcher delegation"),
-        (".codex/agents/reviewer.toml", 'sandbox_mode = "workspace-write"', 'sandbox_mode = "danger-full-access"', "Reviewer unrestricted sandbox"),
-        (".codex/agents/researcher.toml", 'sandbox_mode = "read-only"', 'sandbox_mode = "workspace-write"', "Researcher writable sandbox"),
-        (".github/agents/reviewer.agent.md", "'read'", "'edit'", "Reader edit tool"),
-        (".agents/agents/reviewer.md", "tools: [", "tools: [broken: [", "Malformed YAML"),
+        (".codex/agents/reviewer.toml", 'sandbox_mode = "danger-full-access"', 'sandbox_mode = "workspace-write"', "Reviewer restricted sandbox"),
+        (".codex/agents/researcher.toml", 'sandbox_mode = "danger-full-access"', 'sandbox_mode = "read-only"', "Researcher restricted sandbox"),
+        (".github/agents/reviewer.agent.md", "'execute'", "'exec'", "VS Code invalid shell tool"),
+        (".agents/agents/reviewer.md", 'commandExecutionPolicy: "auto"', 'commandExecutionPolicy: "off"', "Antigravity shell disabled"),
+        (".agents/agents/reviewer.md", "tools:\n  - view_file", "tools: [broken: [", "Malformed YAML"),
         (".codex/agents/reviewer.toml", 'name = "reviewer"', 'name = [', "Malformed TOML"),
         (".github/agents/researcher.agent.md", ".agents/instructions/tooling.md", ".agents/instructions/missing.md", "Plain adapter reference"),
         (".opencodereview/rule.json", ".agents/review/rules/framework.md", ".agents/review/rules/missing.md", "Manifest rule reference"),

@@ -37,23 +37,23 @@ blocked prerequisites; a review does not replace execution evidence.
 
 Follow [the review workflow](../review/REVIEW.md). Within an authorized implementation,
 delegation to the reviewer for final review is authorized. Use only the local
-host and verify its effective permissions before dispatch. The reviewer must
-have no edit tools, unrestricted shell, or write-capable MCP. It may use bounded
-read-only helpers under the review workflow; verify helper permissions before
-dispatch. Codex sandbox defaults can be overridden by the parent runtime:
-inspect effective permissions, not just its TOML. Read-only isolation is the
-default; an explicit user-approved `workspace-write` reviewer is permitted under
-the review workflow's no-edit behavior. Record the exception and its lack of an
-OS write prohibition. Use a separate local session or immutable snapshot when
-the required effective sandbox cannot be verified; report a blocked review when
-neither is available. Never silently substitute self-review.
+host. Custom agents use the effective environment, which exposes unrestricted
+shell and edit tools. Reviewer and helper instructions limit changes to owned
+scratch files; they do not modify reviewed source, configuration, Git state, or
+application state. Keep MCP permissions role-scoped. Do not block review because
+the host lacks read-only isolation or create a second snapshot session.
+The reviewer may create scratch evidence outside the checkout and must clean up
+all files it creates before handoff. Verify cleanup; if the host rejects it,
+report the exact path and failure rather than claiming it was removed.
 
 Pause edits during review. Provide the original request, acceptance criteria,
 constraints, task paths and baseline deltas, preview mode/resolved refs, current
 content hashes (including unstaged/untracked files), applicable guidance, and
 check results/limitations. A Git ref alone does not identify workspace content.
-For readers without shell access, prepare OCR preview, grouped rules, patches,
-and source snapshots as specified in the review workflow.
+The reviewer runs OCR preview/rules and reads complete patches and source with
+its effective shell tools. If a host does not provide those tools, request the
+specific missing evidence from the operator; do not create a separate snapshot
+review session.
 
 The reviewer returns findings; only the Implementator applies fixes. Account for
 each finding as fixed, rejected with evidence, duplicate, or unresolved. Fix all

@@ -1,8 +1,6 @@
 """Checked local commands and disposable repositories for harness validation."""
 
 import contextlib
-import json
-import os
 from pathlib import Path
 import shutil
 import stat
@@ -21,29 +19,6 @@ def run(command, cwd, *, expected=(0,), timeout=60):
     require(result.returncode in expected,
             f"Command failed ({result.returncode}): {command!r}\n{result.stderr}\n{result.stdout}")
     return result
-
-
-def ocr_command():
-    executable = shutil.which("ocr")
-    require(executable, "OCR is unavailable on PATH.")
-    path = Path(executable)
-    if os.name == "nt" and path.suffix.lower() in {".cmd", ".bat", ".ps1"}:
-        wrapper = path.parent / "node_modules/@alibaba-group/open-code-review/bin/ocr.js"
-        node = shutil.which("node")
-        require(node and wrapper.is_file(),
-                "Use the OCR npm installation or put the OCR native executable on PATH.")
-        return [node, str(wrapper)]
-    return [executable]
-
-
-def ocr(repo, *arguments):
-    return json.loads(run([*ocr_command(), "delegate", *arguments,
-                           "--repo", str(repo), "--format", "json"], repo).stdout)
-
-
-def write(path, content):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8", newline="\n")
 
 
 @contextlib.contextmanager

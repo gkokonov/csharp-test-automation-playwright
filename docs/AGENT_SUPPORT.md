@@ -41,15 +41,14 @@ MCP binding/filtering still needs fresh host verification. Follow the
 [RTK evidence rules](../.agents/instructions/tooling.md#rtk-and-complete-evidence)
 when preparing complete patches, source, or OCR JSON.
 
-Reviewer must preserve no-edit behavior. Read-only isolation is the default;
-an explicit user-approved `workspace-write` reviewer is permitted under the
-[review workflow](../.agents/review/REVIEW.md). The repository's Codex reviewer
-uses that approved mode. Filesystem writes are possible in this mode; report
-that limit and verify effective permissions, including MCP tools, before
-delegation. Adapter defaults do not prove runtime isolation. If the required
-sandbox cannot be verified, use a separate local session or immutable snapshot.
-Researcher remains read-only. Reviewer helpers follow the shared workflow and
-cannot delegate further. Do not use destructive write probes to test permissions.
+Custom agents use the effective environment, which exposes unrestricted shell
+and edit tools. Do not block dispatch because a read-only sandbox is unavailable.
+Keep each role within its task: Implementator changes only authorized scope;
+Reviewer returns findings without changing reviewed source; Researcher does not
+change repository source or configuration. Reviewer and Researcher may create
+task-specific scratch files outside the checkout. They must clean up owned files
+before handoff and report the exact path and failure if cleanup is blocked. Keep
+MCP allowlists role-scoped and do not add write-capable MCP tools.
 
 OCR can omit task-owned host settings or excluded provider files. Check the
 manifest exclusions and review task-owned settings separately. Report that
@@ -72,44 +71,19 @@ requirements and fallbacks. `.vscode/mcp.json` and
 `.agents/mcp_config.json` are separate host configurations; check each affected
 adapter when changing a shared endpoint or launch option.
 
-### Review fallback when shell reads are rejected
+### Temporary review evidence
 
-A separate local CLI review can still reject harmless shell reads after a
-`--sandbox workspace-write` request when the effective session reports
-`read-only`. Keep the approved Reviewer TOML setting; the CLI request and static
-adapter checks do not prove native host activation or effective tool access.
-Use the review workflow's supplied-evidence route:
+Use the Reviewer’s effective shell for OCR, Git, and source reads. Do not start a
+second snapshot review session to work around tool access. If you need temporary
+evidence files, create them in one task-specific directory outside the checkout.
+Record its resolved path, keep only required evidence, and remove it before
+handoff. Verify the directory is gone. If recursive cleanup is rejected, remove
+only the files created by this task and then the empty directory; report any
+remaining path and the exact failure.
 
-1. The Implementator runs deterministic OCR preview/rule commands and prepares
-   complete task patches, source snapshots, applicable instructions, API/UI
-   architecture references, RTK guidance, validation results, and content hashes.
-2. Start a separate local Reviewer with that fixed evidence and instruct it to
-   review without tool calls. Check the effective session sandbox, absence of
-   configured MCP services, and the session log for tool calls. A no-call review
-   is an observation, not proof that its tool schema lacks tools. The Reviewer
-   reports findings and reviewed/skipped identities from the supplied snapshot;
-   it does not claim to have run OCR, builds, tests, or repository reads.
-3. Keep edits paused. Compare current task hashes with the snapshot before
-   accepting the report. Supply missing references or changed content and repeat
-   the whole task review. Report native host activation as unverified.
-
-This fallback establishes an independent static review of supplied content.
-For example, after preparing the fixed prompt and sources:
-
-```powershell
-Get-Content -Raw artifacts/agent-follow-up/snapshot-review-prompt.txt |
-    codex exec --ignore-user-config --sandbox workspace-write --ephemeral --color never `
-    -c 'features.multi_agent=false' -c 'web_search="disabled"' `
-    --output-last-message artifacts/agent-follow-up/snapshot-review-result.txt - `
-    > artifacts/agent-follow-up/snapshot-review-session.log 2>&1
-```
-
-The prompt forbids tool calls and includes OCR preview/rules, the full patch,
-numbered source and guidance, and a content-hash manifest. Inspect the session
-log and recheck hashes; the command alone does not establish complete coverage.
 Live test evidence remains the Implementator's responsibility. For CBM timestamp
 warnings and unsupported Gherkin sources, use the
-[Windows freshness audit](../.agents/instructions/tooling.md#windows-freshness-and-unsupported-sources)
+[Windows freshness guidance](../.agents/instructions/tooling.md#windows-freshness-and-unsupported-sources)
 and direct `.feature` reads plus Reqnroll discovery.
 
 ## Discovery check
@@ -129,16 +103,13 @@ activation or correct behavior.
 
 ## Instruction maintenance check
 
-From the repository root, run the [maintenance script](../.agents/scripts/Test-AgentHarness.ps1)
-and [configuration checker](../.agents/scripts/check_agent_configuration.py):
+From the repository root, run the [maintenance script](../.agents/scripts/Test-AgentHarness.ps1).
+It also runs the configuration checker:
 
 ```powershell
 pwsh -NoProfile -File .agents/scripts/Test-AgentHarness.ps1
-python .agents/scripts/check_agent_configuration.py
 ```
 
-Use `-OcrFixtures` on the maintenance script when changing OCR selection or
-rules. It requires Git and a JSON-capable OCR CLI. These checks cover links,
-routing, adapter syntax, and deterministic fixtures; they do not prove host
-activation or effective runtime isolation. Instruction-only changes need no
-.NET build. Finish with `git diff --check` and review the complete diff.
+These checks cover links, routing, and adapter syntax. They do not prove host
+activation or effective runtime tool availability. Instruction-only changes need
+no .NET build. Finish with `git diff --check` and review the complete diff.

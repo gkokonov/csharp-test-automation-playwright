@@ -316,13 +316,21 @@ Sanitization, truncation, and formatting apply **only** to log/Allure output —
 
 ## 8. Redaction
 
-`appsettings.json` sets redaction **off** for API log and Allure content. The `ApiLoggingSettings` model defaults it to `true` when the setting is omitted. When enabled, sensitive values are replaced with `***REDACTED***` before they are retained. Set `Api.Logging.RedactSensitiveData` to `true` to redact them.
+Both application test projects set `Api.Logging.RedactSensitiveData` to `true`
+in `appsettings.json`. The `ApiLoggingSettings` model also defaults it to `true`
+when the setting is omitted. Keep it enabled for application runs. Sensitive
+values are replaced with `***REDACTED***` before API log and Allure content is retained.
 
 **Default redacted headers** (case-insensitive): `Authorization`, `Proxy-Authorization`, `Cookie`, `Set-Cookie`.
 
 **Default redacted body fields** (case-insensitive, recursive): `password`, `token`, `access_token`, `refresh_token`, `id_token`, `api_key`, `apikey`, `client_secret`, `secret`.
 
 **Extend** the body field list via `Api.Logging.AdditionalRedactedFields` in `appsettings.json`; configured names are appended to the built-in list at construction time (applied only when `RedactSensitiveData` is `true`).
+
+Current implementation limit: the NUnit application's
+`GlobalSetupFixture.LogAppsettingsValues()` writes the full configuration at
+Debug level without redaction. API request/response sanitization does not cover
+this separate startup logging path.
 
 ## 9. Configuration Reference
 
@@ -350,7 +358,7 @@ Bound from the `Api` key in `CsharpTestAutomation.Tests/appsettings.json`.
 | `AttachOnFailureOnly` | `bool` | `true` | When `true`, attach only for failed calls; when `false`, attach for every call. |
 | `MaxBodySizeBytes` | `int` | `15000` | Max body bytes retained before truncation **in logs/attachments only** (the `RestResponse` keeps the raw body). Validated to be greater than zero. |
 | `LogFullDetail` | `bool` | `false` | When `true`, write full request/response details at Debug level after configured sanitization. |
-| `RedactSensitiveData` | `bool` | `false` in `appsettings.json` (model fallback: `true`) | When `true`, redact sensitive headers/body fields before logging and attachment. |
+| `RedactSensitiveData` | `bool` | `true` (model and application settings) | When `true`, redact sensitive headers/body fields before logging and attachment. |
 | `AdditionalRedactedFields` | `IList<string>` | `[]` | Extra JSON field names appended to the built-in body redaction list (used only when `RedactSensitiveData` is `true`). |
 
 ### Example
@@ -369,7 +377,7 @@ Bound from the `Api` key in `CsharpTestAutomation.Tests/appsettings.json`.
       "AttachOnFailureOnly": true,
       "MaxBodySizeBytes": 15000,
       "LogFullDetail": false,
-      "RedactSensitiveData": false,
+      "RedactSensitiveData": true,
       "AdditionalRedactedFields": []
     }
   }
@@ -382,7 +390,6 @@ Newest first. Bump the version and add a row whenever this document changes so f
 
 | Version | Date | Summary |
 | --- | --- | --- |
+| 1.14 | 2026-10-12 | Align application redaction defaults and example; document the NUnit startup logging limitation. |
 | 1.13 | 2026-10-10 | Align NUnit and BDD DTO guidance; clarify brief contracts and reuse of identical response shapes. |
 | 1.12 | 2026-10-10 | Harmonize DTO naming: use {Resource}ResponseDto and Brief{Resource}Dto. |
-| 1.11 | 2026-10-10 | BDD scope includes independent Site and Device coverage. |
-| 1.10 | 2026-09-27 | Document NetBox token authentication and clarify API logging configuration. |

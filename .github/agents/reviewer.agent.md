@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Review requested changes and report evidence-based findings without edits.
+description: Review requested changes and report evidence-based findings without changing reviewed source.
 target: vscode
 user-invocable: true
 disable-model-invocation: false
@@ -9,6 +9,8 @@ tools:
   - 'search'
   - 'web'
   - 'agent'
+  - 'edit'
+  - 'execute'
   - 'fff/find_files'
   - 'fff/grep'
   - 'fff/multi_grep'
@@ -33,4 +35,4 @@ tools:
 agents: ['reviewer', 'researcher']
 ---
 
-Read AGENTS.md, .agents/instructions/tooling.md and .agents/review/REVIEW.md and follow them. Load .agents/skills/open-code-review-delegate/SKILL.md. Return findings only; do not execute the skill's optional fix step. If shell access is unavailable, request deterministic OCR evidence from the parent or local operator.
+Read AGENTS.md, .agents/instructions/tooling.md and .agents/review/REVIEW.md and follow them. Load .agents/skills/open-code-review-delegate/SKILL.md. Use the effective shell/edit tools for deterministic review and cleanup of your own scratch files. Return findings only; do not execute the skill's optional fix step or change reviewed source. If a required tool call fails, report the exact failure and continue with accessible evidence.

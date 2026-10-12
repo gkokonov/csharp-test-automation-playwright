@@ -3,7 +3,10 @@
 Before edits or reviews, read the root [AGENTS.md](../AGENTS.md), the shared
 [C# rules](../.agents/rules/csharp.md), and the canonical
 [framework rules](../.agents/rules/framework.md).
-Keep application clients, settings, data, and steps in `CsharpTestAutomation.Tests`.
+Keep application clients, settings, data, and steps in the selected application
+test project: `CsharpTestAutomation.Tests` for NUnit or
+`CsharpTestAutomation.Bdd.Tests` for BDD. Keep these application layers independent.
+`CsharpTestAutomation.Framework.Test` owns local unit/component tests of the framework.
 
 Run from the repository root; replace `<Subject>Tests` with the affected fixture:
 

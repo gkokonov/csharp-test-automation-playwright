@@ -31,7 +31,7 @@ before instruction reads. Reuse guidance already available in the session.
 | BDD application work | [BDD scope](CsharpTestAutomation.Bdd.Tests/AGENTS.md); routes features, steps, hooks, and application layers. |
 | Framework self-tests | [Self-test scope](CsharpTestAutomation.Framework.Test/AGENTS.md). |
 | Implementation agent | [Implementation workflow](.agents/implementation/IMPLEMENTATION.md); one writer for all four projects. |
-| Code review agent | [Review workflow](.agents/review/REVIEW.md); read-only findings go to the Implementator for fixes. |
+| Code review agent | [Review workflow](.agents/review/REVIEW.md); findings go to the Implementator. Reviewers can use the effective shell/edit tools but do not change reviewed source. |
 | Commit message or authorized commit | [Commit instructions](.agents/instructions/commit-instructions.md); these do not authorize a commit. |
 | Detailed tool selection or workflows | [Tooling instructions](.agents/instructions/tooling.md) for fallbacks and operational details; read it before external docs or browser work. |
 | Instruction or host setup changes | [Agent support](docs/AGENT_SUPPORT.md). |

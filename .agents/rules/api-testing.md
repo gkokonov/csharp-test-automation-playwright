@@ -95,7 +95,8 @@ created record is a failed assertion. Follow shared ownership/cleanup rules.
   (`ShouldHaveCompletedTransport`) and JSONPath (`ShouldHaveJsonPathValue`).
 - Assert critical status codes before extracting data or performing DB operations.
   Apply the shared contract-based DB policy; fixtures/Then bindings own behavior assertions.
-- Keep request/response redaction enabled for normal NetBox runs so expected
-  `404` responses do not retain raw Authorization headers in Allure attachments.
-  Startup configuration logging currently writes unredacted values; changing
-  that behavior is deferred until requested.
+- Keep request/response redaction enabled for application runs, including error
+  responses. Configure sensitive fields for the application's contract so API
+  logs and Allure attachments do not retain credentials or tokens. See
+  [API logging and redaction](../../docs/API_TESTING_ARCHITECTURE.md#8-redaction)
+  for configuration and current implementation limits.

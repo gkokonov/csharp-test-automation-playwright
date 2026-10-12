@@ -37,8 +37,9 @@ Guard required non-null inputs, for example with `ArgumentNullException.ThrowIfN
 
 ## Async
 
-`.ConfigureAwait(false)` is required here, and only here. Both test projects
-use plain `await` by repository policy.
+`.ConfigureAwait(false)` is required only in the framework library. Both
+application test projects and the framework unit/component test project use
+plain `await` by repository policy.
 
 All I/O is async. Never block with `.Result` or `.Wait()`.
 
@@ -53,7 +54,12 @@ required setup.
 
 Never add to this project: application endpoints, domain DTOs, environment
 names, connection strings, or an application `appsettings.json`. These belong in
-`CsharpTestAutomation.Tests`.
+the selected application test project: `CsharpTestAutomation.Tests` for NUnit or
+`CsharpTestAutomation.Bdd.Tests` for BDD. Keep their application layers independent.
+
+`CsharpTestAutomation.Framework.Test` contains local unit/component tests of the
+framework. It is not an application test project and must not use application
+endpoints, credentials, or external services.
 
 ## Folder Layout and layer references
 

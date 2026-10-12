@@ -1,5 +1,4 @@
 [CmdletBinding()]
-param([switch] $OcrFixtures)
 
 $ErrorActionPreference = 'Stop'
 $harnessRepository = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
@@ -135,10 +134,6 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'git diff --check failed.' }
     python (Join-Path $PSScriptRoot 'check_agent_configuration.py') --repo $harnessRepository
     if ($LASTEXITCODE -ne 0) { throw 'Agent configuration checks failed.' }
-    if ($OcrFixtures) {
-        python (Join-Path $PSScriptRoot 'check_ocr_fixtures.py') --repo $harnessRepository
-        if ($LASTEXITCODE -ne 0) { throw 'OCR fixture checks failed.' }
-    }
 }
 finally {
     Pop-Location
