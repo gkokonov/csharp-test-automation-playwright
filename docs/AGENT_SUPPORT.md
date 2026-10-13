@@ -27,11 +27,14 @@ for the shared software-design skill.
 
 ## Local implementation, review, and research agents
 
-Select `implementator`, `reviewer`, or `researcher` from the host's local agent
-picker. Codex requires a trusted project and fresh session. These adapters use
-the shared [implementation](../.agents/implementation/IMPLEMENTATION.md) and
-[review](../.agents/review/REVIEW.md) workflows. Researcher is for bounded
-research and cannot implement changes.
+The main agent handles ordinary questions and authorized changes. Select custom
+`implementator` explicitly to use its
+[workflow](../.agents/implementation/IMPLEMENTATION.md); an ordinary request to
+implement does not select it. Every completed set of edits receives independent
+[review](../.agents/review/REVIEW.md), with findings and fixes owned by the writer.
+Questions without edits need no automatic review. Select `researcher` for
+[bounded research](../.agents/instructions/tooling.md#bounded-research).
+Codex requires a trusted project and fresh session.
 
 Use [tooling's role access rules](../.agents/instructions/tooling.md#agent-tool-access)
 for the selected navigation/documentation tools, external service caches, and
@@ -49,6 +52,13 @@ change repository source or configuration. Reviewer and Researcher may create
 task-specific scratch files outside the checkout. They must clean up owned files
 before handoff and report the exact path and failure if cleanup is blocked. Keep
 MCP allowlists role-scoped and do not add write-capable MCP tools.
+
+Copilot's Implementator sets `disable-model-invocation: true`; Antigravity exposes
+it as a main agent, not a subagent. Codex uses an instruction guard. Verify these
+routes in fresh hosts. Task contracts and source restrictions are advisory with
+current shell/edit access; metadata and MCP allowlists need runtime verification.
+Removing edit access alone cannot enforce read-only behavior with unrestricted
+shell. Sandbox/tool changes need a separate proposal that keeps OCR/Git usable.
 
 OCR can omit task-owned host settings or excluded provider files. Check the
 manifest exclusions and review task-owned settings separately. Report that
@@ -104,7 +114,7 @@ handoff. Verify the directory is gone. If recursive cleanup is rejected, remove
 only the files created by this task and then the empty directory; report any
 remaining path and the exact failure.
 
-Live test evidence remains the Implementator's responsibility. For CBM timestamp
+Live test evidence remains the change owner's responsibility. For CBM timestamp
 warnings and unsupported Gherkin sources, use the
 [Windows freshness guidance](../.agents/instructions/tooling.md#windows-freshness-and-unsupported-sources)
 and direct `.feature` reads plus Reqnroll discovery.

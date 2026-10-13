@@ -94,6 +94,18 @@ def references(root, source, text, expected):
         require((root / target).is_file(), f"Broken adapter reference: {source} -> {target}")
 
 
+def check_role_routes(source, text, role):
+    # These are instruction-presence checks, not proof of runtime behavior.
+    require("Task contract" in text, f"Missing task contract route: {source}")
+    if role == "implementator":
+        require("only when the user explicitly selects or requests custom Implementator" in text,
+                f"Missing explicit Implementator invocation guard: {source}")
+    elif role == "researcher":
+        require("Bounded research" in text, f"Missing shared research route: {source}")
+        require(".agents/implementation/IMPLEMENTATION.md" not in text,
+                f"Researcher must not load Implementator workflow: {source}")
+
+
 def check(root):
     project = tomllib.loads((root / ".codex/config.toml").read_text(encoding="utf-8-sig"))["mcp_servers"]
     vscode = json.loads((root / ".vscode/mcp.json").read_text(encoding="utf-8-sig"))["servers"]
@@ -115,18 +127,18 @@ def check(root):
                     f"Fetch transport differs from project config: {host}.{key}")
     require(vscode["fetch"].get("type") == "stdio", "Invalid VS Code Fetch transport type.")
     required = {
-        "implementator": {"AGENTS.md", ".agents/implementation/IMPLEMENTATION.md",
+        "implementator": {"AGENTS.md", ".agents/implementation/IMPLEMENTATION.md", ".agents/review/REVIEW.md",
                           ".agents/instructions/tooling.md", ".agents/skills/software-design-principles/SKILL.md"},
         "reviewer": {"AGENTS.md", ".agents/review/REVIEW.md",
                      ".agents/instructions/tooling.md", ".agents/skills/open-code-review-delegate/SKILL.md"},
-        "researcher": {"AGENTS.md", ".agents/instructions/tooling.md",
-                       ".agents/implementation/IMPLEMENTATION.md"},
+        "researcher": {"AGENTS.md", ".agents/instructions/tooling.md"},
     }
     for role, targets in required.items():
         path = root / f".codex/agents/{role}.toml"
         data = tomllib.loads(path.read_text(encoding="utf-8-sig"))
         require(data.get("name") == role and data.get("description"), f"Invalid Codex role: {path}")
         references(root, path, data["developer_instructions"], targets)
+        check_role_routes(path, data["developer_instructions"], role)
         check_mcp(root, path, data, role, project, vscode)
         require(data.get("sandbox_mode") == "danger-full-access",
                 f"Custom agent must use the effective unrestricted shell/edit environment: {path}")
@@ -145,10 +157,15 @@ def check(root):
             require(header.get("name") == role and header.get("description"),
                     f"Invalid role: {adapter}")
             references(root, adapter, body, targets)
+            check_role_routes(adapter, body, role)
             tools = header.get("tools")
             require(isinstance(tools, list), f"Tools must be a YAML list: {adapter}")
             if directory == ".github/agents":
                 require(header.get("target") == "vscode", f"Local target missing: {adapter}")
+                if role == "implementator":
+                    require(header.get("user-invocable") is True
+                            and header.get("disable-model-invocation") is True,
+                            f"Implementator must require explicit user invocation: {adapter}")
                 permitted = {"read", "search", "web", "edit", "execute"}
                 if role != "researcher":
                     permitted.add("agent")
@@ -256,7 +273,23 @@ def negative_fixtures(root):
         (".codex/agents/researcher.toml", 'enabled_tools = ["fetch"]', 'enabled_tools = ["*"]', "Fetch tool wildcard"),
         (".codex/agents/reviewer.toml", 'PYTHONIOENCODING = "utf-8"', 'PYTHONIOENCODING = "ascii"', "Fetch role encoding drift"),
         (".github/agents/reviewer.agent.md", "'fetch/fetch'", "'fetch/*'", "VS Code Fetch wildcard"),
+        (".github/agents/implementator.agent.md", "disable-model-invocation: true", "disable-model-invocation: false", "Automatic Implementator invocation"),
+        (".github/agents/implementator.agent.md", "user-invocable: true", "user-invocable: false", "Implementator not user selectable"),
     ]
+    for directory, suffix in ((".codex/agents", ".toml"),
+                              (".github/agents", ".agent.md"), (".agents/agents", ".md")):
+        mutations.extend([
+            (f"{directory}/implementator{suffix}",
+             "only when the user explicitly selects or requests custom Implementator",
+             "for any implementation request", f"{directory} invocation guard"),
+            (f"{directory}/researcher{suffix}", "Bounded research", "Other guidance",
+             f"{directory} shared research route"),
+            (f"{directory}/researcher{suffix}", "Bounded research",
+             "Bounded research and .agents/implementation/IMPLEMENTATION.md",
+             f"{directory} Researcher implementation coupling"),
+            (f"{directory}/reviewer{suffix}", "Task contract", "Other guidance",
+             f"{directory} Reviewer contract route"),
+        ])
     with disposable_repository("configuration-harness-") as repo:
         for source in files:
             target = repo / source.relative_to(root)

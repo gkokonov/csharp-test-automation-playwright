@@ -65,8 +65,9 @@ BDD results use `artifacts/bdd/` under the test output directory.
 
 ## Agent Guidance
 
-Use the local Implementator, Reviewer, and optional Researcher in Codex, VS Code
-Copilot, or Antigravity. See [local agent setup](docs/AGENT_SUPPORT.md#local-implementation-review-and-research-agents).
+Use the main agent for ordinary tasks. Select custom Implementator explicitly;
+completed edits receive independent Reviewer review. Researcher is optional for
+bounded research in Codex, VS Code Copilot, or Antigravity. See [local agent setup](docs/AGENT_SUPPORT.md#local-implementation-review-and-research-agents).
 
 See [AGENTS.md](AGENTS.md) for task routing and [agent support](docs/AGENT_SUPPORT.md)
 for Copilot, Codex, and Antigravity discovery. The root targets 60–80 lines with

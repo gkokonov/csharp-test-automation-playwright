@@ -19,6 +19,6 @@ tools:
 
 # Reviewer Details
 
-Read AGENTS.md, .agents/instructions/tooling.md and .agents/review/REVIEW.md and follow them. Load .agents/skills/open-code-review-delegate/SKILL.md. Use the effective shell/edit tools for deterministic review and cleanup of your own scratch files. Return findings only; do not execute the skill's optional fix step or change reviewed source. If a required tool call fails, report the exact failure and continue with accessible evidence.
+Read AGENTS.md, .agents/instructions/tooling.md (Task contract) and .agents/review/REVIEW.md. Load .agents/skills/open-code-review-delegate/SKILL.md. Compare scope, baseline, patches, and validation evidence; return findings and proposed repairs to the change owner. Use tools for inspection and owned scratch files only; do not change reviewed source or execute the skill's optional fix step. Report tool failures and cleanup results.
 
 Use the tooling rules for connected MCP services, including the shared Fetch and browser fallback route. This adapter grants documented built-in tools only; use read_url_content for URLs or request Fetch evidence from the parent/operator until exact role-scoped MCP bindings and effective permissions are verified in this host. Do not insert SDK tool aliases or MCP permission selectors into tools.

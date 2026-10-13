@@ -23,6 +23,10 @@ Read only the guidance needed for the task; follow its applicable links.
 Use the [guidance reading checklist](.agents/instructions/tooling.md#guidance-reading-checklist)
 before instruction reads. Reuse guidance already available in the session.
 
+Main handles tasks; custom Implementator needs explicit user selection.
+Record a [task contract](.agents/instructions/tooling.md#task-contract) for substantive work.
+Keep one writer; review edits independently. Questions need no delegates.
+
 | Task | Required guidance |
 | --- | --- |
 | C# edits or reviews | [C# rules](.agents/rules/csharp.md) and the relevant project `AGENTS.md`. |
@@ -30,8 +34,8 @@ before instruction reads. Reuse guidance already available in the session.
 | NUnit application work | [NUnit scope](CsharpTestAutomation.Tests/AGENTS.md); routes API, UI, and supporting helpers. |
 | BDD application work | [BDD scope](CsharpTestAutomation.Bdd.Tests/AGENTS.md); routes features, steps, hooks, and application layers. |
 | Framework self-tests | [Self-test scope](CsharpTestAutomation.Framework.Test/AGENTS.md). |
-| Implementation agent | [Implementation workflow](.agents/implementation/IMPLEMENTATION.md); one writer for all four projects. |
-| Code review agent | [Review workflow](.agents/review/REVIEW.md); findings go to the Implementator. Reviewers can use the effective shell/edit tools but do not change reviewed source. |
+| Explicitly selected Implementator | [Implementation workflow](.agents/implementation/IMPLEMENTATION.md). |
+| Review or completed edits | [Review workflow](.agents/review/REVIEW.md); findings go to the change owner. |
 | Commit message or authorized commit | [Commit instructions](.agents/instructions/commit-instructions.md); these do not authorize a commit. |
 | Detailed tool selection or workflows | [Tooling instructions](.agents/instructions/tooling.md) for fallbacks and operational details; read it before external docs or browser work. |
 | Instruction or host setup changes | [Agent support](docs/AGENT_SUPPORT.md). |

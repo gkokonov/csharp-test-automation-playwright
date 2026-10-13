@@ -1,17 +1,39 @@
 # Review workflow
 
-Activate for an explicit review or the final review of an authorized Implementator
-task. Return findings to the Implementator. Do not change reviewed source,
+Activate for an explicit review or independent final review of any completed
+task edits, including code, documentation, configuration, and harness changes.
+Return findings and proposed repairs to the change owner. Do not change reviewed source,
 configuration, Git state, or application state. Do not run tests/builds, commit,
 or publish. Reviewers have the effective shell and edit tools described in the
 tooling rules; use them for inspection and owned scratch files only.
+
+## Review coordination
+
+The change owner pauses edits and supplies the original request, tooling's
+[task contract](../instructions/tooling.md#task-contract), baseline and task deltas,
+task paths, preview mode/refs, current content hashes (including untracked files),
+applicable guidance, and check results/limitations. A Git ref alone does not
+identify workspace content. Final review delegation is authorized for task edits;
+questions without changes need no automatic review.
+
+Reviewer compares changed paths and patches against authorized scope and the
+baseline, checks preservation of existing user changes, required validation,
+and evidence for completion claims. Report scope violations, missing checks,
+and unsupported coverage/completion claims with evidence. Return repairs to
+the owner; do not apply fixes or run validation yourself.
+
+The owner records each finding as fixed, rejected with evidence, duplicate, or
+unresolved. Fix accepted in-scope findings, including medium severity; request
+direction for out-of-scope changes. Revalidate and request review of the whole
+task scope, including changed interactions. Stop after three rounds and report
+unresolved findings. Report skipped/stale coverage and unavailable enforcement
+separately; do not claim complete review with skipped files or unresolved findings.
 
 ## Guidance and permissions
 
 Read root AGENTS.md, the guidance reading checklist, and every affected project's
 entry point and linked rules. Mechanical style belongs to .editorconfig. Load
 [the OCR delegate skill](../skills/open-code-review-delegate/SKILL.md).
-Use the software-design-principles skill selectively for concrete design issues.
 Canonical rules, explicit exceptions, architecture, and feature specifications
 remain authoritative; these checklists do not duplicate their requirements.
 
