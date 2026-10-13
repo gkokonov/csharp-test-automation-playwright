@@ -71,6 +71,29 @@ requirements and fallbacks. `.vscode/mcp.json` and
 `.agents/mcp_config.json` are separate host configurations; check each affected
 adapter when changing a shared endpoint or launch option.
 
+### Fetch MCP
+
+All three workspace configurations launch `mcp-server-fetch` with `uvx`.
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and make
+`uvx` available on the host's PATH. The first launch may download the package.
+`PYTHONIOENCODING=utf-8` is set for Windows. See the
+[upstream Fetch documentation](https://github.com/modelcontextprotocol/servers/blob/main/src/fetch/README.md).
+
+Use the shared [web reading route](../.agents/instructions/tooling.md#web-reading-and-browser-fallback).
+Codex and Copilot grant only the `fetch` tool to Implementator, Reviewer, and
+Researcher. Each Codex role keeps the server optional so that URL-reading
+fallbacks remain available. Antigravity workspace configuration includes Fetch;
+its custom agents retain built-in URL readers until MCP access is verified.
+
+The configured `--ignore-robots-txt` disables robots.txt checks. The custom
+browser User-Agent changes the HTTP header; it does not add JavaScript rendering,
+browser cookies, or a login session. These options are supported by upstream.
+
+In each affected host and role, use a fresh session to check that `fetch` is
+listed and can read a small public URL. Check `max_length` and `start_index`
+with a longer page. Record unavailable hosts or role bindings as untested;
+static transport and allowlist checks do not prove activation.
+
 ### Temporary review evidence
 
 Use the Reviewer’s effective shell for OCR, Git, and source reads. Do not start a

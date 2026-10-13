@@ -10,6 +10,20 @@ Read AGENTS.md, .agents/instructions/tooling.md and .agents/implementation/IMPLE
 # Tool-selection and cache rules are owned by .agents/instructions/tooling.md.
 # Explicit transports avoid placeholder commands in standalone config layers.
 
+[mcp_servers.fetch]
+command = "uvx"
+args = [
+    "mcp-server-fetch",
+    "--ignore-robots-txt",
+    "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+]
+enabled = true
+required = false
+enabled_tools = ["fetch"]
+
+[mcp_servers.fetch.env]
+PYTHONIOENCODING = "utf-8"
+
 [mcp_servers.context7]
 url = "https://mcp.context7.com/mcp"
 bearer_token_env_var = "CONTEXT7_API_KEY"

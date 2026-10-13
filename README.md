@@ -73,5 +73,8 @@ for Copilot, Codex, and Antigravity discovery. The root targets 60–80 lines wi
 a 100-line maximum; project entry points load shared and applicable layer rules.
 Set `CONTEXT7_API_KEY` in the local agent environment for the optional Context7
 MCP server; do not store the key in the repository.
+Install `uv` and make `uvx` available on PATH for Fetch MCP. Use Fetch for known
+static web URLs and permitted browser tools for pages that need rendering or
+interaction. See [Fetch setup and checks](docs/AGENT_SUPPORT.md#fetch-mcp).
 
 For local Windows Codex clients, open and trust this repository, then start a fresh session. Codex uses the root and scoped `AGENTS.md` files, `.agents/skills/`, and the project MCP settings in `.codex/config.toml`. VS Code's `.vscode/mcp.json` remains the Copilot adapter. See [Windows Codex setup and checks](docs/AGENT_SUPPORT.md#codex-on-windows) for prerequisites, environment setup, and connection checks.

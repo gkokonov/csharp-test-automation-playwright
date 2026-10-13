@@ -16,6 +16,7 @@ from agent_harness_common import disposable_repository, require
 
 # Validate the role policy owned by .agents/instructions/tooling.md.
 MCP_INSPECTION = {
+    "fetch": {"fetch"},
     "fff": {"find_files", "grep", "multi_grep"},
     "codebase-memory-mcp": {
         "list_projects", "search_graph", "search_code", "trace_path", "get_architecture",
@@ -53,7 +54,7 @@ def check_mcp(root, path, data, role, project, vscode):
         require(transport.get("command") or transport.get("url"),
                 f"Missing project MCP transport: {server}")
         require(server in vscode, f"Missing VS Code MCP server: {server}")
-        for key in ("command", "args", "url", "cwd", "env_vars", "bearer_token_env_var",
+        for key in ("command", "args", "url", "cwd", "env", "env_vars", "bearer_token_env_var",
                     "startup_timeout_sec"):
             require(section.get(key) == transport.get(key),
                     f"Role MCP transport differs from project config: {path} -> {server}.{key}")
@@ -102,6 +103,17 @@ def check(root):
     require(antigravity["chrome-devtools"].get("command")
             and "chrome-devtools-mcp@latest" in antigravity["chrome-devtools"].get("args", []),
             "Missing Antigravity Chrome DevTools transport.")
+    fetch = project.get("fetch", {})
+    require(fetch.get("command") == "uvx"
+            and "mcp-server-fetch" in fetch.get("args", [])
+            and fetch.get("env", {}).get("PYTHONIOENCODING") == "utf-8",
+            "Missing Fetch launch settings or Windows encoding.")
+    for host, servers in (("VS Code", vscode), ("Antigravity", antigravity)):
+        require("fetch" in servers, f"Missing {host} Fetch server.")
+        for key in ("command", "args", "env"):
+            require(servers["fetch"].get(key) == fetch.get(key),
+                    f"Fetch transport differs from project config: {host}.{key}")
+    require(vscode["fetch"].get("type") == "stdio", "Invalid VS Code Fetch transport type.")
     required = {
         "implementator": {"AGENTS.md", ".agents/implementation/IMPLEMENTATION.md",
                           ".agents/instructions/tooling.md", ".agents/skills/software-design-principles/SKILL.md"},
@@ -238,6 +250,12 @@ def negative_fixtures(root):
         (".agents/agents/researcher.md", "read_url_content", "mcp(context7/query-docs)", "Antigravity permission selector"),
         (".vscode/mcp.json", '"fff":', '"missing-fff":', "Missing VS Code server binding"),
         (".agents/mcp_config.json", '"chrome-devtools":', '"missing-chrome":', "Missing Antigravity browser service"),
+        (".vscode/mcp.json", '"fetch":', '"missing-fetch":', "Missing VS Code Fetch server"),
+        (".agents/mcp_config.json", '"fetch":', '"missing-fetch":', "Missing Antigravity Fetch server"),
+        (".agents/mcp_config.json", '"PYTHONIOENCODING": "utf-8"', '"PYTHONIOENCODING": "ascii"', "Fetch host encoding drift"),
+        (".codex/agents/researcher.toml", 'enabled_tools = ["fetch"]', 'enabled_tools = ["*"]', "Fetch tool wildcard"),
+        (".codex/agents/reviewer.toml", 'PYTHONIOENCODING = "utf-8"', 'PYTHONIOENCODING = "ascii"', "Fetch role encoding drift"),
+        (".github/agents/reviewer.agent.md", "'fetch/fetch'", "'fetch/*'", "VS Code Fetch wildcard"),
     ]
     with disposable_repository("configuration-harness-") as repo:
         for source in files:

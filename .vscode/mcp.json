@@ -33,6 +33,18 @@
       "command": "${env:LOCALAPPDATA}/Programs/codebase-memory-mcp/codebase-memory-mcp.exe",
       "args": [],
       "cwd": "${workspaceFolder}"
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch",
+        "--ignore-robots-txt",
+        "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
     }
   }
 }

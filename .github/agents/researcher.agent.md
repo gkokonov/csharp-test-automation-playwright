@@ -8,6 +8,7 @@ tools:
   - 'read'
   - 'search'
   - 'web'
+  - 'fetch/fetch'
   - 'edit'
   - 'execute'
   - 'fff/find_files'

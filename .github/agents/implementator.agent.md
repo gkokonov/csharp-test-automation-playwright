@@ -8,6 +8,7 @@ tools:
   - 'read'
   - 'search'
   - 'web'
+  - 'fetch/fetch'
   - 'agent'
   - 'edit'
   - 'execute'
