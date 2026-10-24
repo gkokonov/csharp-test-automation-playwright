@@ -45,6 +45,19 @@
       "env": {
         "PYTHONIOENCODING": "utf-8"
       }
+    },
+    "firecrawl": {
+      "type": "stdio",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "firecrawl-mcp"
+      ],
+      "env": {
+        "FIRECRAWL_API_KEY": "${env:FIRECRAWL_API_KEY}"
+      }
     }
   }
 }

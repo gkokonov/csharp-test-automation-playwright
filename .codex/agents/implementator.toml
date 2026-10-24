@@ -117,3 +117,48 @@ enabled_tools = [
     "performance_analyze_insight",
     "take_heapsnapshot",
 ]
+
+[mcp_servers.firecrawl]
+command = "cmd.exe"
+args = ["/d", "/c", "npx", "-y", "firecrawl-mcp"]
+env_vars = [
+    "FIRECRAWL_API_KEY",
+    "SystemRoot",
+    "PROGRAMFILES",
+    "LOCALAPPDATA",
+    "APPDATA",
+    "USERPROFILE",
+]
+startup_timeout_sec = 60
+enabled = true
+required = false
+enabled_tools = [
+    "firecrawl_agent",
+    "firecrawl_agent_status",
+    "firecrawl_check_crawl_status",
+    "firecrawl_crawl",
+    "firecrawl_credit_usage",
+    "firecrawl_developer_search",
+    "firecrawl_feedback",
+    "firecrawl_find_tools",
+    "firecrawl_gov_search",
+    "firecrawl_interact",
+    "firecrawl_interact_stop",
+    "firecrawl_map",
+    "firecrawl_monitor_check",
+    "firecrawl_monitor_checks",
+    "firecrawl_monitor_create",
+    "firecrawl_monitor_delete",
+    "firecrawl_monitor_get",
+    "firecrawl_monitor_list",
+    "firecrawl_monitor_run",
+    "firecrawl_monitor_update",
+    "firecrawl_parse",
+    "firecrawl_research_inspect_paper",
+    "firecrawl_research_read_paper",
+    "firecrawl_research_related_papers",
+    "firecrawl_research_search_papers",
+    "firecrawl_scrape",
+    "firecrawl_search",
+    "firecrawl_search_feedback",
+]

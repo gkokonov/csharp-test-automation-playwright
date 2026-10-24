@@ -64,3 +64,17 @@ required = true
 
 [mcp_servers.fetch.env]
 PYTHONIOENCODING = "utf-8"
+
+[mcp_servers.firecrawl]
+command = "cmd.exe"
+args = ["/d", "/c", "npx", "-y", "firecrawl-mcp"]
+env_vars = [
+    "FIRECRAWL_API_KEY",
+    "SystemRoot",
+    "PROGRAMFILES",
+    "LOCALAPPDATA",
+    "APPDATA",
+    "USERPROFILE",
+]
+startup_timeout_sec = 60
+required = true

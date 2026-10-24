@@ -50,6 +50,7 @@ continue other authorized work while waiting.
 | Third-party libraries | Context7 MCP | Library and API documentation |
 | Microsoft / .NET | Microsoft Learn MCP | C#, BCL, MSBuild, editor settings, Azure SDKs, Azure DevOps. |
 | Known web URLs | Fetch MCP (`fetch/fetch`) | Static documentation, GitHub files, articles, and other public pages. |
+| Dynamic / deep web data | Firecrawl MCP | Clean scrape with JS rendering, site crawl, map, web search, extraction. |
 | Live UI | Repository Playwright CLI skill | DOM, locators, reproduction, screenshots, traces. |
 | Browser diagnostics | Chrome DevTools MCP | Network, console, cookies/storage, performance, memory. |
 | Command output | RTK | Compact routine command output; preserve full review and machine-readable evidence. |
@@ -72,9 +73,10 @@ continue other authorized work while waiting.
 - Pass `max_length=10000` by default; use a smaller limit for focused reads.
   Continue truncated content with `start_index` until needed sections are read;
   for extraction loss, try `raw=true` or a direct text URL.
-- Use permitted browser tools for empty content, extraction errors, or JavaScript
-  shells; start directly with a browser for rendering, clicking, or login. Readers
-  request browser evidence from the parent/operator; fallback grants no permissions.
+- Use Firecrawl for JavaScript-rendered pages, site crawling, site mapping, or
+  structured web extraction. Use permitted browser tools for live UI interaction,
+  reproduction, or login. Readers request browser evidence from the parent/operator;
+  fallback grants no permissions.
 - Before Playwright CLI work, read its repository skill. For UI diagnostics:
   Playwright CLI → trace → Chrome DevTools → source analysis. Validate new locators
   with the CLI when the app is available; browser tools are not runtime test dependencies.
@@ -95,7 +97,7 @@ Custom-agent access is role-scoped:
 Readers need explicit MCP allowlists without wildcards, indexing, cache management,
 browser tools, or other write-capable tools. Keep search-service caches outside the
 checkout. Readers may create task scratch files; remove them before handoff and
-report cleanup failures. Codex/Copilot allow `fetch/fetch` for all three roles.
+report cleanup failures. Codex and Copilot allow `fetch/fetch` and `firecrawl/*` tools.
 
 ## Bounded research
 

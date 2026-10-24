@@ -104,6 +104,13 @@ listed and can read a small public URL. Check `max_length` and `start_index`
 with a longer page. Record unavailable hosts or role bindings as untested;
 static transport and allowlist checks do not prove activation.
 
+### Firecrawl MCP
+
+All three workspace configurations configure `firecrawl-mcp` via `npx`. Set
+`FIRECRAWL_API_KEY` in the host environment. Firecrawl provides clean Markdown
+scraping with JavaScript rendering, site crawling, URL mapping, and structured
+data extraction.
+
 ### Temporary review evidence
 
 Use the Reviewer’s effective shell for OCR, Git, and source reads. Do not start a
