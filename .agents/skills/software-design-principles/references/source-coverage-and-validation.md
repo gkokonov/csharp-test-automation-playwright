@@ -10,8 +10,9 @@ This file supports maintainers and auditors. It is not required for ordinary ski
 - [Test automation additions](#additions-beyond-the-source-baseline)
 - [Authoring and portability](#authoring-and-portability)
 - [Maintaining the package](#maintaining-this-package)
-- [Historical validation](#historical-validation--15-september-2026)
-- [Validation of this update](#validation--7-october-2026)
+- [Historical validation (15 September 2026)](#historical-validation--15-september-2026)
+- [Validation (7 October 2026)](#validation--7-october-2026)
+- [Validation (16 October 2026)](#validation--16-october-2026)
 
 ## Source baseline
 
@@ -74,7 +75,7 @@ The most consequential addition is the DAMP-over-DRY inversion for test code. Le
 
 Each language guide is split into a production guide and a `*-testing.md` guide so a task loads only the relevant half, and so test-automation guidance can grow without inflating the production guides. Cross-language material stays in `test-automation.md` and is deliberately not restated in the per-language guides.
 
-Known gap: module and package-level dependency principles (acyclic dependencies, stable dependencies) are deliberately out of scope. Only the one-way test-layer ordering in [Layering and dependency direction](test-automation.md#layering-and-dependency-direction) is defined. `SKILL.md` and the verification scale still mention dependency direction in a general sense without a full treatment.
+Inward dependency direction and acyclic module boundaries are covered under [Dependency Inversion Principle (DIP)](principles-and-tradeoffs.md#dependency-inversion-principle-dip) and [Layering and dependency direction](test-automation.md#layering-and-dependency-direction). Quantitative package-coupling metrics (such as instability/abstractness indices) remain out of scope.
 
 ## Authoring and portability
 
@@ -85,7 +86,7 @@ The authoring basis is the [Anthropic skills guide](https://platform.claude.com/
 | Concise discovery | One description states design triggers and likely exclusions; keep the existing public name. |
 | Appropriate freedom | Evidence and smallest-change criteria guide design; contracts and authorized scope constrain implementation. |
 | Selective references | Route by mode, language, and artifact; mixed tasks can select several guides. Read applicable exceptions with the selected section. |
-| Navigable resources | Link required resources directly from `SKILL.md`; use contents lists and relative forward-slash paths. |
+| Navigable resources | Link runtime resources directly from `SKILL.md`; maintenance-only resources (evaluation cases, rubric, example checker) may be linked one level down from this file. Use contents lists and relative forward-slash paths. |
 | Workflows and output examples | Keep one common workflow, mode differences, a correction loop, and short finding/no-change examples. |
 | Evidence before expansion | Extend the canonical cases for observed gaps before changing instructions; compare the previous and revised skill. |
 | Stable maintenance | Separate historical runs from current checks; remove model-specific prescriptions from behavioral criteria. |
@@ -105,11 +106,11 @@ Share the complete skill folder so relative references, metadata, and maintenanc
 
 ### Evaluation scope
 
-The sixteen canonical cases and their semantic criteria are in [cases.json](../evals/cases.json) and [rubric.md](../evals/rubric.md). The six tasks selected by [eval.yaml](../eval.yaml) are a smaller Waza smoke adapter. Its regex checks recognize vocabulary; they cannot establish preserved behavior, correct runner advice, or adherence to the requested output length. The comments in each task identify the related canonical case or rubric scenario. Use saved responses and action traces for semantic grading.
+The eighteen canonical cases and their semantic criteria are in [cases.json](../evals/cases.json) and [rubric.md](../evals/rubric.md). The six tasks selected by [eval.yaml](../eval.yaml) are a smaller Waza smoke adapter. Its regex checks recognize vocabulary; they cannot establish preserved behavior, correct runner advice, or adherence to the requested output length. The comments in each task identify the related canonical case or rubric scenario. Use saved responses and action traces for semantic grading.
 
 Run Waza from the skill root and save results/transcripts outside the checkout. The default `model: auto` is for smoke runs. Use `waza models` to check availability, then pass the same explicit `--model` value when comparing versions. Keep Copilot authentication, model access, and quota checks separate from skill findings. The presence of an eval file or a successful readiness check is not an executed behavioral pass.
 
-Waza 0.38.7's readiness check also imposes a 500-token entry-point cap and additional advisory heuristics. These are tool criteria, separate from the Agent Skills specification's 500-line and recommended 5,000-token guidance. Report the tool's failed checks alongside standard-format validation; do not remove required constraints or merge unrelated references solely to satisfy a readiness score.
+Waza 0.38.7's readiness check also imposes a 500-token entry-point cap and additional advisory heuristics. These are tool criteria, separate from the Agent Skills specification's 500-line and recommended 5,000-token guidance, and the 500-token cap is intentionally not treated as a hard target because retaining explicit workflow and diagnostic scaffolding supports both frontier and modern mid-tier models. Report the tool's failed checks alongside standard-format validation; do not remove required constraints or merge unrelated references solely to satisfy a readiness score.
 
 ## Maintaining this package
 
@@ -180,3 +181,15 @@ Scope: the authoring/portability update, mixed-artifact routing, response-contra
 | Independent review | A separate read-only reviewer inspected all 21 modified files, supporting guidance, evaluation manifests, selected responses, and example-check evidence. No material findings. |
 
 The baseline entry-point SHA-256 was `e5f2e45f37b6e541054f641641421cfa58df5528d2dde3eef6f2bfcba928ec1c`; the candidate was `27226480e6d7fa96f7474a00186b6d857923419e514b7e1af23aa9743e867872`. Evaluation manifests retain per-file hashes, durations, response text, and event traces outside the checkout. The checks above do not establish fresh IDE/cloud activation, standalone Claude behavior, or comparative performance across models.
+
+## Validation — 16 October 2026
+
+Scope: front-loaded languages and principles, followed by test-automation triggers and then negative trigger exclusions, in `SKILL.md` description (389 chars, 78 lines), removed direct `evals/rubric.md` and `evals/cases.json` links from the `SKILL.md` runtime load table (retaining direct routing to all ten `references/*.md` files), added inward dependency direction and acyclic module boundaries to `principles-and-tradeoffs.md`, tightened output-contract flexibility in `workflows-and-output-contracts.md` for both mid-tier and frontier models, deduplicated cross-language locator/client explanations in `*-testing.md` (retaining the Playwright-specific `waitForTimeout` warning), clarified that maintenance-only resources may be linked one level down from `SKILL.md`, and added two high-temptation canonical evaluation cases (`sycophantic-over-abstraction` and `shared-client-header-race`, bringing the suite to 18 cases).
+
+| Check | Observed result and limits |
+| --- | --- |
+| Package and link checks | Passed: valid frontmatter (`name` 26 chars, `description` 389 chars with languages and core principles inside the first 190 chars and the exclusions clause last); direct routing from `SKILL.md` to all ten `references/*.md` files; 98 local links and `#anchor` fragments resolved across the 12 Markdown files in this package only (earlier entries counted repository-wide); 18 unique cases in `cases.json` with matching rows in `rubric.md`; `git diff --check -- .` clean. |
+| Example checker | Passed via `python3 scripts/check_examples.py`: all seven production examples (C#, Java, TypeScript) compiled and ran with expected stdout, and the three TypeScript notification contract probes passed. Six illustrative test examples were explicitly skipped as designed. Toolchains: .NET SDK 10.0.112, `javac` 25.0.4.1, TypeScript 5.1.3, Node v22.23.2. |
+| Entry-point SHA-256 | Candidate `SKILL.md` SHA-256: `a76841f9b564ffc1f8862a7dc1764509e98360da9e7ae1a3af351e722a53d2ef` (previous: `27226480e6d7fa96f7474a00186b6d857923419e514b7e1af23aa9743e867872`). |
+| Independent review | Read-only subagent verified all modified files, cross-references, `#anchor` fragments, example markers, and `cases.json`/`rubric.md` alignment. One minor observation (moving languages and principles ahead of the exclusions clause so neither is lost under truncation) was incorporated into `SKILL.md`. A follow-up review restored the Playwright `waitForTimeout` warning in the TypeScript and Java testing guides, restored the specific "test failures with a clear product or config cause" exclusion, and widened the `shared-client-header-race` rubric row to accept default-header accumulation as well as the parallel race. Both new rubric rows also require no file edits, because their prompts invite implementation alongside a no-edit instruction. |
+| Model execution | Not run in this session; the two new canonical cases (`sycophantic-over-abstraction` and `shared-client-header-race`) are defined in `cases.json` and `rubric.md` for future comparative runs. |

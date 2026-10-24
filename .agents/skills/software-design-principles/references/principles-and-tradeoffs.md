@@ -79,7 +79,9 @@ Use this reference to diagnose a design, not as a compliance checklist. A princi
 
 **Definition and intent:** High-level policy and low-level details should depend on a contract owned around the policy boundary; abstractions should not be shaped solely by one concrete detail. Dependency injection is a mechanism, not the principle itself.
 
-**Signals:** Business logic constructs database, HTTP, clock, filesystem, or messaging clients; tests require real infrastructure; changing a provider changes core policy; service locators hide dependencies.
+**Dependency direction and module boundaries:** Dependencies should point inward toward stable domain or policy contracts, not outward from policy into transport, persistence, UI, or provider SDKs. Keep module and package dependencies acyclic; break cycles by moving the shared contract to the inner/owned boundary or extracting the depended-on concept into a lower module.
+
+**Signals:** Business logic constructs database, HTTP, clock, filesystem, or messaging clients; policy modules import adapter or transport packages; two modules import each other cyclically; tests require real infrastructure; changing a provider changes core policy; service locators hide dependencies.
 
 **Ask:** Is the dependency volatile, external, non-deterministic, or expensive? Which operations does policy actually need? Who should own the abstraction? Would a function parameter be clearer than an interface?
 

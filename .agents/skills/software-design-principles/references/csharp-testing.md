@@ -13,8 +13,7 @@ Cross-language principles live in [Test Automation Design](test-automation.md); 
 ## Design choices
 
 - Unlike xUnit, NUnit has no fixture-injection mechanism, so composition is plain object construction: build collaborators—browser session, API client, data builder—in per-test setup and hold them in fields. No container is required, and a base class is not the alternative.
-- Prefer typed domain results at API client boundaries when transport details are not part of the behavior under test. When tests must assert status, headers, or other transport metadata, expose the response information needed for those assertions. Follow the repository's API testing guidance for the concrete return type.
-- Reuse one `RestClient` or `HttpClient` per base address—both are thread-safe and pool connections—but never mutate default headers per test. Shared defaults plus parallel tests means one test overwrites another's auth. Pass per-request state explicitly.
+- Reuse one `RestClient` or `HttpClient` per base address—both are thread-safe and pool connections—but never mutate default headers per test. Shared defaults plus parallel tests means one test overwrites another's auth. Pass per-request state explicitly, and follow [Boundaries and hermeticity](test-automation.md#boundaries-and-hermeticity) and repository conventions when choosing typed domain return values versus transport responses (`RestResponse<T>` / `HttpResponseMessage`).
 - Use a `record` for test data and `with` expressions to override only the fields under test; the overrides then document the test's intent.
 - Inject `TimeProvider`, random sources, and identifier generators wherever determinism matters.
 - Stay asynchronous end to end: `[Test] public async Task`, never `async void`, and no `.Result` or `.Wait()`. Blocking on a test host's synchronization context deadlocks, and it wraps failures in `AggregateException`, which obscures the real assertion message.

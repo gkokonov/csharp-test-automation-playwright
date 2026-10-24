@@ -73,7 +73,7 @@ Trade-off: added cost or reason the current design may be acceptable.
 Confidence: high, medium, or low with the key assumption.
 ```
 
-Order findings by impact. Merge symptoms with the same root cause. If there are no material findings, say that directly and mention any validation limitation.
+Order findings by impact. Merge symptoms with the same root cause. For compact reviews or straightforward findings, fold secondary fields (`Principle`, `Trade-off`, `Confidence`) into concise prose when separate labels add no signal. If there are no material findings, say that directly and mention any validation limitation.
 
 ### Example: evidence supports a finding
 
@@ -91,12 +91,14 @@ Output: “Keep the validators separate. Their policies have independent owners 
 
 ### Procedure and output
 
+Use the full progression below for open-ended teaching or interview preparation. When the user requests a brief or length-bounded explanation, include only the elements that fit the requested constraint.
+
 1. Give a one-sentence definition in original wording.
 2. Explain the problem it addresses and the observable signal.
 3. Give one idiomatic example or short scenario.
 4. Give a counterexample or over-application warning.
 5. State a trade-off and how it interacts with another principle.
-6. For interview practice, add follow-up questions when useful. For short explanations, use only the elements that fit the requested length.
+6. For interview practice, add follow-up questions when useful.
 
 For interview answers, prefer this narrative: **problem → principle → design choice → trade-off → verification**. Do not present slogans as absolute laws.
 

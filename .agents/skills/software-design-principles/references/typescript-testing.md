@@ -13,9 +13,8 @@ Cross-language principles live in [Test Automation Design](test-automation.md); 
 - Playwright Test's fixtures are its composition mechanism. `test.extend<Fixtures>({ ... })` adds per-concern setup that a spec requests by destructuring; there is no reason to build a base test class.
 - The built-in `page` fixture is already per test. Creating a browser or page at module scope reintroduces the shared state fixtures exist to avoid.
 - Declare `{ scope: "worker" }` only for expensive immutable setup. Worker-scoped mutable state is shared across every test that worker runs.
-- Prefer `getByRole`, `getByLabel`, and `getByTestId` over CSS or XPath. Web-first assertions such as `await expect(locator).toHaveText(...)` retry until the timeout, so `page.waitForTimeout` is nearly always a design smell.
-- Returning a `Locator` from a page object for `expect()` keeps the selector encapsulated, because a locator is a lazy query re-resolved on each use. Returning an `ElementHandle` pins one DOM node and goes stale.
-- Use the `request` fixture or an `APIRequestContext` inside a client that owns request/auth plumbing. Return typed objects for domain scenarios; expose status, headers, and JSON values when they are the contract under test. Follow the repository's established client return type.
+- Prefer `getByRole`, `getByLabel`, and `getByTestId` with web-first assertions (`await expect(locator).toHaveText(...)`), which retry until the timeout, so `page.waitForTimeout` is nearly always a design smell. Expose `Locator` rather than `ElementHandle` from page objects (see [Page, screen, and component objects](test-automation.md#page-screen-and-component-objects)).
+- Wrap `request` (`APIRequestContext`) in a client that owns request/auth plumbing, returning typed domain objects or `APIResponse` metadata according to the scenario under test (see [Boundaries and hermeticity](test-automation.md#boundaries-and-hermeticity)).
 - `test.step` improves failure diagnosis for long flows without extracting the narrative into helpers—it is the DAMP-friendly way to add structure.
 - Avoid `test.describe.serial` unless the order is genuinely required; it removes isolation and retries the whole block on one failure.
 - Build test data with factory functions taking a partial override, so each spec states only the fields it depends on.

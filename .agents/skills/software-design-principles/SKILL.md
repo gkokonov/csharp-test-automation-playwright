@@ -1,13 +1,12 @@
 ---
 name: software-design-principles
 description: >-
-  Guides software design, refactoring, architecture reviews, and explanations
-  when responsibilities, coupling, contracts, or change cost need analysis.
-  Covers C#, Java, and TypeScript/JavaScript, including test framework design,
-  page objects, fixtures, test data, parallel safety, and design causes of flaky
-  tests. Applies SOLID, DRY/DAMP, KISS, YAGNI, composition, and the Law of Demeter
-  to concrete evidence. Excludes mechanical renames, formatting, dependency
-  updates, and failures with a clear product or configuration cause.
+  Guides C#, Java, and TypeScript/JavaScript software and test-automation design,
+  refactoring, reviews, and explanations (SOLID, DRY/DAMP, KISS, YAGNI,
+  composition, Law of Demeter). Covers page objects, fixtures, test data,
+  parallel safety, and design causes of flaky tests. Excludes mechanical
+  renames, formatting, dependency updates, and test failures with a clear
+  product or config cause.
 ---
 
 # Software Design Principles
@@ -40,8 +39,7 @@ Use each reference's index to select relevant sections. Include its introduction
 | [principles-and-tradeoffs.md](references/principles-and-tradeoffs.md) | A principle's diagnostic detail helps decide or explain. |
 | [test-automation.md](references/test-automation.md) | The artifact under design is a test, a suite, or a test automation framework. |
 | A language guide below | A language-specific decision matters; read its design choices and review checks. |
-| [source-coverage-and-validation.md](references/source-coverage-and-validation.md) | Auditing this harness, tracing it to the source article, or maintaining its examples. |
-| [Evaluation rubric](evals/rubric.md), [cases](evals/cases.json), and [example checker](scripts/check_examples.py) | Maintaining or evaluating the skill; keep grading criteria out of the task model's context. Ordinary design tasks do not need them. |
+| [source-coverage-and-validation.md](references/source-coverage-and-validation.md) | Auditing or maintaining this skill package (links to evaluation cases, rubric, and example checker). Do not load for ordinary design tasks. |
 
 | Language | Production code | Test code |
 |---|---|---|
