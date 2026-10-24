@@ -97,7 +97,9 @@ Custom-agent access is role-scoped:
 Readers need explicit MCP allowlists without wildcards, indexing, cache management,
 browser tools, or other write-capable tools. Keep search-service caches outside the
 checkout. Readers may create task scratch files; remove them before handoff and
-report cleanup failures. Codex and Copilot allow `fetch/fetch` and `firecrawl/*` tools.
+report cleanup failures. Codex and Copilot grant `fetch/fetch` to all three roles,
+and `firecrawl/*` tools to Implementator and Researcher. Reviewer omits external
+crawling and scraping tools.
 
 ## Bounded research
 

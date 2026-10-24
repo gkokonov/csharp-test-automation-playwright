@@ -109,7 +109,8 @@ static transport and allowlist checks do not prove activation.
 All three workspace configurations configure `firecrawl-mcp` via `npx`. Set
 `FIRECRAWL_API_KEY` in the host environment. Firecrawl provides clean Markdown
 scraping with JavaScript rendering, site crawling, URL mapping, and structured
-data extraction.
+data extraction. Codex and Copilot grant Firecrawl tools to Implementator and
+Researcher; Reviewer omits external scraping and focuses on repository review.
 
 ### Temporary review evidence
 

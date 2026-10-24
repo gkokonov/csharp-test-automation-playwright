@@ -27,42 +27,42 @@ MCP_INSPECTION = {
     "microsoft-learn": {
         "microsoft_docs_search", "microsoft_docs_fetch", "microsoft_code_sample_search",
     },
-    "firecrawl": {
-        "firecrawl_agent",
-        "firecrawl_agent_status",
-        "firecrawl_check_crawl_status",
-        "firecrawl_crawl",
-        "firecrawl_credit_usage",
-        "firecrawl_developer_search",
-        "firecrawl_feedback",
-        "firecrawl_find_tools",
-        "firecrawl_gov_search",
-        "firecrawl_interact",
-        "firecrawl_interact_stop",
-        "firecrawl_map",
-        "firecrawl_monitor_check",
-        "firecrawl_monitor_checks",
-        "firecrawl_monitor_create",
-        "firecrawl_monitor_delete",
-        "firecrawl_monitor_get",
-        "firecrawl_monitor_list",
-        "firecrawl_monitor_run",
-        "firecrawl_monitor_update",
-        "firecrawl_parse",
-        "firecrawl_research_inspect_paper",
-        "firecrawl_research_read_paper",
-        "firecrawl_research_related_papers",
-        "firecrawl_research_search_papers",
-        "firecrawl_scrape",
-        "firecrawl_search",
-        "firecrawl_search_feedback",
-    },
 }
 CHROME_DIAGNOSTICS = {
     "list_pages", "select_page", "list_console_messages", "get_console_message",
     "list_network_requests", "get_network_request", "take_snapshot", "take_screenshot",
     "get_css_styles", "performance_start_trace", "performance_stop_trace",
     "performance_analyze_insight", "take_heapsnapshot",
+}
+FIRECRAWL_TOOLS = {
+    "firecrawl_agent",
+    "firecrawl_agent_status",
+    "firecrawl_check_crawl_status",
+    "firecrawl_crawl",
+    "firecrawl_credit_usage",
+    "firecrawl_developer_search",
+    "firecrawl_feedback",
+    "firecrawl_find_tools",
+    "firecrawl_gov_search",
+    "firecrawl_interact",
+    "firecrawl_interact_stop",
+    "firecrawl_map",
+    "firecrawl_monitor_check",
+    "firecrawl_monitor_checks",
+    "firecrawl_monitor_create",
+    "firecrawl_monitor_delete",
+    "firecrawl_monitor_get",
+    "firecrawl_monitor_list",
+    "firecrawl_monitor_run",
+    "firecrawl_monitor_update",
+    "firecrawl_parse",
+    "firecrawl_research_inspect_paper",
+    "firecrawl_research_read_paper",
+    "firecrawl_research_related_papers",
+    "firecrawl_research_search_papers",
+    "firecrawl_scrape",
+    "firecrawl_search",
+    "firecrawl_search_feedback",
 }
 
 
@@ -71,13 +71,16 @@ def role_mcp_tools(role):
     if role == "implementator":
         tools["codebase-memory-mcp"].add("index_repository")
         tools["chrome-devtools"] = set(CHROME_DIAGNOSTICS)
+        tools["firecrawl"] = set(FIRECRAWL_TOOLS)
+    elif role == "researcher":
+        tools["firecrawl"] = set(FIRECRAWL_TOOLS)
     return tools
 
 
 def check_mcp(root, path, data, role, project, vscode):
     servers = data.get("mcp_servers", {})
     expected = role_mcp_tools(role)
-    require(set(servers) == set(MCP_INSPECTION) | {"chrome-devtools"},
+    require(set(servers) == set(MCP_INSPECTION) | {"chrome-devtools", "firecrawl"},
             f"Missing or unexpected role MCP server: {path}")
     for server, section in servers.items():
         transport = project.get(server, {})
@@ -140,7 +143,7 @@ def check(root):
     project = tomllib.loads((root / ".codex/config.toml").read_text(encoding="utf-8-sig"))["mcp_servers"]
     vscode = json.loads((root / ".vscode/mcp.json").read_text(encoding="utf-8-sig"))["servers"]
     antigravity = json.loads((root / ".agents/mcp_config.json").read_text(encoding="utf-8-sig"))["mcpServers"]
-    require(set(MCP_INSPECTION) | {"chrome-devtools"} <= set(antigravity),
+    require(set(MCP_INSPECTION) | {"chrome-devtools", "firecrawl"} <= set(antigravity),
             "Missing Antigravity workspace MCP service.")
     require(antigravity["chrome-devtools"].get("command")
             and "chrome-devtools-mcp@latest" in antigravity["chrome-devtools"].get("args", []),
@@ -291,6 +294,7 @@ def negative_fixtures(root):
         (".codex/agents/reviewer.toml", 'command = "powershell.exe"', 'command = "cmd.exe"', "Broken role transport"),
         (".codex/agents/researcher.toml", '"resolve-library-id"', '"resolve_library_id"', "Normalized MCP alias"),
         (".github/agents/reviewer.agent.md", "'fff/find_files'", "'chrome-devtools/evaluate_script'", "VS Code unsafe MCP tool"),
+        (".github/agents/reviewer.agent.md", "'fff/find_files'", "'firecrawl/firecrawl_scrape'", "Reviewer Firecrawl tool"),
         (".github/agents/reviewer.agent.md", "'fff/find_files'", "'fff/*'", "VS Code MCP wildcard"),
         (".github/agents/researcher.agent.md", "'read'", "'read'\n  - 'agent'", "VS Code Researcher delegation"),
         (".agents/agents/researcher.md", "read_url_content", "run_command", "Antigravity Researcher command"),
