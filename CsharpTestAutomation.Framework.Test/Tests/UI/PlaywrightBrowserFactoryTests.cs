@@ -5,6 +5,9 @@ using CsharpTestAutomation.Framework.Common;
 using CsharpTestAutomation.Framework.Common.Reporting.Allure;
 using CsharpTestAutomation.Framework.UI;
 using Microsoft.Playwright;
+using WireMock.RequestBuilders;
+using WireMock.ResponseBuilders;
+using WireMock.Server;
 
 namespace CsharpTestAutomation.Framework.Test.Tests.UI;
 
@@ -66,8 +69,8 @@ public class PlaywrightBrowserFactoryTests
 
         // Act
         IPage page = await PlaywrightBrowserFactory.CreatePageAsync();
-        await page.GotoAsync("https://www.google.com");
-        await AllureExtensions.CaptureScreenshotAsync(page, "GooglePageScreenshot");
+        await page.SetContentAsync("<h1>Local page</h1>");
+        await AllureExtensions.CaptureScreenshotAsync(page, "LocalPageScreenshot");
 
         // Assert
         page.Should().NotBeNull();
@@ -173,29 +176,26 @@ public class PlaywrightBrowserFactoryTests
         await PlaywrightBrowserFactory.InitializeAsync();
 
         await PlaywrightBrowserFactory.CreateContextAsync();
-        IPage page1 = await PlaywrightBrowserFactory.CreatePageAsync();
-        await page1.GotoAsync("https://www.google.com");
-        await page1.Context.AddCookiesAsync([
+        IBrowserContext firstContext = PlaywrightBrowserFactory.GetCurrentContext();
+        await firstContext.AddCookiesAsync([
                 new Cookie
                 {
                     Name = testCookieName,
                     Value = testCookieValue,
-                    Domain = "www.google.com",
+                    Domain = "local.test",
                     Path = "/",
                 }
             ]);
 
-        string storageStatePath = await page1.Context.StorageStateAsync();
+        string storageState = await firstContext.StorageStateAsync();
 
         await PlaywrightBrowserFactory.DisposeContextAsync();
 
         // Act
-        await PlaywrightBrowserFactory.CreateContextAsync(storageStatePath);
-        IPage page2 = await PlaywrightBrowserFactory.CreatePageAsync();
-        await page2.GotoAsync("https://www.google.com");
+        IBrowserContext secondContext = await PlaywrightBrowserFactory.CreateContextAsync(storageState);
 
         // Assert
-        IReadOnlyList<BrowserContextCookiesResult> cookies = await page2.Context.CookiesAsync();
+        IReadOnlyList<BrowserContextCookiesResult> cookies = await secondContext.CookiesAsync("https://local.test");
         BrowserContextCookiesResult? testCookie = cookies.FirstOrDefault(c => c.Name == testCookieName);
 
         testCookie.Should().NotBeNull("Cookie should be preserved in the new context");
@@ -203,30 +203,36 @@ public class PlaywrightBrowserFactoryTests
     }
 
     [Test]
-    [Ignore("The public app is unavailable sometimes")]
     public async Task Verify_ProtectedSiteAuthenticationSucceeds_When_ContextUsesHttpCredentials()
     {
         // Arrange
-        // httpbin.org/basic-auth/{username}/{password} requires matching credentials
+        using WireMockServer server = WireMockServer.Start();
+        server.Given(Request.Create().WithPath("/protected").UsingGet())
+            .RespondWith(Response.Create().WithStatusCode(401).WithHeader("WWW-Authenticate", "Basic realm=\"local\""));
+        server.Given(Request.Create().WithPath("/protected").UsingGet()
+                .WithHeader("Authorization", "Basic dXNlcjpwYXNzd2Q="))
+            .RespondWith(Response.Create().WithStatusCode(200).WithBody("Authenticated locally"));
         CoreConfiguration config = AppConfiguration<CoreConfiguration>.Instance.Settings;
-        config.HttpCredentials = new HttpCredentials
+        HttpCredentials? originalCredentials = config.HttpCredentials;
+        config.HttpCredentials = new() { Username = "user", Password = "passwd", Origin = server.Url };
+        try
         {
-            Username = "user",
-            Password = "passwd",
-            Origin = "https://httpbin.org" // The origin must match the site we are testing
-        };
+            await PlaywrightBrowserFactory.InitializeAsync();
+            await PlaywrightBrowserFactory.CreateContextAsync();
+            IPage page = await PlaywrightBrowserFactory.CreatePageAsync();
 
-        await PlaywrightBrowserFactory.InitializeAsync();
-        await PlaywrightBrowserFactory.CreateContextAsync();
-        IPage page = await PlaywrightBrowserFactory.CreatePageAsync();
+            // Act
+            IResponse? response = await page.GotoAsync($"{server.Url}/protected");
 
-        // Act
-        await page.GotoAsync("https://httpbin.org/basic-auth/user/passwd");
-
-        // Assert
-        string content = await page.ContentAsync();
-        content.Should().Contain("\"authenticated\": true");
-
-        await AllureExtensions.CaptureScreenshotAsync(page, "HttpAuthSuccessScreenshot");
+            // Assert
+            response.Should().NotBeNull();
+            response.Status.Should().Be(200);
+            string content = await page.ContentAsync();
+            content.Should().Contain("Authenticated locally");
+        }
+        finally
+        {
+            config.HttpCredentials = originalCredentials;
+        }
     }
 }

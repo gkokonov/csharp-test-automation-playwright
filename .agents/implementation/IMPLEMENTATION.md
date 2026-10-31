@@ -10,8 +10,10 @@ role selection authorizes no commit, publication, or cloud execution.
 1. Read root AGENTS.md, tooling's guidance reading checklist, and each affected
    project entry point. Follow its linked canonical rules, layer architecture,
    and the feature specification required by the task.
-2. Load [.agents/skills/software-design-principles/SKILL.md](../skills/software-design-principles/SKILL.md)
-   for every implementation. Apply it in proportion to the change; read only
+2. Load the installed user-level `software-design-principles` skill for every
+   implementation. Resolve it through the host's skill catalog; its user-level
+   location is `~/.agents/skills/software-design-principles/SKILL.md`.
+   Apply it in proportion to the change; read only
    relevant references. Do not introduce abstractions without concrete need.
 3. Select Framework, NUnit application, independent BDD application, or framework
    self-tests by responsibility. Ask BDD versus NUnit if it changes implementation.

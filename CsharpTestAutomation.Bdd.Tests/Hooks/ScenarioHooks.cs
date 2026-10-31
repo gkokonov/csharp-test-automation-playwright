@@ -32,8 +32,7 @@ public sealed class ScenarioHooks(IObjectContainer container, ScenarioContext sc
         await PlaywrightBrowserFactory.InitializeAsync();
         lifecycle.AddRelease("scenario browser", PlaywrightBrowserFactory.DisposeBrowserAsync);
         lifecycle.AddRelease("scenario context", PlaywrightBrowserFactory.DisposeContextAsync);
-        lifecycle.AddRelease("scenario trace", () => AllureExtensions.CaptureTraceAsync(scenario.TestError is not null));
-        lifecycle.AddEvidence("Playwright trace", () => AllureExtensions.CaptureTraceAsync(testFailed: true));
+        lifecycle.AddRelease("scenario trace", failed => AllureExtensions.CaptureTraceAsync(failed));
         IBrowserContext context = await PlaywrightBrowserFactory.CreateContextAsync(storageState);
         if (resources.Configuration.CaptureBrowserLogs)
         {

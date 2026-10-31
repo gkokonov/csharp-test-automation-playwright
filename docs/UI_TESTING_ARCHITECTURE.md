@@ -41,7 +41,7 @@ page with `BaseUIPage.Create<T>(IPage)` and use page-owned transitions thereafte
 
 | Type | Responsibility |
 | --- | --- |
-| `TestBase` | Root fixture (`[TestFixture]`, `[AllureNUnit]`). Owns the per-test `TestContainer` and `ScenarioCleanupActions`, runs `[SetUp]`/`[TearDown]`, and exposes overridable `OnSetUpAsync` / `OnTearDownAsync` hooks (no base call required). |
+| `TestBase` | Root fixture (`[TestFixture]`, `[AllureNUnit]`). Owns the per-test `TestContainer` and `ScenarioCleanupActions`, runs `[SetUp]`/`[TearDown]`, and exposes `OnSetUpAsync`, `OnTearDownAsync`, and `OnReleaseResourcesAsync(bool testFailed)` hooks (no base call required). |
 | `UiTestBase` | Base fixture for UI tests (`[Category("UI")]`). Owns the Playwright `Context`/`Page` via `PlaywrightBrowserFactory`, initializes them in `OnSetUpAsync`, captures a screenshot (and browser logs when `CaptureBrowserLogs` is `true`) on failure, then disposes context + browser. Exposes `GetPage<T>()`. |
 | `BaseUIObject` | Shared base for **both** pages and components. Centralizes the `IPage`, strongly-typed `ExtendedConfiguration`, and the web-first `Expect(ILocator)` entry point. Its static constructor sets the global default Expect timeout from configuration. |
 | `BaseUIPage` | Base class for **full-page** objects. Declares the abstract `PageReadyLocator` readiness signal and provides `IsLoadedAsync()` (no wait), `WaitUntilLoadedAsync()` (waits up to `LongTimeoutInMS`), `GetPage<TPage>()` for post-navigation transitions, and the static `Create<TPage>(IPage)` factory. |
@@ -135,10 +135,12 @@ uses the BDD scenario lifecycle described afterward; bindings do not derive from
 `PlaywrightBrowserFactory` owns the browser/context/page **per test** (keyed by test id, safe for parallel execution). `UiTestBase` wires it into the NUnit lifecycle:
 
 - **Setup** (`OnSetUpAsync` → `InitializePlaywrightEnvironmentAsync`): initialize Playwright, create a context (optionally from a `storageState`), and open a page.
-- **Teardown** (`OnTearDownAsync`): independently capture a screenshot and optional
-  browser logs on failure, finalize and attach retained traces, then release the
-  context and browser. `TestBase` attempts data cleanup and every service release,
-  preserves the original failure, and fails a passing test on release errors.
+- **Teardown**: `OnTearDownAsync` independently captures a screenshot and optional
+  browser logs on body failure. `TestBase` then runs data cleanup while clients and
+  browser resources remain usable. `OnReleaseResourcesAsync` receives the body and
+  prior teardown failure state, finalizes and attaches retained traces, and releases
+  the context and browser. `TestBase` then attempts every service release, preserves
+  the original failure, and fails a passing test on cleanup or release errors.
 - **Run end**: `GlobalSetupFixture` releases shared Playwright state after all
   fixtures finish, even if database release fails.
 
@@ -146,7 +148,8 @@ uses the BDD scenario lifecycle described afterward; bindings do not derive from
 
 NetBox UI authentication is independent of API token provisioning. `NetBoxUiSetupFixture`
 uses `NetBoxLoginPage` once in `OneTimeSetUp`, captures browser storage state under
-`Ui.StorageStateDirectory`, and removes the file in `OneTimeTearDown`. NetBox UI fixtures
+`Ui.StorageStateDirectory` at a unique run-owned path, and removes only that file
+in `OneTimeTearDown`. NetBox UI fixtures
 derive from `NetBoxUiTestBase`, which creates a fresh browser context from that state for
 each test. Like every other context, the login context's trace is saved when `TraceEnabled`
 is `true` — NetBox test accounts are not treated as sensitive secrets. The storage-state file
@@ -203,7 +206,8 @@ logged or attached. API-only scenarios do not initialize the UI snapshot.
 
 Teardown independently attempts screenshot and optional browser-log capture on
 failure, executes LIFO data cleanup while API clients remain usable, then releases
-context, browser, and client. The primary scenario failure is preserved; secondary
+the trace, context, browser, and client. The trace release receives the primary
+failure and accumulated data-cleanup errors before deciding retention. The primary scenario failure is preserved; secondary
 errors are reported without preventing later releases. Cleanup/release failure
 after a passing body fails NUnit and Allure before Allure.Reqnroll emits the result.
 Trace/video behavior remains owned by the factory. Hooks use `AllureExtensions`
