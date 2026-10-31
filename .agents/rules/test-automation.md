@@ -100,6 +100,8 @@ Alias SQL columns to DB-row C# member names; tests must not translate
 - Prefer Bogus `Faker`/`Randomizer` and the existing generator pattern for unique
   or varied test values. Fixed domain values remain constants.
 - Teardown attempts evidence independently, then attempts every cleanup/release.
+  Run data cleanup before trace finalization and context release. Include data
+  cleanup errors when deciding whether to retain a failure-only trace.
   Preserve an existing test failure and report secondary errors. Fail a passing
   test when data cleanup or resource release fails. Finalize traces through the
   framework and release shared Playwright state only at run end.

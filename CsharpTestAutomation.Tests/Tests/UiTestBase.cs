@@ -54,6 +54,15 @@ public abstract class UiTestBase : TestBase
             }
         }
 
+        if (errors.Count > 0)
+        {
+            throw new AggregateException("UI failure evidence capture failed.", errors);
+        }
+    }
+
+    protected override async Task OnReleaseResourcesAsync(bool testFailed)
+    {
+        List<Exception> errors = [];
         await AttemptTeardownAsync(() => AllureExtensions.CaptureTraceAsync(testFailed), errors);
         try
         {

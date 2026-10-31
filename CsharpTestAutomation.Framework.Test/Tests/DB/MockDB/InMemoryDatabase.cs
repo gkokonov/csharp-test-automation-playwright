@@ -4,11 +4,15 @@ using ServiceStack.OrmLite.Sqlite;
 
 namespace CsharpTestAutomation.Framework.Test.Tests.DB.MockDB;
 
-public class InMemoryDatabase
+public class InMemoryDatabase : IDisposable
 {
-    private readonly OrmLiteConnectionFactory _dbFactory = new(":memory:", SqliteOrmLiteDialectProvider.Instance);
+    private readonly OrmLiteConnection _connection = (OrmLiteConnection)
+        new OrmLiteConnectionFactory(":memory:", SqliteOrmLiteDialectProvider.Instance).OpenDbConnection();
 
-    public IDbConnection OpenConnection() => _dbFactory.OpenDbConnection();
+    public IDbConnection OpenConnection() => _connection;
+
+    // OrmLite deliberately does not dispose shared :memory: connections through its wrapper.
+    public void Dispose() => _connection.DbConnection.Dispose();
 
     public void Insert<T>(IEnumerable<T> items)
     {

@@ -75,7 +75,7 @@ public class PollyUtilityTests
             retryCount: 2,
             retryEveryNSeconds: 0);
 
-        Assert.That(async () => await Act(), Throws.TypeOf<RetryException>());
+        await Assert.ThatAsync(Act, Throws.TypeOf<RetryException>());
         Assert.That(attempts, Is.EqualTo(3));
     }
 
@@ -94,7 +94,7 @@ public class PollyUtilityTests
             retryCount: 3,
             retryEveryNSeconds: 0);
 
-        Assert.That(async () => await Act(), Throws.TypeOf<InvalidOperationException>());
+        await Assert.ThatAsync(Act, Throws.TypeOf<InvalidOperationException>());
         Assert.That(attempts, Is.EqualTo(1));
     }
 
