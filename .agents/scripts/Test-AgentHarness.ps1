@@ -27,7 +27,7 @@ try {
         'docs/netbox-automation/03-device-management-spec.md'
         Get-ChildItem -LiteralPath '.agents/rules', '.agents/instructions',
         '.github/instructions', '.agents/implementation', '.agents/review',
-        '.agents/review/rules', '.agents/agents', '.github/agents' -Filter '*.md' -File
+        '.agents/review/rules', '.github/agents' -Filter '*.md' -File
     )
     $instructionMissing = [System.Collections.Generic.List[string]]::new()
     $instructionLinksChecked = 0
@@ -82,12 +82,9 @@ try {
         )) {
         $instructionRule = Get-Content -Raw -LiteralPath ".agents/rules/$($instructionPair[0]).md"
         $instructionAdapter = Get-Content -Raw -LiteralPath ".github/instructions/$($instructionPair[1]).instructions.md"
-        $instructionPatterns = @([regex]::Match($instructionRule, '(?m)^globs: "([^"]+)"').Groups[1].Value.Split(',').Trim())
-        $instructionApply = @([regex]::Match($instructionRule, '(?m)^applyTo: "([^"]+)"').Groups[1].Value.Split(',').Trim())
+        $instructionPatterns = @([regex]::Match($instructionRule, '(?m)^applyTo: "([^"]+)"').Groups[1].Value.Split(',').Trim())
         $instructionCopilot = @([regex]::Match($instructionAdapter, '(?m)^applyTo: "([^"]+)"').Groups[1].Value.Split(',').Trim())
-        if (-not $instructionPatterns[0] -or
-            (Compare-Object $instructionPatterns $instructionApply) -or
-            (Compare-Object $instructionPatterns $instructionCopilot)) {
+        if (-not $instructionPatterns[0] -or (Compare-Object $instructionPatterns $instructionCopilot)) {
             throw "Canonical/adapter glob mismatch: $($instructionPair[0])"
         }
         $instructionGlobs[$instructionPair[0]] = $instructionPatterns

@@ -1,7 +1,5 @@
 ---
 applyTo: "CsharpTestAutomation.Tests/API/**/*.cs,CsharpTestAutomation.Tests/Tests/API/**/*.cs,CsharpTestAutomation.Tests/Tests/ApiTestBase.cs,CsharpTestAutomation.Tests/Steps/API/**/*.cs,CsharpTestAutomation.Tests/TestData/API/**/*.cs,CsharpTestAutomation.Bdd.Tests/API/**/*.cs,CsharpTestAutomation.Bdd.Tests/Steps/API/**/*.cs,CsharpTestAutomation.Bdd.Tests/TestData/API/**/*.cs,CsharpTestAutomation.Bdd.Tests/Features/*Api.feature"
-trigger: glob
-globs: "CsharpTestAutomation.Tests/API/**/*.cs, CsharpTestAutomation.Tests/Tests/API/**/*.cs, CsharpTestAutomation.Tests/Tests/ApiTestBase.cs, CsharpTestAutomation.Tests/Steps/API/**/*.cs, CsharpTestAutomation.Tests/TestData/API/**/*.cs, CsharpTestAutomation.Bdd.Tests/API/**/*.cs, CsharpTestAutomation.Bdd.Tests/Steps/API/**/*.cs, CsharpTestAutomation.Bdd.Tests/TestData/API/**/*.cs, CsharpTestAutomation.Bdd.Tests/Features/*Api.feature"
 description: "Application API clients, DTOs, builders, fixtures, API steps, and API helpers, including setup used by UI tests."
 ---
 

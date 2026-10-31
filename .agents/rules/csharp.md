@@ -1,7 +1,5 @@
 ---
 applyTo: "**/*.cs"
-trigger: glob
-globs: "**/*.cs"
 description: "Repository-wide semantic C# conventions."
 ---
 

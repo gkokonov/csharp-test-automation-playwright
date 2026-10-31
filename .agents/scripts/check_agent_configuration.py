@@ -142,22 +142,15 @@ def check_role_routes(source, text, role):
 def check(root):
     project = tomllib.loads((root / ".codex/config.toml").read_text(encoding="utf-8-sig"))["mcp_servers"]
     vscode = json.loads((root / ".vscode/mcp.json").read_text(encoding="utf-8-sig"))["servers"]
-    antigravity = json.loads((root / ".agents/mcp_config.json").read_text(encoding="utf-8-sig"))["mcpServers"]
-    require(set(MCP_INSPECTION) | {"chrome-devtools", "firecrawl"} <= set(antigravity),
-            "Missing Antigravity workspace MCP service.")
-    require(antigravity["chrome-devtools"].get("command")
-            and "chrome-devtools-mcp@latest" in antigravity["chrome-devtools"].get("args", []),
-            "Missing Antigravity Chrome DevTools transport.")
     fetch = project.get("fetch", {})
     require(fetch.get("command") == "uvx"
             and "mcp-server-fetch" in fetch.get("args", [])
             and fetch.get("env", {}).get("PYTHONIOENCODING") == "utf-8",
             "Missing Fetch launch settings or Windows encoding.")
-    for host, servers in (("VS Code", vscode), ("Antigravity", antigravity)):
-        require("fetch" in servers, f"Missing {host} Fetch server.")
-        for key in ("command", "args", "env"):
-            require(servers["fetch"].get(key) == fetch.get(key),
-                    f"Fetch transport differs from project config: {host}.{key}")
+    require("fetch" in vscode, "Missing VS Code Fetch server.")
+    for key in ("command", "args", "env"):
+        require(vscode["fetch"].get(key) == fetch.get(key),
+                f"Fetch transport differs from project config: VS Code.{key}")
     require(vscode["fetch"].get("type") == "stdio", "Invalid VS Code Fetch transport type.")
     required = {
         "implementator": {"AGENTS.md", ".agents/implementation/IMPLEMENTATION.md", ".agents/review/REVIEW.md",
@@ -182,54 +175,35 @@ def check(root):
             require(data.get("agents", {}).get("enabled") is not False,
                     f"Implementation/Reviewer delegation unexpectedly disabled: {path}")
 
-        for directory, suffix, delegation in (
-                (".github/agents", ".agent.md", "agent"),
-                (".agents/agents", ".md", "invoke_subagent")):
-            adapter = root / directory / f"{role}{suffix}"
-            header, body = frontmatter(adapter)
-            require(header.get("name") == role and header.get("description"),
-                    f"Invalid role: {adapter}")
-            references(root, adapter, body, targets)
-            check_role_routes(adapter, body, role)
-            tools = header.get("tools")
-            require(isinstance(tools, list), f"Tools must be a YAML list: {adapter}")
-            if directory == ".github/agents":
-                require(header.get("target") == "vscode", f"Local target missing: {adapter}")
-                if role == "implementator":
-                    require(header.get("user-invocable") is True
-                            and header.get("disable-model-invocation") is True,
-                            f"Implementator must require explicit user invocation: {adapter}")
-                permitted = {"read", "search", "web", "edit", "execute"}
-                if role != "researcher":
-                    permitted.add("agent")
-                permitted.update(f"{server}/{name}" for server, names in role_mcp_tools(role).items()
-                                 for name in names)
-                require({"read", "search"} <= set(tools), f"Read/search tools missing: {adapter}")
-            else:
-                permitted = {"view_file", "find_by_name", "grep_search", "search_web",
-                             "read_url_content", "list_permissions"}
-                if role != "researcher":
-                    permitted.add("invoke_subagent")
-                permitted.update({"run_command", "replace_file_content"})
-                require({"view_file", "grep_search"} <= set(tools), f"Read/search tools missing: {adapter}")
-                require(header.get("model") == "inherit" and header.get("mainAgent") is True
-                        and header.get("subagent") is (role != "implementator"),
-                        f"Local role discovery/model settings invalid: {adapter}")
-            require(all(isinstance(tool, str) for tool in tools)
-                    and len(tools) == len(set(tools)) and set(tools) == permitted,
-                    f"Missing, unknown, duplicate, or unsafe adapter tool: {adapter}")
-            if directory == ".agents/agents":
-                require(header.get("commandExecutionPolicy") == "auto",
-                        f"Custom agent command policy must use the effective shell: {adapter}")
-            if role == "researcher":
-                require(delegation not in tools, f"Researcher can delegate: {adapter}")
-                if directory == ".github/agents":
-                    require(header.get("agents") == [], f"Researcher allowlist is not empty: {adapter}")
-            elif role == "reviewer":
-                require(delegation in tools, f"Reviewer helper tool missing: {adapter}")
-                if directory == ".github/agents":
-                    require(set(header.get("agents", [])) == {"reviewer", "researcher"},
-                            f"Reviewer may invoke only reader roles: {adapter}")
+        adapter = root / ".github/agents" / f"{role}.agent.md"
+        header, body = frontmatter(adapter)
+        require(header.get("name") == role and header.get("description"),
+                f"Invalid role: {adapter}")
+        references(root, adapter, body, targets)
+        check_role_routes(adapter, body, role)
+        tools = header.get("tools")
+        require(isinstance(tools, list), f"Tools must be a YAML list: {adapter}")
+        require(header.get("target") == "vscode", f"Local target missing: {adapter}")
+        if role == "implementator":
+            require(header.get("user-invocable") is True
+                    and header.get("disable-model-invocation") is True,
+                    f"Implementator must require explicit user invocation: {adapter}")
+        permitted = {"read", "search", "web", "edit", "execute"}
+        if role != "researcher":
+            permitted.add("agent")
+        permitted.update(f"{server}/{name}" for server, names in role_mcp_tools(role).items()
+                         for name in names)
+        require({"read", "search"} <= set(tools), f"Read/search tools missing: {adapter}")
+        require(all(isinstance(tool, str) for tool in tools)
+                and len(tools) == len(set(tools)) and set(tools) == permitted,
+                f"Missing, unknown, duplicate, or unsafe adapter tool: {adapter}")
+        if role == "researcher":
+            require("agent" not in tools, f"Researcher can delegate: {adapter}")
+            require(header.get("agents") == [], f"Researcher allowlist is not empty: {adapter}")
+        elif role == "reviewer":
+            require("agent" in tools, f"Reviewer helper tool missing: {adapter}")
+            require(set(header.get("agents", [])) == {"reviewer", "researcher"},
+                    f"Reviewer may invoke only reader roles: {adapter}")
 
     manifest_path = root / ".opencodereview/rule.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
@@ -263,14 +237,13 @@ def check(root):
         if path.is_file():
             for line_number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
                 require(line.rstrip(" \t") == line, f"Trailing whitespace: {path}:{line_number}")
-    print(f"Checked nine adapters, MCP transports and role allowlists, instruction references, shell/edit access, role boundaries, five OCR rule references, and {len(samples)} OCR routes.")
+    print(f"Checked six adapters, MCP transports and role allowlists, instruction references, shell/edit access, role boundaries, five OCR rule references, and {len(samples)} OCR routes.")
 
 
 def negative_fixtures(root):
-    adapters = [*root.glob(".codex/agents/*.toml"), *root.glob(".github/agents/*.agent.md"),
-                *root.glob(".agents/agents/*.md")]
+    adapters = [*root.glob(".codex/agents/*.toml"), *root.glob(".github/agents/*.agent.md")]
     files = {root / "AGENTS.md", root / ".opencodereview/rule.json",
-             root / ".codex/config.toml", root / ".vscode/mcp.json", root / ".agents/mcp_config.json",
+             root / ".codex/config.toml", root / ".vscode/mcp.json",
              *adapters, *root.glob(".agents/review/rules/*.md")}
     for adapter in adapters:
         for target in re.findall(
@@ -282,8 +255,6 @@ def negative_fixtures(root):
         (".codex/agents/reviewer.toml", 'sandbox_mode = "danger-full-access"', 'sandbox_mode = "workspace-write"', "Reviewer restricted sandbox"),
         (".codex/agents/researcher.toml", 'sandbox_mode = "danger-full-access"', 'sandbox_mode = "read-only"', "Researcher restricted sandbox"),
         (".github/agents/reviewer.agent.md", "'execute'", "'exec'", "VS Code invalid shell tool"),
-        (".agents/agents/reviewer.md", 'commandExecutionPolicy: "auto"', 'commandExecutionPolicy: "off"', "Antigravity shell disabled"),
-        (".agents/agents/reviewer.md", "tools:\n  - view_file", "tools: [broken: [", "Malformed YAML"),
         (".codex/agents/reviewer.toml", 'name = "reviewer"', 'name = [', "Malformed TOML"),
         (".github/agents/researcher.agent.md", ".agents/instructions/tooling.md", ".agents/instructions/missing.md", "Plain adapter reference"),
         (".opencodereview/rule.json", ".agents/review/rules/framework.md", ".agents/review/rules/missing.md", "Manifest rule reference"),
@@ -297,13 +268,8 @@ def negative_fixtures(root):
         (".github/agents/reviewer.agent.md", "'fff/find_files'", "'firecrawl/firecrawl_scrape'", "Reviewer Firecrawl tool"),
         (".github/agents/reviewer.agent.md", "'fff/find_files'", "'fff/*'", "VS Code MCP wildcard"),
         (".github/agents/researcher.agent.md", "'read'", "'read'\n  - 'agent'", "VS Code Researcher delegation"),
-        (".agents/agents/researcher.md", "read_url_content", "run_command", "Antigravity Researcher command"),
-        (".agents/agents/researcher.md", "read_url_content", "mcp(context7/query-docs)", "Antigravity permission selector"),
         (".vscode/mcp.json", '"fff":', '"missing-fff":', "Missing VS Code server binding"),
-        (".agents/mcp_config.json", '"chrome-devtools":', '"missing-chrome":', "Missing Antigravity browser service"),
         (".vscode/mcp.json", '"fetch":', '"missing-fetch":', "Missing VS Code Fetch server"),
-        (".agents/mcp_config.json", '"fetch":', '"missing-fetch":', "Missing Antigravity Fetch server"),
-        (".agents/mcp_config.json", '"PYTHONIOENCODING": "utf-8"', '"PYTHONIOENCODING": "ascii"', "Fetch host encoding drift"),
         (".codex/agents/researcher.toml", 'enabled_tools = ["fetch"]', 'enabled_tools = ["*"]', "Fetch tool wildcard"),
         (".codex/agents/reviewer.toml", 'PYTHONIOENCODING = "utf-8"', 'PYTHONIOENCODING = "ascii"', "Fetch role encoding drift"),
         (".github/agents/reviewer.agent.md", "'fetch/fetch'", "'fetch/*'", "VS Code Fetch wildcard"),
@@ -311,7 +277,7 @@ def negative_fixtures(root):
         (".github/agents/implementator.agent.md", "user-invocable: true", "user-invocable: false", "Implementator not user selectable"),
     ]
     for directory, suffix in ((".codex/agents", ".toml"),
-                              (".github/agents", ".agent.md"), (".agents/agents", ".md")):
+                              (".github/agents", ".agent.md")):
         mutations.extend([
             (f"{directory}/implementator{suffix}",
              "only when the user explicitly selects or requests custom Implementator",

@@ -11,19 +11,15 @@ as pointers; do not duplicate canonical policy.
 | --- | --- | --- |
 | GitHub Copilot in VS Code | Root and project `AGENTS.md`; `.agents/skills/` | `.github/instructions/` points to canonical rules; `.github/agents/` defines local agents. |
 | OpenAI Codex | Root-to-working-directory `AGENTS.md`; `.agents/skills/` | `.codex/agents/`; `.codex/config.toml` holds optional Codex MCP settings. |
-| Google Antigravity | Root and scoped `AGENTS.md`; matching `.agents/rules/`; `.agents/skills/` | `.agents/agents/`; `.agents/mcp_config.json` holds its MCP settings. |
 
 Use a fresh session to check host discovery after changing instruction routing,
 skills, adapters, or MCP launch settings. File presence and static parsing do not
 prove that a host loaded a file or enforced its permissions.
 
-Keep Antigravity rules in the immediate `.agents/rules/` directory with valid
-`trigger` metadata and `globs` where needed. Copilot `applyTo` patterns must
-match the canonical globs. Codex follows explicit reading routes in `AGENTS.md`;
-it does not use Antigravity frontmatter for routing. Keep one canonical skill
-under `.agents/skills/` and validate its discovery and linked resources in each
-host. See the skill's [portability notes](../.agents/skills/software-design-principles/references/source-coverage-and-validation.md#authoring-and-portability)
-for the shared software-design skill.
+Keep canonical rules in `.agents/rules/`. Copilot `applyTo` patterns must match
+the canonical routes. Codex follows explicit reading routes in `AGENTS.md`.
+Keep one canonical skill under `.agents/skills/` and validate its discovery and
+linked resources in each supported host.
 
 ## Local implementation, review, and research agents
 
@@ -39,9 +35,7 @@ Codex requires a trusted project and fresh session.
 Use [tooling's role access rules](../.agents/instructions/tooling.md#agent-tool-access)
 for the selected navigation/documentation tools, external service caches, and
 Implementator browser diagnostics. Codex/Copilot contain explicit MCP allowlists.
-Antigravity grants documented built-in search and URL-fetch tools; custom-agent
-MCP binding/filtering still needs fresh host verification. Follow the
-[RTK evidence rules](../.agents/instructions/tooling.md#rtk-and-complete-evidence)
+Follow the [RTK evidence rules](../.agents/instructions/tooling.md#rtk-and-complete-evidence)
 when preparing complete patches, source, or OCR JSON.
 
 Custom agents use the effective environment, which exposes unrestricted shell
@@ -53,10 +47,10 @@ task-specific scratch files outside the checkout. They must clean up owned files
 before handoff and report the exact path and failure if cleanup is blocked. Keep
 MCP allowlists role-scoped and do not add write-capable MCP tools.
 
-Copilot's Implementator sets `disable-model-invocation: true`; Antigravity exposes
-it as a main agent, not a subagent. Codex uses an instruction guard. Verify these
-routes in fresh hosts. Task contracts and source restrictions are advisory with
-current shell/edit access; metadata and MCP allowlists need runtime verification.
+Copilot's Implementator sets `disable-model-invocation: true`. Codex uses an
+instruction guard. Verify these routes in fresh hosts. Task contracts and source
+restrictions are advisory with current shell/edit access; metadata and MCP
+allowlists need runtime verification.
 Removing edit access alone cannot enforce read-only behavior with unrestricted
 shell. Sandbox/tool changes need a separate proposal that keeps OCR/Git usable.
 
@@ -77,13 +71,13 @@ Inspect configured servers with `codex mcp list` and `codex mcp get <name>`.
 Then check `/mcp` in a fresh session and make a small call to each available
 server. Configuration output alone does not prove a connection. Use the
 [tooling instructions](../.agents/instructions/tooling.md) for server-specific
-requirements and fallbacks. `.vscode/mcp.json` and
-`.agents/mcp_config.json` are separate host configurations; check each affected
-adapter when changing a shared endpoint or launch option.
+requirements and fallbacks. `.vscode/mcp.json` and `.codex/config.toml` are
+separate host configurations; check each affected adapter when changing a
+shared endpoint or launch option.
 
 ### Fetch MCP
 
-All three workspace configurations launch `mcp-server-fetch` with `uvx`.
+Both workspace configurations launch `mcp-server-fetch` with `uvx`.
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and make
 `uvx` available on the host's PATH. The first launch may download the package.
 `PYTHONIOENCODING=utf-8` is set for Windows. See the
@@ -92,8 +86,7 @@ Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and make
 Use the shared [web reading route](../.agents/instructions/tooling.md#web-reading-and-browser-fallback).
 Codex and Copilot grant only the `fetch` tool to Implementator, Reviewer, and
 Researcher. Each Codex role keeps the server optional so that URL-reading
-fallbacks remain available. Antigravity workspace configuration includes Fetch;
-its custom agents retain built-in URL readers until MCP access is verified.
+fallbacks remain available.
 
 The configured `--ignore-robots-txt` disables robots.txt checks. The custom
 browser User-Agent changes the HTTP header; it does not add JavaScript rendering,
@@ -106,7 +99,7 @@ static transport and allowlist checks do not prove activation.
 
 ### Firecrawl MCP
 
-All three workspace configurations configure `firecrawl-mcp` via `npx`. Set
+Both workspace configurations configure `firecrawl-mcp` via `npx`. Set
 `FIRECRAWL_API_KEY` in the host environment. Firecrawl provides clean Markdown
 scraping with JavaScript rendering, site crawling, URL mapping, and structured
 data extraction. Codex and Copilot grant Firecrawl tools to Implementator and

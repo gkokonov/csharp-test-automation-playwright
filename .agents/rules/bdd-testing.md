@@ -1,7 +1,5 @@
 ---
 applyTo: "CsharpTestAutomation.Bdd.Tests/**/*.cs,CsharpTestAutomation.Bdd.Tests/**/*.feature,CsharpTestAutomation.Bdd.Tests/reqnroll.json"
-trigger: glob
-globs: "CsharpTestAutomation.Bdd.Tests/**/*.cs, CsharpTestAutomation.Bdd.Tests/**/*.feature, CsharpTestAutomation.Bdd.Tests/reqnroll.json"
 description: "Reqnroll features, bindings, hooks, typed context, metadata, lifecycle, and generated sources."
 ---
 

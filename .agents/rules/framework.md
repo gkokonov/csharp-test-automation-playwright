@@ -1,7 +1,5 @@
 ---
 applyTo: "CsharpTestAutomation.Framework/**/*.cs"
-trigger: glob
-globs: "CsharpTestAutomation.Framework/**/*.cs"
 description: "Rules unique to the reusable framework library."
 ---
 

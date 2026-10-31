@@ -1,7 +1,5 @@
 ---
 applyTo: "CsharpTestAutomation.Tests/UI/**/*.cs,CsharpTestAutomation.Tests/Tests/UI/**/*.cs,CsharpTestAutomation.Tests/Tests/UiTestBase.cs,CsharpTestAutomation.Tests/Steps/UI/**/*.cs,CsharpTestAutomation.Bdd.Tests/UI/**/*.cs,CsharpTestAutomation.Bdd.Tests/Steps/UI/**/*.cs,CsharpTestAutomation.Bdd.Tests/Features/*Ui.feature"
-trigger: glob
-globs: "CsharpTestAutomation.Tests/UI/**/*.cs, CsharpTestAutomation.Tests/Tests/UI/**/*.cs, CsharpTestAutomation.Tests/Tests/UiTestBase.cs, CsharpTestAutomation.Tests/Steps/UI/**/*.cs, CsharpTestAutomation.Bdd.Tests/UI/**/*.cs, CsharpTestAutomation.Bdd.Tests/Steps/UI/**/*.cs, CsharpTestAutomation.Bdd.Tests/Features/*Ui.feature"
 description: "Application page objects, components, UI fixtures, UI steps, locators, readiness, and Playwright assertions."
 ---
 

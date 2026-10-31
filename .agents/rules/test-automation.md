@@ -1,7 +1,5 @@
 ---
 applyTo: "CsharpTestAutomation.Tests/**/*.cs,CsharpTestAutomation.Bdd.Tests/**/*.cs"
-trigger: glob
-globs: "CsharpTestAutomation.Tests/**/*.cs, CsharpTestAutomation.Bdd.Tests/**/*.cs"
 description: "Shared application assertions, data ownership, cleanup, and steps; scoped NUnit conventions."
 ---
 

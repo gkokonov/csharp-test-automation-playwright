@@ -67,10 +67,10 @@ BDD results use `artifacts/bdd/` under the test output directory.
 
 Use the main agent for ordinary tasks. Select custom Implementator explicitly;
 completed edits receive independent Reviewer review. Researcher is optional for
-bounded research in Codex, VS Code Copilot, or Antigravity. See [local agent setup](docs/AGENT_SUPPORT.md#local-implementation-review-and-research-agents).
+bounded research in Codex or VS Code Copilot. See [local agent setup](docs/AGENT_SUPPORT.md#local-implementation-review-and-research-agents).
 
 See [AGENTS.md](AGENTS.md) for task routing and [agent support](docs/AGENT_SUPPORT.md)
-for Copilot, Codex, and Antigravity discovery. The root targets 60–80 lines with
+for Copilot and Codex discovery. The root targets 60–80 lines with
 a 100-line maximum; project entry points load shared and applicable layer rules.
 Set `CONTEXT7_API_KEY` in the local agent environment for the optional Context7
 MCP server; do not store the key in the repository.
