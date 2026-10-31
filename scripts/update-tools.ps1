@@ -37,8 +37,16 @@ function Invoke-WingetUpgrade {
         --accept-package-agreements `
         --disable-interactivity
 
-    # Winget may return non-zero when there is simply no applicable update,
-    # therefore do not fail the whole script based solely on LASTEXITCODE.
+    $exitCode = $LASTEXITCODE
+
+    if ($exitCode -eq -1978335189) {
+        Write-Host "$PackageId is already up to date."
+        return
+    }
+
+    if ($exitCode -ne 0) {
+        throw "Winget upgrade failed for $PackageId with exit code $exitCode."
+    }
 }
 
 Push-Location $WorkspaceRoot
@@ -53,7 +61,31 @@ try {
     }
 
     #
-    # 2. Global Node tooling
+    # 2. RTK agent integrations
+    #
+    if (Get-Command rtk -ErrorAction SilentlyContinue) {
+        Write-Step "Configuring RTK for GitHub Copilot"
+
+        & rtk init -g --copilot
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "RTK GitHub Copilot setup failed with exit code $LASTEXITCODE."
+        }
+
+        Write-Step "Configuring RTK for Codex"
+
+        & rtk init -g --codex
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "RTK Codex setup failed with exit code $LASTEXITCODE."
+        }
+    }
+    else {
+        Write-Warning "RTK was not found in PATH. Skipping RTK agent setup."
+    }
+
+    #
+    # 3. Global Node tooling
     #
     if (-not $SkipSkills) {
         Write-Step "Updating global Playwright CLI"
@@ -80,12 +112,13 @@ try {
             throw "Playwright skill refresh failed."
         }
 
-        Write-Step "Updating workspace-local Archify skill"
+        Write-Step "Updating global Archify skill for Codex"
 
         & npx -y skills add `
             tt-a1i/archify `
             --skill archify `
             --agent codex `
+            --global `
             --copy `
             --yes
 
@@ -108,21 +141,31 @@ try {
     }
 
     #
-    # 3. MCP tooling
+    # 4. MCP tooling
     #
     if (-not $SkipMcp) {
         Write-Step "Updating FFF MCP"
 
         $fffInstaller = Join-Path $env:TEMP "install-fff-mcp.ps1"
+        $fffRelease = Invoke-RestMethod `
+            -Uri "https://api.github.com/repos/dmtrKovalenko/fff/releases/latest" `
+            -Headers @{ "User-Agent" = "csharp-test-automation-playwright" }
+
+        if ([string]::IsNullOrWhiteSpace($fffRelease.tag_name) -or $fffRelease.prerelease) {
+            throw "Could not resolve a stable FFF MCP release."
+        }
 
         Invoke-WebRequest `
             -Uri "https://raw.githubusercontent.com/dmtrKovalenko/fff/main/install-mcp.ps1" `
             -OutFile $fffInstaller
 
+        Write-Host "Using latest stable FFF release: $($fffRelease.tag_name)"
+
         & powershell.exe `
             -NoProfile `
             -ExecutionPolicy Bypass `
-            -File $fffInstaller
+            -File $fffInstaller `
+            -Version $fffRelease.tag_name
 
         if ($LASTEXITCODE -ne 0) {
             throw "FFF MCP update failed."
@@ -136,7 +179,34 @@ try {
         Write-Step "Checking Codebase Memory MCP"
 
         if (Get-Command codebase-memory-mcp -ErrorAction SilentlyContinue) {
-            & codebase-memory-mcp update
+            Write-Step "Updating Codebase Memory MCP"
+
+            $cbmInstaller = Join-Path `
+                ([System.IO.Path]::GetTempPath()) `
+                "install-codebase-memory-mcp-$([guid]::NewGuid().ToString('N')).ps1"
+
+            try {
+                Invoke-WebRequest `
+                    -Uri "https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.ps1" `
+                    -OutFile $cbmInstaller `
+                    -UseBasicParsing
+
+                & powershell.exe `
+                    -NoProfile `
+                    -ExecutionPolicy Bypass `
+                    -File $cbmInstaller `
+                    --skip-config
+
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Codebase Memory MCP update failed with exit code $LASTEXITCODE."
+                }
+            }
+            finally {
+                Remove-Item `
+                    -LiteralPath $cbmInstaller `
+                    -Force `
+                    -ErrorAction SilentlyContinue
+            }
         }
         else {
             Write-Warning "codebase-memory-mcp was not found in PATH."
@@ -144,7 +214,7 @@ try {
     }
 
     #
-    # 4. Verification
+    # 5. Verification
     #
     Write-Step "Verifying installations"
 
@@ -191,16 +261,16 @@ try {
     }
 
     $ArchifySkill =
-        Join-Path $WorkspaceRoot ".agents\skills\archify"
+        Join-Path $HOME ".agents\skills\archify"
 
     $OpenCodeReviewSkill =
         Join-Path $WorkspaceRoot ".agents\skills\open-code-review-delegate"
 
     if (Test-Path $ArchifySkill) {
-        Write-Host "Archify skill: $ArchifySkill"
+        Write-Host "Global Archify skill: $ArchifySkill"
     }
     else {
-        Write-Warning "Workspace Archify skill not found."
+        Write-Warning "Global Archify skill not found."
     }
 
     if (Test-Path $OpenCodeReviewSkill) {
