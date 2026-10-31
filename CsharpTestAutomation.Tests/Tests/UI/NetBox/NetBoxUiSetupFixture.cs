@@ -14,9 +14,9 @@ public sealed class NetBoxUiSetupFixture
     private static readonly Logger s_log = LogManager.GetCurrentClassLogger();
     private static readonly ExtendedConfiguration s_configuration = AppConfiguration<ExtendedConfiguration>.Instance.Settings;
 
-    public static string StorageStatePath => Path.GetFullPath(Path.Combine(
+    public static string StorageStatePath { get; } = Path.GetFullPath(Path.Combine(
         s_configuration.Ui.StorageStateDirectory,
-        "netbox.json"));
+        $"netbox-{Guid.NewGuid():N}.json"));
 
     [OneTimeSetUp]
     public async Task CaptureStorageStateAsync()
@@ -26,11 +26,6 @@ public sealed class NetBoxUiSetupFixture
         {
             throw new InvalidOperationException(
                 "NetBox.Username and NetBox.Password must be configured for UI authentication.");
-        }
-
-        if (File.Exists(StorageStatePath))
-        {
-            File.Delete(StorageStatePath);
         }
 
         string storageStateDirectory = Path.GetDirectoryName(StorageStatePath)

@@ -105,35 +105,32 @@ public sealed class PostgreSqlConnectionPool : IDisposable
         return dataSourceBuilder.Build();
     }
 
-    private static string BuildConnectionString(DatabaseInfo dbInfo, DBConfigurationDTO dbSettings)
+    internal static string BuildConnectionString(DatabaseInfo dbInfo, DBConfigurationDTO dbSettings)
     {
-        var connectionStringParts = new Dictionary<string, object>
+        var connectionString = new NpgsqlConnectionStringBuilder
         {
-            ["Host"] = dbSettings.Server
+            Host = dbSettings.Server
                 ?? throw new InvalidOperationException("DbSettings.Server is not configured."),
-            ["Database"] = dbInfo.DbName
+            Database = dbInfo.DbName
                 ?? throw new InvalidOperationException("DbSettings.Database[].DbName is not configured."),
-            ["Username"] = dbInfo.Username
+            Username = dbInfo.Username
                 ?? throw new InvalidOperationException("DbSettings.Database[].Username is not configured."),
-            ["Password"] = dbInfo.Password
+            Password = dbInfo.Password
                 ?? throw new InvalidOperationException("DbSettings.Database[].Password is not configured."),
-            ["Port"] = dbSettings.Port
+            Port = dbSettings.Port,
+            Pooling = true,
+            MinPoolSize = 1,
+            MaxPoolSize = 20,
+            CommandTimeout = 30
         };
 
         if (dbSettings.PostgreSql.EnableSslMode)
         {
-            connectionStringParts["SSL Mode"] = dbSettings.PostgreSql.SslMode;
-            connectionStringParts["Trust Server Certificate"] = dbSettings.PostgreSql.TrustServerCertificate;
+            connectionString["SSL Mode"] = dbSettings.PostgreSql.SslMode;
+            connectionString["Trust Server Certificate"] = dbSettings.PostgreSql.TrustServerCertificate;
         }
 
-        // Additional PostgreSQL specific settings
-        connectionStringParts["Pooling"] = true;
-        connectionStringParts["MinPoolSize"] = 1;
-        connectionStringParts["MaxPoolSize"] = 20;
-        connectionStringParts["Command Timeout"] = 30;
-
-        string connectionString = string.Join(";", connectionStringParts.Select(kvp => $"{kvp.Key}={kvp.Value}"));
-        return connectionString;
+        return connectionString.ConnectionString;
     }
 
     public void Dispose()

@@ -58,6 +58,7 @@ public abstract class TestBase
                 await AttemptTeardownAsync(() => cleanup.CleanUpAsync(), errors);
             }
 
+            await AttemptTeardownAsync(() => OnReleaseResourcesAsync(testFailed || errors.Count > 0), errors);
             await AttemptTeardownAsync(TestContainer.DisposeServicesAsync, errors);
         }
         finally
@@ -83,6 +84,12 @@ public abstract class TestBase
     /// base call required.
     /// </summary>
     protected virtual Task OnTearDownAsync() => Task.CompletedTask;
+
+    /// <summary>
+    /// Releases test resources after data cleanup, while registered clients are still available.
+    /// The failure flag includes the test body and earlier teardown errors.
+    /// </summary>
+    protected virtual Task OnReleaseResourcesAsync(bool testFailed) => Task.CompletedTask;
 
     private static async Task AttemptTeardownAsync(Func<Task> action, List<Exception> errors)
     {

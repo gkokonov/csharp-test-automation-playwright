@@ -133,6 +133,8 @@ def check_role_routes(source, text, role):
     if role == "implementator":
         require("only when the user explicitly selects or requests custom Implementator" in text,
                 f"Missing explicit Implementator invocation guard: {source}")
+        require("Load the installed user-level software-design-principles skill" in text,
+                f"Missing user-level design skill route: {source}")
     elif role == "researcher":
         require("Bounded research" in text, f"Missing shared research route: {source}")
         require(".agents/implementation/IMPLEMENTATION.md" not in text,
@@ -154,7 +156,7 @@ def check(root):
     require(vscode["fetch"].get("type") == "stdio", "Invalid VS Code Fetch transport type.")
     required = {
         "implementator": {"AGENTS.md", ".agents/implementation/IMPLEMENTATION.md", ".agents/review/REVIEW.md",
-                          ".agents/instructions/tooling.md", ".agents/skills/software-design-principles/SKILL.md"},
+                          ".agents/instructions/tooling.md"},
         "reviewer": {"AGENTS.md", ".agents/review/REVIEW.md",
                      ".agents/instructions/tooling.md", ".agents/skills/open-code-review-delegate/SKILL.md"},
         "researcher": {"AGENTS.md", ".agents/instructions/tooling.md"},
@@ -279,6 +281,9 @@ def negative_fixtures(root):
     for directory, suffix in ((".codex/agents", ".toml"),
                               (".github/agents", ".agent.md")):
         mutations.extend([
+            (f"{directory}/implementator{suffix}",
+             "Load the installed user-level software-design-principles skill",
+             "Load another skill", f"{directory} user-level design skill route"),
             (f"{directory}/implementator{suffix}",
              "only when the user explicitly selects or requests custom Implementator",
              "for any implementation request", f"{directory} invocation guard"),

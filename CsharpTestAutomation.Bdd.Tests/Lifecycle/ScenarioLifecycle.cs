@@ -6,12 +6,15 @@ namespace CsharpTestAutomation.Bdd.Tests.Lifecycle;
 public sealed class ScenarioLifecycle(ScenarioCleanupActions cleanup)
 {
     private readonly List<(string Name, Func<Task> Action)> _evidence = [];
-    private readonly List<(string Name, Func<Task> Action)> _releases = [];
+    private readonly List<(string Name, Func<bool, Task> Action)> _releases = [];
     private bool _completed;
 
     public void AddEvidence(string name, Func<Task> capture) => _evidence.Add((name, capture));
 
-    public void AddRelease(string name, Func<Task> release) => _releases.Add((name, release));
+    public void AddRelease(string name, Func<Task> release) => AddRelease(name, _ => release());
+
+    /// <summary>Registers a release that observes the primary error and preceding teardown errors.</summary>
+    public void AddRelease(string name, Func<bool, Task> release) => _releases.Add((name, release));
 
     public async Task<AggregateException?> CompleteAsync(Exception? primaryError, Action<string, Exception> report)
     {
@@ -33,8 +36,8 @@ public sealed class ScenarioLifecycle(ScenarioCleanupActions cleanup)
         await AttemptAsync("scenario data cleanup", () => cleanup.CleanUpAsync(), report, errors);
         for (int index = _releases.Count - 1; index >= 0; index--)
         {
-            (string name, Func<Task> release) = _releases[index];
-            await AttemptAsync(name, release, report, errors);
+            (string name, Func<bool, Task> release) = _releases[index];
+            await AttemptAsync(name, () => release(primaryError is not null || errors.Count > 0), report, errors);
         }
 
         _evidence.Clear();

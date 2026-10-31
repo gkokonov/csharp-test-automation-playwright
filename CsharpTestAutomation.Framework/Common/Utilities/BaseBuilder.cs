@@ -17,7 +17,7 @@ namespace CsharpTestAutomation.Framework.Common.Utilities;
 /// <see cref="Default"/> values and then overlays properties from a
 /// <see cref="Dictionary{TKey,TValue}">Dictionary&lt;string, object&gt;</see>, matching by
 /// property name (case-insensitive) or by any <see cref="PropertyAlias"/> attributes declared on
-/// the property. Type mismatches are resolved automatically — enums are parsed by name, strings
+/// the property. Type mismatches are resolved automatically — enums accept names or integral values, strings
 /// are converted to <see cref="DateTime"/> via <see cref="System.Globalization.CultureInfo.InvariantCulture"/>,
 /// and all other types fall back to <see cref="Convert.ChangeType(object, Type)"/>.
 /// </para>
@@ -59,13 +59,14 @@ public abstract class BaseBuilder<TModel>
                 if (string.Equals(kvp.Key, property.Name, StringComparison.OrdinalIgnoreCase) || aliases != null && aliases!.Any(x => x.Alias.Equals(kvp.Key, StringComparison.OrdinalIgnoreCase)))
                 {
                     object? value = kvp.Value;
-                    if (value != null && property.PropertyType != value.GetType())
+                    Type targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+                    if (value != null && !targetType.IsInstanceOfType(value))
                     {
-                        Type targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
-
                         if (targetType.IsEnum)
                         {
-                            value = Enum.Parse(targetType, (value as string)!, true);
+                            value = value is string enumName
+                                ? Enum.Parse(targetType, enumName, true)
+                                : Enum.ToObject(targetType, value);
                         }
                         else if (targetType == typeof(DateTime) && value is string dateString)
                         {

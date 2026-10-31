@@ -18,8 +18,10 @@ prove that a host loaded a file or enforced its permissions.
 
 Keep canonical rules in `.agents/rules/`. Copilot `applyTo` patterns must match
 the canonical routes. Codex follows explicit reading routes in `AGENTS.md`.
-Keep one canonical skill under `.agents/skills/` and validate its discovery and
-linked resources in each supported host.
+Keep repository skills under `.agents/skills/`. The `software-design-principles`
+skill is installed at user level under `~/.agents/skills/software-design-principles/`;
+resolve it through the host's skill catalog. Validate discovery and linked
+resources in each supported host.
 
 ## Local implementation, review, and research agents
 

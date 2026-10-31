@@ -78,4 +78,4 @@ tools:
 agents: ['reviewer', 'researcher']
 ---
 
-Use this role only when the user explicitly selects or requests custom Implementator. Read AGENTS.md, .agents/instructions/tooling.md (Task contract) and .agents/implementation/IMPLEMENTATION.md. Load .agents/skills/software-design-principles/SKILL.md for this role. Edit authorized paths, preserve baseline user changes, and follow .agents/review/REVIEW.md for independent review and repairs. Use tooling's Bounded research route for authorized research.
+Use this role only when the user explicitly selects or requests custom Implementator. Read AGENTS.md, .agents/instructions/tooling.md (Task contract) and .agents/implementation/IMPLEMENTATION.md. Load the installed user-level software-design-principles skill for this role. Edit authorized paths, preserve baseline user changes, and follow .agents/review/REVIEW.md for independent review and repairs. Use tooling's Bounded research route for authorized research.

@@ -10,9 +10,8 @@ namespace CsharpTestAutomation.Framework.Test.Tests.DB;
 [Category("DapperActionsTests")]
 public class DapperActionsTests
 {
-    private static InMemoryDatabase s_db;
-    private static Mock<IDatabaseConnectionFactory> s_connectionFactoryMock;
-    private static UserRepository s_userRepository;
+    private InMemoryDatabase _db;
+    private UserRepository _userRepository;
 
     private static readonly List<User> s_usersMockData =
     [
@@ -24,21 +23,25 @@ public class DapperActionsTests
         new User {Id = 6, FirstName = "John", SirName = "Doe", Title = "Mr.", Country = "USA", City = "Decatur", Email = "john_doe@gmail.com"}
     ];
 
-    [OneTimeSetUp]
-    public static void SetupDatabase()
+    [SetUp]
+    public void SetupDatabase()
     {
-        s_db = new InMemoryDatabase();
-        s_connectionFactoryMock = new Mock<IDatabaseConnectionFactory>();
-        s_userRepository = new UserRepository(s_connectionFactoryMock.Object);
+        _db = new InMemoryDatabase();
+        var connectionFactoryMock = new Mock<IDatabaseConnectionFactory>();
+        _userRepository = new UserRepository(connectionFactoryMock.Object);
 
-        s_db.Insert(s_usersMockData); // Change this line to use an instance reference
-        s_connectionFactoryMock.Setup(c => c.GetConnection()).Returns(s_db.OpenConnection());
+        _db.Insert(s_usersMockData);
+        connectionFactoryMock.Setup(c => c.GetConnection()).Returns(_db.OpenConnection());
     }
+
+    [TearDown]
+    public void DisposeDatabase() => _db?.Dispose();
 
     [Test]
     public void Verify_SingleEntityRead_When_ReturnTypeIsGeneric()
     {
-        var expectedUser = new User {
+        var expectedUser = new User
+        {
             Id = 1,
             FirstName = "Ivan",
             SirName = "Ivanov",
@@ -63,7 +66,7 @@ public class DapperActionsTests
         var dpRead = new DynamicParameters();
         dpRead.Add("firstName", "Ivan");
 
-        User? actualUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? actualUser = _userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(actualUser, Is.EqualTo(expectedUser));
     }
@@ -97,7 +100,7 @@ public class DapperActionsTests
         var dpRead = new DynamicParameters();
         dpRead.Add("firstName", "Ivan");
 
-        IDictionary<string, object>? actualDictionary = s_userRepository.Query(readSqlQuery, dpRead);
+        IDictionary<string, object>? actualDictionary = _userRepository.Query(readSqlQuery, dpRead);
 
         Assert.That(actualDictionary, Is.EqualTo(expectedDictionary));
     }
@@ -112,7 +115,7 @@ public class DapperActionsTests
             *
         FROM User";
 
-        List<User> actualUsers = s_userRepository.QueryAll<User>(readSqlQuery);
+        List<User> actualUsers = _userRepository.QueryAll<User>(readSqlQuery);
 
         Assert.That(actualUsers, Has.Count.EqualTo(expectedUsersCount));
     }
@@ -127,7 +130,7 @@ public class DapperActionsTests
             *
         FROM User";
 
-        List<IDictionary<string, object>> actualDictionaryList = s_userRepository.QueryAll(readSqlQuery);
+        List<IDictionary<string, object>> actualDictionaryList = _userRepository.QueryAll(readSqlQuery);
 
         Assert.That(actualDictionaryList, Has.Count.EqualTo(expectedUsersCount));
     }
@@ -135,7 +138,8 @@ public class DapperActionsTests
     [Test]
     public void Verify_EntityCreatedInDatabase()
     {
-        var expectedUser = new User {
+        var expectedUser = new User
+        {
             Id = 7,
             FirstName = "Frank",
             SirName = "Sinatra",
@@ -169,7 +173,8 @@ public class DapperActionsTests
         WHERE Email = @email";
 
         var dpCreate = new DynamicParameters(
-            new {
+            new
+            {
                 id = 7,
                 firstName = "Frank",
                 sirName = "Sinatra",
@@ -186,15 +191,15 @@ public class DapperActionsTests
         var dpDelete = new DynamicParameters();
         dpDelete.Add("email", "f_sinatra@gmail.com");
 
-        s_userRepository.Execute(createSqlQuery, dpCreate);
+        _userRepository.Execute(createSqlQuery, dpCreate);
 
-        User? actualUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? actualUser = _userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(actualUser, Is.EqualTo(expectedUser));
 
-        s_userRepository.Execute(deleteSqlQuery, dpDelete);
+        _userRepository.Execute(deleteSqlQuery, dpDelete);
 
-        User? deletedUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? deletedUser = _userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(deletedUser, Is.Null);
     }
@@ -202,7 +207,8 @@ public class DapperActionsTests
     [Test]
     public void Verify_EntityUpdatedInDatabase()
     {
-        var expectedUser = new User {
+        var expectedUser = new User
+        {
             Id = 7,
             FirstName = "Frank",
             SirName = "Sinatra",
@@ -249,7 +255,8 @@ public class DapperActionsTests
         WHERE Email = @email";
 
         var dpCreate = new DynamicParameters(
-            new {
+            new
+            {
                 id = 7,
                 firstName = "Frank",
                 sirName = "Sinatra",
@@ -264,7 +271,8 @@ public class DapperActionsTests
         dpRead.Add("firstName", "Frank");
 
         var dpUpdate = new DynamicParameters(
-            new {
+            new
+            {
                 id = 7,
                 firstName = "Frank",
                 sirName = "Sinatra",
@@ -278,24 +286,24 @@ public class DapperActionsTests
         var dpDelete = new DynamicParameters();
         dpDelete.Add("email", "f_sinatra@gmail.com");
 
-        s_userRepository.Execute(createSqlQuery, dpCreate);
+        _userRepository.Execute(createSqlQuery, dpCreate);
 
-        User? actualUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? actualUser = _userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(actualUser, Is.EqualTo(expectedUser));
 
-        s_userRepository.Execute(updateSqlQuery, dpUpdate);
+        _userRepository.Execute(updateSqlQuery, dpUpdate);
 
         expectedUser.Country = "Bulgaria";
         expectedUser.City = "Sofia";
 
-        User? updatedUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? updatedUser = _userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(updatedUser, Is.EqualTo(expectedUser));
 
-        s_userRepository.Execute(deleteSqlQuery, dpDelete);
+        _userRepository.Execute(deleteSqlQuery, dpDelete);
 
-        User? deletedUser = s_userRepository.Query<User>(readSqlQuery, dpRead);
+        User? deletedUser = _userRepository.Query<User>(readSqlQuery, dpRead);
 
         Assert.That(deletedUser, Is.Null);
     }
