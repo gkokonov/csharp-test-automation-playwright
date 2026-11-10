@@ -1,17 +1,18 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "archify": {
       "source": "tt-a1i/archify",
       "sourceType": "github",
       "skillPath": "archify/SKILL.md",
-      "computedHash": "e9ef0923cda908886e667eb48e36b29e81d0a7a7b9fe2bc05f3779be271e5119"
+      "computedHash": ""
     },
     "open-code-review-delegate": {
       "source": "alibaba/open-code-review",
       "sourceType": "github",
       "skillPath": "skills/open-code-review-delegate/SKILL.md",
-      "computedHash": "59d49c90884061691d5f1255cfa1781d9e155a74596a6b38c8f3c403e66ae49d"
+      "computedHash": "828b20ccd9de9270aa77c031fa00068e49e356b8042f426cc51bd5338daadeac",
+      "installMode": "copy"
     }
   }
 }
